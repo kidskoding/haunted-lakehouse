@@ -1,0 +1,12 @@
+# Local-only working material, never part of the app.
+spikes/
+docs/
+# Hand-authored planning docs keep their own Markdown style.
+CLAUDE.md
+TODO.md
+.next/
+node_modules/
+playwright-report/
+test-results/
+next-env.d.ts
+bun.lock
