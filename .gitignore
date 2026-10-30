@@ -1,3 +1,7 @@
+# Local-only working material, never part of the app.
+docs/
+spikes/
+
 node_modules/
 .next/
 .vercel/
