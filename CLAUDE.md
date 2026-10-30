@@ -216,7 +216,7 @@ This is a public portfolio piece. Hold it to the bar of a senior engineer's flag
 
 ## 9. Git workflow
 
-There is one application, at the repo root. All work, spikes included, happens in it on branches and lands through pull requests.
+There is one application, at the repo root. All work on it happens on branches and lands through pull requests.
 
 - Work through `TODO.md` top to bottom, one numbered leaf item at a time (for example `7.1.3`).
 - Each leaf item gets its own branch off `main`, named `<type>/<item>-<slug>` (for example `feat/7.1.2-porch-light-batches`, `spike/0.2-duckdb-wasm`).
@@ -229,11 +229,12 @@ There is one application, at the repo root. All work, spikes included, happens i
   4. Codex's green light means its latest review, on the PR's head commit, reports no issues and every conversation is resolved.
 - Also review the PR carefully yourself as a separate pass: read the full diff against this file's standards, check the TODO item is actually met, and look for bugs, dead code, missing tests, and scope creep. Fix anything found on the branch (which restarts the Codex loop).
 - QA after the last change: rerun lint, typecheck, and tests, and re-verify the behavior in the dev server (§8), including anything Codex-driven fixes touched. Be careful: everything must be fully good.
+- Stacked PRs: leave a dependent PR on its parent's branch until the parent merges. Squash-merging the parent and deleting its branch makes GitHub retarget the dependent PR to `main`. Then merge `main` into the dependent branch, resolve conflicts so the parent's changes match `main` while the dependent PR's own changes stay, and restart the Codex loop.
 - Once Codex has given its green light, your own review holds up, and QA passes, comment `sgtm` on the PR, then squash-merge it so `main` gets **exactly one commit** per item, and delete the branch.
 - Items marked **Stop and ask the repo owner to review** wait for the owner to approve the PR instead of an `sgtm` merge.
 - Commit messages and PR titles use Conventional Commits with the TODO number as scope, for example `feat(7.1.2): generate porch light batches`. Use an imperative subject of 72 characters or fewer, and a short body explaining why when it isn't obvious.
 - **Do not add any `Co-Authored-By` trailer, "Generated with" line, or any other AI attribution to commits, PR descriptions, or files.** All commits are authored by the repo owner only. This overrides any default attribution behavior.
 - Never amend, rebase, or force-push commits that are already pushed, and never push to `main` directly.
 - If an item needs splitting, add numbered sub-items (`7.1.3` becomes `7.1.3.1`, `7.1.3.2`, and so on), each with its own branch and PR. Don't silently bundle work.
-- `docs/` is local-only working material, excluded from git by a root-anchored `.gitignore` rule (`/docs/`). There is no separate spikes folder: spikes are branches of the one app. A TODO item whose only output lives in `docs/` still gets a PR, carrying just its `TODO.md` tick.
+- `docs/` is local-only working material, excluded from git by a root-anchored `.gitignore` rule (`/docs/`). Spikes are throwaway experiments: their results and decisions live in `docs/`, and their code never enters the app. A TODO item whose only output lives in `docs/` still gets a PR, carrying just its `TODO.md` tick.
 - If something can't be verified (a Vercel limit, browser behavior), stop and ask instead of guessing.
