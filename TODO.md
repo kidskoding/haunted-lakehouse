@@ -21,7 +21,7 @@ Spikes are built inside the one application, as routes under `src/app/spikes/` t
 
 ### 1.1 Repo
 - [x] **1.1.1 Scaffold.** Next.js App Router, TypeScript strict, Tailwind, bun, ESLint (typescript-eslint strict), Prettier, Vitest, and Playwright. MIT `LICENSE`, plus a placeholder `README.md` (title and tagline only).
-- [ ] **1.1.2 CI.** GitHub Actions running lint, typecheck, Vitest, and Playwright on push and PR.
+- [x] **1.1.2 CI.** GitHub Actions running lint, typecheck, Vitest, and Playwright on push and PR.
 - [ ] **1.1.3 Vercel project.** Connect the GitHub repo to a Vercel project so every pushed branch gets a preview deployment and `main` deploys to production. Environment variables documented in `.env.example`.
 
 ### 1.2 Data and auth
