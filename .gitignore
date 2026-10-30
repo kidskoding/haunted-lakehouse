@@ -1,1 +1,14 @@
+# Local-only working material, never part of the app.
 /docs/
+
+/node_modules/
+/.next/
+/.vercel/
+next-env.d.ts
+*.tsbuildinfo
+/test-results/
+/playwright-report/
+
+# Environment files can hold secrets; only the documented template is tracked.
+.env*
+!.env.example
