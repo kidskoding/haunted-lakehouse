@@ -1,0 +1,21 @@
+name: Codex re-review
+
+# Codex reviews a pull request automatically when it opens, but not after later pushes.
+# Asking again on every push keeps its review on the head commit, which merging requires.
+on:
+  pull_request:
+    types: [synchronize, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  request-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask Codex to review the new head commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr comment "$PR_NUMBER" --body "@codex review"
