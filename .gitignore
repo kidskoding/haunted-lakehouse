@@ -1,12 +1,15 @@
-# Local-only working material, never part of the app.
-docs/
-spikes/
+# Local-only working material, never part of the app. Anchored so src/app/spikes/ stays tracked.
+/docs/
+/spikes/
 
-node_modules/
-.next/
-.vercel/
+/node_modules/
+/.next/
+/.vercel/
 next-env.d.ts
 *.tsbuildinfo
-test-results/
-playwright-report/
-.env*.local
+/test-results/
+/playwright-report/
+
+# Environment files can hold secrets; only the documented template is tracked.
+.env*
+!.env.example
