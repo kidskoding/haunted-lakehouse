@@ -222,11 +222,12 @@ There is one application, at the repo root. All work, spikes included, happens i
 - Each leaf item gets its own branch off `main`, named `<type>/<item>-<slug>` (for example `feat/7.1.2-porch-light-batches`, `spike/0.2-duckdb-wasm`).
 - After the work: run lint, typecheck, and tests, and verify the change in the dev server as described in §8 (plus Playwright and a screenshot review for UI items). Fix everything until it's green. Tick the box in `TODO.md` on the branch.
 - Push the branch and open a pull request. Its Vercel preview build must pass.
-- Before merging, review the PR carefully as a separate pass: read the full diff against this file's standards, check the TODO item is actually met, and look for bugs, dead code, missing tests, and scope creep. Fix anything found on the branch first. When it holds up, comment `sgtm` on the PR, then squash-merge it so `main` gets **exactly one commit** per item, and delete the branch.
+- Codex reviews every PR automatically (GitHub app). Wait for its review, then handle every finding: fix it on the branch, or reply on the comment explaining why it does not apply. Never merge with an unanswered Codex finding.
+- Then review the PR carefully yourself as a separate pass: read the full diff against this file's standards, check the TODO item is actually met, and look for bugs, dead code, missing tests, and scope creep. Fix anything found on the branch first. When it holds up, comment `sgtm` on the PR, then squash-merge it so `main` gets **exactly one commit** per item, and delete the branch.
 - Items marked **Stop and ask the repo owner to review** wait for the owner to approve the PR instead of an `sgtm` merge.
 - Commit messages and PR titles use Conventional Commits with the TODO number as scope, for example `feat(7.1.2): generate porch light batches`. Use an imperative subject of 72 characters or fewer, and a short body explaining why when it isn't obvious.
 - **Do not add any `Co-Authored-By` trailer, "Generated with" line, or any other AI attribution to commits, PR descriptions, or files.** All commits are authored by the repo owner only. This overrides any default attribution behavior.
 - Never amend, rebase, or force-push commits that are already pushed, and never push to `main` directly.
 - If an item needs splitting, add numbered sub-items (`7.1.3` becomes `7.1.3.1`, `7.1.3.2`, and so on), each with its own branch and PR. Don't silently bundle work.
-- `docs/` and `spikes/` are local-only working material, excluded from git through `.git/info/exclude`. A TODO item whose only output lives in `docs/` still gets a PR, carrying just its `TODO.md` tick.
+- `docs/` and `spikes/` are local-only working material, excluded from git by `.gitignore`. A TODO item whose only output lives in `docs/` still gets a PR, carrying just its `TODO.md` tick.
 - If something can't be verified (a Vercel limit, browser behavior), stop and ask instead of guessing.
