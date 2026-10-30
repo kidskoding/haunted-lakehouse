@@ -6,7 +6,7 @@ Work top to bottom. **Every numbered leaf item (for example 7.1.3) is exactly on
 
 ## 0. Spikes (prove the risky parts first)
 
-- [ ] **0.1 Vercel hello world.** A minimal Next.js app deployed to Vercel with one route handler. Record the account's plan limits (function duration, memory, bundle size) in `docs/decisions/0001-vercel-limits.md`.
+- [x] **0.1 Vercel hello world.** A minimal Next.js app deployed to Vercel with one route handler. Record the account's plan limits (function duration, memory, bundle size) in `docs/decisions/0001-vercel-limits.md`.
 - [ ] **0.2 DuckDB-WASM in the browser.** A spike page that loads DuckDB-WASM in a Web Worker, ingests JSON, CSV, and Parquet fetched from a route handler, and runs a window-function query. Measure cold-load time and memory. Record the results.
 - [ ] **0.3 Server-side generation.** A route handler that generates about 2 MB of seeded JSON, CSV, and Parquet in TypeScript within Vercel's limits. Pick the Parquet writer library based on bundle size and correctness. Record the results.
 - [ ] **0.4 Delta log feasibility.** Generate a tiny Delta table's `_delta_log` (JSON commits plus a Parquet checkpoint) in TypeScript, then validate it by reading it with the `deltalake` Python package in a local script. Record the approach.
