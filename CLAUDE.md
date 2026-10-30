@@ -201,6 +201,14 @@ This is a public portfolio piece. Hold it to the bar of a senior engineer's flag
 **Tests**
 - `bun run lint`, `bun run typecheck`, and `bun run test` must pass before every commit. Playwright runs in CI and before ticking any UI item.
 
+**Verifying it works (dev, not builds)**
+- Don't run `next build` locally as a routine check. Production builds happen on Vercel: the GitHub repo is connected to the Vercel project, every pushed branch gets a preview deployment, and `main` deploys to production. A failed Vercel build is a failed item.
+- Verify behavior against the running dev server (`bun run dev`), not a build:
+  - The `next-devtools` MCP server reads the dev server's built-in endpoint (`/_next/mcp`). Use `nextjs_index` to find the server, then `nextjs_call` for compile and runtime errors, routes, and logs. An item isn't done while it reports errors.
+  - Route handlers: call them with `curl` against `localhost` and check status and body.
+  - UI: drive pages with the Playwright MCP server (navigate, click, check the console, take screenshots).
+- Check a preview deployment only when the item depends on Vercel behavior (limits, Blob, Postgres, environment variables). Previews sit behind Deployment Protection, so use `vercel curl`.
+
 **Decisions**
 - Record significant technical decisions as short ADRs in `docs/decisions/NNNN-title.md` (context, decision, consequences).
 
@@ -209,7 +217,7 @@ This is a public portfolio piece. Hold it to the bar of a senior engineer's flag
 ## 9. Git workflow
 
 - Work through `TODO.md` top to bottom, one numbered leaf item at a time (for example `7.1.3`).
-- After each leaf item: run lint, typecheck, and tests (plus Playwright and a screenshot review for UI items). Fix everything until it's green. Tick the box in `TODO.md`. Make **exactly one commit** for that item, with the tick included.
+- After each leaf item: run lint, typecheck, and tests, and verify the change in the dev server as described in §8 (plus Playwright and a screenshot review for UI items). Fix everything until it's green. Tick the box in `TODO.md`. Make **exactly one commit** for that item, with the tick included.
 - Commit messages use Conventional Commits with the TODO number as scope, for example `feat(7.1.2): generate porch light batches`. Use an imperative subject of 72 characters or fewer, and a short body explaining why when it isn't obvious.
 - **Do not add any `Co-Authored-By` trailer, "Generated with" line, or any other AI attribution to commits, PR descriptions, or files.** All commits are authored by the repo owner only. This overrides any default attribution behavior.
 - Never amend, rebase, or force-push existing commits. Never push unless explicitly asked.

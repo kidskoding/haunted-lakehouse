@@ -20,7 +20,7 @@ Work top to bottom. **Every numbered leaf item (for example 7.1.3) is exactly on
 ### 1.1 Repo
 - [ ] **1.1.1 Scaffold.** Next.js App Router, TypeScript strict, Tailwind, bun, ESLint (typescript-eslint strict), Prettier, Vitest, and Playwright. MIT `LICENSE`, plus a placeholder `README.md` (title and tagline only).
 - [ ] **1.1.2 CI.** GitHub Actions running lint, typecheck, Vitest, and Playwright on push and PR.
-- [ ] **1.1.3 Vercel project.** Production and preview deployments wired up, with environment variables documented in `.env.example`.
+- [ ] **1.1.3 Vercel project.** Connect the GitHub repo to a Vercel project so every pushed branch gets a preview deployment and `main` deploys to production. Environment variables documented in `.env.example`.
 
 ### 1.2 Data and auth
 - [ ] **1.2.1 Database.** Postgres via Vercel's marketplace integration, with Drizzle ORM and the initial schema: players, runs, run_events, unlocks, fragments, daily_results. Migrations committed.
