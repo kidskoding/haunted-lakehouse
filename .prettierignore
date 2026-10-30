@@ -1,6 +1,7 @@
 # Local-only working material, never part of the app.
-spikes/
 docs/
+# Personal Claude Code settings, never committed.
+.claude/
 # Hand-authored planning docs keep their own Markdown style.
 CLAUDE.md
 TODO.md

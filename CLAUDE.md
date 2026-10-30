@@ -235,5 +235,5 @@ There is one application, at the repo root. All work, spikes included, happens i
 - **Do not add any `Co-Authored-By` trailer, "Generated with" line, or any other AI attribution to commits, PR descriptions, or files.** All commits are authored by the repo owner only. This overrides any default attribution behavior.
 - Never amend, rebase, or force-push commits that are already pushed, and never push to `main` directly.
 - If an item needs splitting, add numbered sub-items (`7.1.3` becomes `7.1.3.1`, `7.1.3.2`, and so on), each with its own branch and PR. Don't silently bundle work.
-- `docs/` and `spikes/` are local-only working material, excluded from git by root-anchored `.gitignore` rules (`/docs/`, `/spikes/`), so `src/app/spikes/` stays tracked. A TODO item whose only output lives in `docs/` still gets a PR, carrying just its `TODO.md` tick.
+- `docs/` is local-only working material, excluded from git by a root-anchored `.gitignore` rule (`/docs/`). There is no separate spikes folder: spikes are branches of the one app. A TODO item whose only output lives in `docs/` still gets a PR, carrying just its `TODO.md` tick.
 - If something can't be verified (a Vercel limit, browser behavior), stop and ask instead of guessing.
