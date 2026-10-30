@@ -216,10 +216,16 @@ This is a public portfolio piece. Hold it to the bar of a senior engineer's flag
 
 ## 9. Git workflow
 
+There is one application, at the repo root. All work, spikes included, happens in it on branches and lands through pull requests.
+
 - Work through `TODO.md` top to bottom, one numbered leaf item at a time (for example `7.1.3`).
-- After each leaf item: run lint, typecheck, and tests, and verify the change in the dev server as described in §8 (plus Playwright and a screenshot review for UI items). Fix everything until it's green. Tick the box in `TODO.md`. Make **exactly one commit** for that item, with the tick included.
-- Commit messages use Conventional Commits with the TODO number as scope, for example `feat(7.1.2): generate porch light batches`. Use an imperative subject of 72 characters or fewer, and a short body explaining why when it isn't obvious.
+- Each leaf item gets its own branch off `main`, named `<type>/<item>-<slug>` (for example `feat/7.1.2-porch-light-batches`, `spike/0.2-duckdb-wasm`).
+- After the work: run lint, typecheck, and tests, and verify the change in the dev server as described in §8 (plus Playwright and a screenshot review for UI items). Fix everything until it's green. Tick the box in `TODO.md` on the branch.
+- Push the branch and open a pull request. Its Vercel preview build must pass. Squash-merge it so `main` gets **exactly one commit** per item, then delete the branch.
+- Items marked **Stop and ask the repo owner to review** wait for the owner to approve the PR. Other PRs can be merged once green.
+- Commit messages and PR titles use Conventional Commits with the TODO number as scope, for example `feat(7.1.2): generate porch light batches`. Use an imperative subject of 72 characters or fewer, and a short body explaining why when it isn't obvious.
 - **Do not add any `Co-Authored-By` trailer, "Generated with" line, or any other AI attribution to commits, PR descriptions, or files.** All commits are authored by the repo owner only. This overrides any default attribution behavior.
-- Never amend, rebase, or force-push existing commits. Never push unless explicitly asked.
-- If an item needs splitting, add numbered sub-items (`7.1.3` becomes `7.1.3.1`, `7.1.3.2`, and so on) and commit each separately. Don't silently bundle work.
+- Never amend, rebase, or force-push commits that are already pushed, and never push to `main` directly.
+- If an item needs splitting, add numbered sub-items (`7.1.3` becomes `7.1.3.1`, `7.1.3.2`, and so on), each with its own branch and PR. Don't silently bundle work.
+- `docs/` and `spikes/` are local-only working material, excluded from git through `.git/info/exclude`. A TODO item whose only output lives in `docs/` still gets a PR, carrying just its `TODO.md` tick.
 - If something can't be verified (a Vercel limit, browser behavior), stop and ask instead of guessing.
