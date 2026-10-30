@@ -1,6 +1,5 @@
-# Local-only working material, never part of the app. Anchored so src/app/spikes/ stays tracked.
+# Local-only working material, never part of the app.
 /docs/
-/spikes/
 
 /node_modules/
 /.next/

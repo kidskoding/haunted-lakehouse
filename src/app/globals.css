@@ -1,2 +1,2 @@
-/* Scan only src/ so local-only folders like spikes/ never feed classes into the app. */
+/* Scan only src/ so local-only material like docs/ never feeds classes into the app. */
 @import "tailwindcss" source("..");

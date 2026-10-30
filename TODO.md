@@ -6,7 +6,7 @@ Work top to bottom. **Every numbered leaf item (for example 7.1.3) is exactly on
 
 ## 0. Spikes (prove the risky parts first)
 
-Spikes are built inside the one application, as routes under `src/app/spikes/` that return 404 in production, each on its own branch and PR. **1.1.1 (scaffold) is done before 0.2** so they have an app to live in. Spike results are recorded in `docs/` (local-only).
+Spikes are built inside the one application on `spike/<item>-<slug>` branches, as routes under `src/app/spikes/` that return 404 in production, each landing through its own PR. **1.1.1 (scaffold) is done before 0.2** so they have an app to live in. Spike results are recorded in `docs/` (local-only).
 
 - [x] **0.1 Vercel hello world.** A minimal Next.js app deployed to Vercel with one route handler. Record the account's plan limits (function duration, memory, bundle size) in `docs/decisions/0001-vercel-limits.md`.
 - [ ] **0.2 DuckDB-WASM in the browser.** A spike page that loads DuckDB-WASM in a Web Worker, ingests JSON, CSV, and Parquet fetched from a route handler, and runs a window-function query. Measure cold-load time and memory. Record the results.

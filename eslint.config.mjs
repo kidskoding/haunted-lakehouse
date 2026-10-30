@@ -4,14 +4,13 @@ import nextTypescript from "eslint-config-next/typescript";
 import tseslint from "typescript-eslint";
 
 export default defineConfig([
-  // spikes/ and docs/ are local-only working material, never part of the app.
+  // docs/ is local-only working material, never part of the app.
   globalIgnores([
     ".next/**",
     "node_modules/**",
     "next-env.d.ts",
     "playwright-report/**",
     "test-results/**",
-    "spikes/**",
     "docs/**",
   ]),
   ...nextVitals,
