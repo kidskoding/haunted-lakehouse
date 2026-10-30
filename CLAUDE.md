@@ -222,8 +222,13 @@ There is one application, at the repo root. All work, spikes included, happens i
 - Each leaf item gets its own branch off `main`, named `<type>/<item>-<slug>` (for example `feat/7.1.2-porch-light-batches`, `spike/0.2-duckdb-wasm`).
 - After the work: run lint, typecheck, and tests, and verify the change in the dev server as described in §8 (plus Playwright and a screenshot review for UI items). Fix everything until it's green. Tick the box in `TODO.md` on the branch.
 - Push the branch and open a pull request. Its Vercel preview build must pass.
-- Codex reviews every PR automatically (GitHub app). Wait for its review, then handle every finding: fix it on the branch, or reply on the comment explaining why it does not apply, then resolve the conversation. Never merge with an unresolved Codex finding.
-- Then review the PR carefully yourself as a separate pass: read the full diff against this file's standards, check the TODO item is actually met, and look for bugs, dead code, missing tests, and scope creep. Fix anything found on the branch first. When it holds up, comment `sgtm` on the PR, then squash-merge it so `main` gets **exactly one commit** per item, and delete the branch.
+- Codex reviews every PR thoroughly (GitHub app). Codex's green light is required before any merge:
+  1. Wait for Codex's review of the latest commit. If it hasn't reviewed the latest commit, comment `@codex review` to request one.
+  2. Make every change Codex requests, on the branch. Only when a finding is genuinely wrong, reply on its comment with the reason instead. Resolve each conversation once it's handled.
+  3. After pushing fixes, comment `@codex review` again and repeat from step 1.
+  4. Codex's green light means its latest review, on the PR's head commit, reports no issues and every conversation is resolved.
+- Also review the PR carefully yourself as a separate pass: read the full diff against this file's standards, check the TODO item is actually met, and look for bugs, dead code, missing tests, and scope creep. Fix anything found on the branch (which restarts the Codex loop).
+- Once Codex has given its green light and your own review holds up, comment `sgtm` on the PR, then squash-merge it so `main` gets **exactly one commit** per item, and delete the branch.
 - Items marked **Stop and ask the repo owner to review** wait for the owner to approve the PR instead of an `sgtm` merge.
 - Commit messages and PR titles use Conventional Commits with the TODO number as scope, for example `feat(7.1.2): generate porch light batches`. Use an imperative subject of 72 characters or fewer, and a short body explaining why when it isn't obvious.
 - **Do not add any `Co-Authored-By` trailer, "Generated with" line, or any other AI attribution to commits, PR descriptions, or files.** All commits are authored by the repo owner only. This overrides any default attribution behavior.
