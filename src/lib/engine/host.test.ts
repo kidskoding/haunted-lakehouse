@@ -151,16 +151,55 @@ describe("createEngineHost", () => {
     expect(posted).toHaveLength(before);
   });
 
-  it("reports a failed load as status and answers every request as unavailable", async () => {
-    const { send, statuses } = harness(() => Promise.reject(new Error("no wasm for you")));
+  it("shares one failed load between the requests that arrived during it", async () => {
+    let loads = 0;
+    const { send, statuses } = harness(() => {
+      loads += 1;
+      return Promise.reject(new Error("no wasm for you"));
+    });
     const [first, second] = await Promise.all([
       send({ kind: "init" }),
       send({ kind: "query", sql: "SELECT 1" }),
     ]);
+    expect(loads).toBe(1);
     for (const response of [first, second]) {
       expect(response).toMatchObject({ ok: false, error: { code: "unavailable" } });
       if (!response.ok) expect(response.error.message).toContain("no wasm for you");
     }
     expect(statuses()).toEqual([{ phase: "error", message: "no wasm for you" }]);
   });
+
+  it("answers a loader that throws synchronously as unavailable", async () => {
+    const { send, statuses } = harness(() => {
+      throw new Error("no worker support");
+    });
+    expect(await send({ kind: "init" })).toMatchObject({
+      ok: false,
+      error: { code: "unavailable" },
+    });
+    expect(statuses()).toEqual([{ phase: "error", message: "no worker support" }]);
+  });
+
+  it("retries the load on the next request after a failed one", async () => {
+    let loads = 0;
+    const { send, statuses } = harness((onStatus) => {
+      loads += 1;
+      return loads === 1 ? Promise.reject(new Error("network blip")) : loadFresh(onStatus);
+    });
+    const failed = await send({ kind: "init" });
+    expect(failed).toMatchObject({ ok: false, error: { code: "unavailable" } });
+    const [init, query] = await Promise.all([
+      send({ kind: "init" }),
+      send({ kind: "query", sql: "SELECT 7 AS n" }),
+    ]);
+    expect(loads).toBe(2);
+    expect(valueOf(init)).toEqual({ version: "v1.4.3" });
+    expect(valueOf(query)).toMatchObject({ rows: [[7]] });
+    expect(statuses()).toEqual([
+      { phase: "error", message: "network blip" },
+      { phase: "downloading", bytesLoaded: 0, bytesTotal: 10 },
+      { phase: "instantiating" },
+      { phase: "ready", version: "v1.4.3" },
+    ]);
+  }, 60_000);
 });

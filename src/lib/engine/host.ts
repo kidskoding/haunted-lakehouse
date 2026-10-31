@@ -81,7 +81,8 @@ async function run(
 /**
  * The worker side of the protocol: answers each message with exactly one result, never a
  * throw. The first request of any kind starts loading the database, and requests run one at
- * a time in arrival order, so a multi-step read never interleaves with a reset.
+ * a time in arrival order, so a multi-step read never interleaves with a reset. A failed load
+ * is not kept: requests that arrived during it share its failure, and the next one retries.
  */
 export function createEngineHost(
   load: LoadDatabase,
@@ -90,10 +91,19 @@ export function createEngineHost(
   let database: Promise<Database> | null = null;
   let queue: Promise<void> = Promise.resolve();
 
+  // Called when a request arrives rather than when its turn in the queue comes, so a request
+  // that arrived during a load waits on that load, even if it fails, instead of starting another.
   const ready = (): Promise<Database> => {
-    database ??= load((status) => {
-      post({ type: "status", status });
-    }).then(
+    if (database !== null) return database;
+    // Wrapped so a loader that throws synchronously still fails as a rejected load.
+    const loading = new Promise<Database>((resolve) => {
+      resolve(
+        load((status) => {
+          post({ type: "status", status });
+        }),
+      );
+    });
+    const attempt = loading.then(
       (db) => {
         post({ type: "status", status: { phase: "ready", version: db.version } });
         return db;
@@ -104,12 +114,17 @@ export function createEngineHost(
         throw new UnavailableError(`The engine failed to load: ${message}`);
       },
     );
-    return database;
+    database = attempt;
+    // A failure may be transient, so forget it and let the next request load again.
+    attempt.catch(() => {
+      if (database === attempt) database = null;
+    });
+    return attempt;
   };
 
-  const answer = async (request: EngineRequest): Promise<void> => {
+  const answer = async (request: EngineRequest, db: Promise<Database>): Promise<void> => {
     try {
-      const value = await run(await ready(), request);
+      const value = await run(await db, request);
       post({ type: "result", id: request.id, ok: true, value });
     } catch (error) {
       const code = error instanceof UnavailableError ? "unavailable" : "sql";
@@ -136,6 +151,7 @@ export function createEngineHost(
       }
       return;
     }
-    queue = queue.then(() => answer(request));
+    const db = ready();
+    queue = queue.then(() => answer(request, db));
   };
 }
