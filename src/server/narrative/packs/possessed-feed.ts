@@ -1,6 +1,9 @@
 import "server-only";
-import { mayor, wren } from "../lines";
+import { mayor, narrator, wren } from "../lines";
 import type { NarrativePack } from "../types";
+
+const TALLY =
+  "Moribund Party Supply bills by the piece. At {checkpoints} I want, per item, the pieces we've received and the drops we can't vouch for.";
 
 export const possessedFeed: NarrativePack = {
   puzzleId: "possessed-feed",
@@ -8,22 +11,34 @@ export const possessedFeed: NarrativePack = {
   status: "launch",
   owner: "mayor",
   bindings: {
+    drop_count: "count",
+    invoiced_pieces: "count",
+    paid_pieces: "count",
     recovered_rows: "count",
     unknown_rows: "count",
+    swapped_rows: "count",
+    example_unit: "name",
+    example_word: "name",
+    example_dozen: "name",
+    example_vague: "name",
   },
   intro: [
     mayor(
-      "The Moribund contract pays per item delivered. Their feed was fine at six. Now the columns have new names, some numbers are words, and one quantity is listed as 'lots'. I don't pay for 'lots'. I also don't pretend it didn't come: there's a forty-foot inflatable bat on the Town Green. Every delivery stays on the books. If you can tell how many, tell me. If you truly can't, say so.",
+      `${TALLY} One quantity in their feed reads '{*example_vague}'. I don't pay for '{*example_vague}'. Every drop stays on the books.`,
+      `${TALLY} One quantity in their feed is a shrug. I don't pay for shrugs. Every drop stays on the books.`,
+    ),
+    narrator(
+      "Hobb, their driver, sent a note: *New handhelds. The lads type amounts how they like: digits, digits with pcs or units ('{example_unit}'), spelled out ('{example_word}'), dozens ('{example_dozen}'). The office reads them all. If a lad couldn't count it, he wrote what he liked. We true those up Monday.*",
     ),
     wren(
-      "Things written in a hurry still mean something. Read them the way they were meant, and don't invent what they didn't say.",
+      "The van's uplink keeps {retention|words:upload,uploads}. Don't ask a feed for a column it hasn't named yet. Take the whole row, then ask.",
     ),
   ],
   cleared: [
     mayor(
-      "{recovered_rows|plural:delivery,deliveries} recovered, {unknown_rows} genuinely unknown, and the bat is accounted for. Moribund says they changed nothing. I'm choosing to believe them, out of fatigue.",
+      "I read Hobb the tally down the phone. He invoiced {invoiced_pieces|number} pieces. I'm paying for {paid_pieces|number} and disputing {unknown_rows|plural:drop,drops}. He swears nobody touched the handhelds tonight. I'm choosing to believe him, out of fatigue.",
     ),
-    wren("You kept the rows you couldn't read. Not everyone does."),
+    wren("Feeds don't change their own minds. Somebody changes them."),
   ],
   hook: [
     mayor(
@@ -32,19 +47,19 @@ export const possessedFeed: NarrativePack = {
   ],
   autopsy: {
     title: "Schema drift and rescued values",
-    town: "Partway through the night, Moribund's feed renamed its columns and started writing some quantities as words. Most of the strange values still meant a number. Mapped back to the old shape, {recovered_rows|plural:delivery,deliveries} could be read exactly. {unknown_rows|plural:delivery,deliveries} said something like 'lots', which no rule turns into a count, so they stayed on the books as unknown.",
+    town: "Moribund's feed changed shape three times: `qty` became `quantity`, the quantity turned to text, then item and quantity swapped places on {swapped_rows|plural:row,rows}, under the old header. Of {drop_count} drops, {recovered_rows} failed a strict integer cast yet named an exact count. Nothing turns '{example_vague}' into a number, so {unknown_rows|plural:drop,drops} of that kind stayed on the tally as disputed.",
     tempting:
-      "Cast strictly and filter out whatever fails. It protects a typed table, and it's what many loaders do by default. It breaks when the contract pays per delivery: every dropped row is a delivery that happened and now doesn't exist. Turning every failure into a null is gentler, and still throws away the deliveries that could have been read.",
-    idea: "**Schema drift** is a source changing shape without notice: columns renamed, added, or retyped. A robust load maps each known variant onto one target schema, parses with a cast that returns null instead of failing (`try_cast` in many engines), and keeps the raw text of anything that didn't parse in a **rescued data** column beside the typed value. Null then means 'unknown', and the raw text says why.",
+      "Follow the rename, `try_cast` to an integer, and drop or dispute the nulls. It never errors, and most quantities are digits, so the tally looks right, if a little low. It breaks at the first check after the text arrives: '{example_word}' and '{example_dozen}' were exact counts. A quantity of `glow stick` isn't garbage either: its count is in `item`.",
+    idea: "**Schema drift** is a source changing shape without notice: renamed, retyped, added, or reordered columns. **Schema-on-read** lands each record as it came, then maps each known variant onto one target, by name, never by position. **Type coercion** follows a written rule: a value is recoverable when the rule yields exactly one number. Anything else becomes null, with its raw text kept in a **rescued data** column to say why.",
     production:
-      "Vendor files, partner APIs, and event payloads all drift: a column renamed in a release, a number that arrives as a string, a field nobody announced. A frequent failure is a strict pipeline that quietly filters the rows it can't parse, so totals shrink and nothing alerts. Teams prevent it with data contracts at the boundary, alerts on new or missing columns, a rescued-data column or quarantine table instead of a filter, and row counts reconciled between the raw and clean layers.",
+      "Vendor files and partner APIs drift. Loaders offer a choice: fail, add the new columns, or keep the target fixed and rescue stray values into a side column (Databricks Auto Loader's schema evolution modes, for one). The costly failure is a strict load that quietly filters what it can't parse: totals shrink and nothing alerts. Teams set data contracts at the boundary, alert on new or missing columns, quarantine instead of drop, and reconcile row counts from raw to clean.",
     search: [
       "schema evolution",
-      "try_cast",
+      "schema-on-read",
       "rescued data column",
       "dead letter queue",
       "data contracts",
     ],
   },
-  epitaphs: ["Couldn't read it, so threw it away.", "Paid for 'lots'."],
+  epitaphs: ["Couldn't read it, so threw it away.", "Called 'a dozen' a typo."],
 };
