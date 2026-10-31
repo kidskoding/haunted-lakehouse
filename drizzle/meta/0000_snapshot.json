@@ -1,5 +1,5 @@
 {
-  "id": "6b289dd0-5a6e-4228-b401-973aecbd67e2",
+  "id": "448bbcb9-eaba-47e1-b9db-26d02544ed5e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -174,15 +174,17 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "fragments_run_id_runs_id_fk": {
-          "name": "fragments_run_id_runs_id_fk",
+        "fragments_run_fk": {
+          "name": "fragments_run_fk",
           "tableFrom": "fragments",
           "tableTo": "runs",
           "columnsFrom": [
-            "run_id"
+            "run_id",
+            "player_id"
           ],
           "columnsTo": [
-            "id"
+            "id",
+            "player_id"
           ],
           "onDelete": "set null",
           "onUpdate": "no action"
@@ -431,6 +433,14 @@
           "columns": [
             "player_id",
             "daily_date"
+          ]
+        },
+        "runs_id_player_key": {
+          "name": "runs_id_player_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "player_id"
           ]
         },
         "runs_id_player_daily_date_key": {

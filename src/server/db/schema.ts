@@ -57,7 +57,9 @@ export const runs = pgTable(
   (t) => [
     index("runs_player_id_idx").on(t.playerId),
     unique("runs_player_daily_date_key").on(t.playerId, t.dailyDate),
-    // Target of daily_results' composite foreign key.
+    // Targets of the composite foreign keys that tie fragments and daily results to the
+    // player's own runs.
+    unique("runs_id_player_key").on(t.id, t.playerId),
     unique("runs_id_player_daily_date_key").on(t.id, t.playerId, t.dailyDate),
   ],
 );
@@ -101,11 +103,21 @@ export const fragments = pgTable(
       .notNull()
       .references(() => players.id, { onDelete: "cascade" }),
     fragmentId: text("fragment_id").notNull(),
-    // Kept when the run is gone: the fragment persists across runs by design.
-    runId: uuid("run_id").references(() => runs.id, { onDelete: "set null" }),
+    // The run that found the fragment. Optional: fragments persist across runs by design.
+    runId: uuid("run_id"),
     createdAt: createdAt(),
   },
-  (t) => [primaryKey({ columns: [t.playerId, t.fragmentId] })],
+  (t) => [
+    primaryKey({ columns: [t.playerId, t.fragmentId] }),
+    // The finding run must be this player's own. Deleting the run must clear only run_id,
+    // so the migration narrows this to Postgres 15's `ON DELETE SET NULL ("run_id")`,
+    // which Drizzle cannot express; a plain SET NULL would also null player_id and fail.
+    foreignKey({
+      name: "fragments_run_fk",
+      columns: [t.runId, t.playerId],
+      foreignColumns: [runs.id, runs.playerId],
+    }).onDelete("set null"),
+  ],
 );
 
 export const dailyResults = pgTable(

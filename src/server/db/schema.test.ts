@@ -120,6 +120,18 @@ describe("database schema", () => {
     expect(await db.select().from(runEvents)).toHaveLength(0);
   });
 
+  it("records a fragment's run only if it is the same player's run", async () => {
+    const player = await newPlayer(db);
+    const other = await newPlayer(db);
+    const othersRun = await newRun(db, other.id);
+    await expect(
+      db
+        .insert(fragments)
+        .values({ playerId: player.id, fragmentId: "page-1", runId: othersRun.id }),
+    ).rejects.toThrow();
+    await db.insert(fragments).values({ playerId: player.id, fragmentId: "page-1", runId: null });
+  });
+
   it("rejects a second player claiming the same GitHub account", async () => {
     await db.insert(players).values({ githubId: 68204671, githubLogin: "someone" });
     await expect(
