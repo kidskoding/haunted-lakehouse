@@ -48,17 +48,17 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **2.2.5 Costume votes.** Ballots with edits and revisions, cast only by kids present that night.
 - [x] **2.2.6 Pumpkin sensors.** Candle-flame readings with realistic flicker and burn-out.
 - [x] **2.2.7 Porch lights and candy bowls.** Porch-light sensors that report state changes (some go silent), and candy-bowl scales that report weight, with per-candy-type weights and refills.
-- [ ] **2.2.8 Cross-feed consistency.** A test suite proving all feeds agree across 20 seeds.
+- [x] **2.2.8 Cross-feed consistency.** A test suite proving all feeds agree across 20 seeds.
 
 ### 2.3 Batches
-- [ ] **2.3.1 Batch scheduler.** Splits a feed into arrival-ordered batches with seeded injections: late arrivals, duplicates, out-of-order delivery, and schema drift. Each injection is declarative per puzzle.
+- [x] **2.3.1 Batch scheduler.** Splits a feed into arrival-ordered batches with seeded injections: late arrivals, duplicates, out-of-order delivery, and schema drift. Each injection is declarative per puzzle.
 - [ ] **2.3.2 Visible vs hidden.** Marks batches as visible (preview) or hidden (run-the-night only), and a route handler serves hidden batches only for an active run-the-night attempt.
 
 ### 2.4 Runs and meta-progression
-- [ ] **2.4.1 Run state machine.** Slots, pool draws (respecting prerequisites), candles, boss rules, curses, relic offers and choices, and death. A pure reducer with exhaustive tests.
+- [x] **2.4.1 Run state machine.** Slots, pool draws (respecting prerequisites), candles, boss rules, curses, relic offers and choices, and death. A pure reducer with exhaustive tests.
 - [ ] **2.4.2 Checkpoint validation API.** The client submits gold hashes per checkpoint; the server compares, records the attempt, and updates candles. Returns only the first failing checkpoint.
 - [ ] **2.4.3 Relics v1.** Wren's Lantern, Raven's Feather, Hourglass, Black Cat, and Spare Candle, implemented as engine effects with tests.
-- [ ] **2.4.4 Curses v1.** Possession, Fog, Short Memory, and Darkness, implemented as engine effects with tests.
+- [x] **2.4.4 Curses v1.** Possession, Fog, Short Memory, and Darkness, implemented as engine effects with tests.
 - [ ] **2.4.5 Unlocks.** Act gating, characters, endings, and ledger fragments, persisted per player.
 
 ---
@@ -66,7 +66,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 ## 3. Pipeline runtime (client)
 
 - [x] **3.1 Engine worker.** DuckDB-WASM in a Web Worker behind a typed message API, loaded in the background on page load, with progress reporting.
-- [ ] **3.2 Runtime contract doc.** `docs/pipeline-runtime.md` precisely specifies `view`, `table`, and `incremental` (`{{ this }}`, `{{ new_batch }}`, `unique_key`), bronze retention, checkpoints, and idempotency replays.
+- [x] **3.2 Runtime contract doc.** `docs/pipeline-runtime.md` precisely specifies `view`, `table`, and `incremental` (`{{ this }}`, `{{ new_batch }}`, `unique_key`), bronze retention, checkpoints, and idempotency replays.
 - [ ] **3.3 Model compiler.** Parses model files, resolves references into a DAG, detects cycles with clear errors, and renders templated SQL.
 - [ ] **3.4 Night executor.** Replays batches in order, applies retention, runs models in DAG order per batch, and hashes gold at checkpoints. Supports preview mode and run-the-night mode.
 - [ ] **3.5 Failure reporting.** Identifies the first failing checkpoint and the batch that preceded it, and reveals that batch's data to the player.
@@ -76,7 +76,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 
 ## 4. Art direction and design system
 
-- [ ] **4.1 Art direction doc.** `docs/art-direction.md`: mood, palette (with contrast-checked tokens), typography (chosen typefaces and scale), iconography, motion principles, sound palette, and a wireframe of every screen. **Stop and ask the repo owner to review before 4.2.**
+- [x] **4.1 Art direction doc.** `docs/art-direction.md`: mood, palette (with contrast-checked tokens), typography (chosen typefaces and scale), iconography, motion principles, sound palette, and a wireframe of every screen. **Stop and ask the repo owner to review before 4.2.**
 - [ ] **4.2 Design tokens.** Colors, type scale, spacing, radii, shadows, and motion durations and easings as Tailwind theme tokens.
 - [ ] **4.3 Core components.** Button, panel, tabs, tooltip, dialog, toast, and kbd hint. Accessible, keyboard-complete, every state designed. A `/dev/components` gallery page covers them (excluded from production).
 - [ ] **4.4 Scene shell.** The chosen scene library mounted behind a React component, with a reduced-motion fallback and a lazy-loaded bundle.
@@ -120,7 +120,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 
 ## 6. Story framework
 
-- [ ] **6.1 Story bible.** `docs/story.md` covers cast voices with sample lines, the full mystery, every ending, the fragment locations, and Wren's dialogue progression. **Stop and ask the repo owner to review.**
+- [x] **6.1 Story bible.** `docs/story.md` covers cast voices with sample lines, the full mystery, every ending, the fragment locations, and Wren's dialogue progression. **Stop and ask the repo owner to review.**
 - [ ] **6.2 Narrative engine.** Story intros, beats, autopsies, and character reactions are templated from the run's actual data, with a test that every puzzle renders with no unfilled placeholders.
 
 ---
@@ -136,7 +136,7 @@ Every puzzle follows the same five steps:
 
 ### 7.1 Porch Lights (6:00pm, ★, tutorial)
 *The Mayor wants to know how many houses are welcoming trick-or-treaters at each checkpoint. Porch-light sensors report changes, not states, and a few go silent. The tutorial teaches the editor, models, preview, and running the night. Trap: counting lights that were ever switched on.*
-- [ ] **7.1.1** Design doc
+- [x] **7.1.1** Design doc
 - [ ] **7.1.2** Generator
 - [ ] **7.1.3** Reference and trap pipelines with tests
 - [ ] **7.1.4** Narrative, including tutorial callouts

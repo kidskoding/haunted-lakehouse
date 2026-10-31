@@ -1,5 +1,5 @@
 import "server-only";
-import type { Puzzle, PuzzleData } from "./puzzle";
+import type { GenerateContext, Puzzle, PuzzleData } from "./puzzle";
 import { rngFor } from "./random";
 import { SLOTS, type Slot } from "./slots";
 
@@ -53,10 +53,15 @@ export function createPuzzleRegistry(puzzles: readonly Puzzle[]): PuzzleRegistry
   };
 }
 
-/** Generates a puzzle's data for a run, with every stream keyed by (puzzle id, run seed, slot). */
-export function generatePuzzle(puzzle: Puzzle, runSeed: string): PuzzleData {
-  return puzzle.generate({
+/** The context a puzzle generates in for a run, with every stream keyed by (puzzle id, run seed, slot). */
+export function generateContext(puzzle: Puzzle, runSeed: string): GenerateContext {
+  return {
     runSeed,
     rng: (...labels) => rngFor([puzzle.id, runSeed, puzzle.slot, ...labels]),
-  });
+  };
+}
+
+/** Generates a puzzle's data for a run, with every stream keyed by (puzzle id, run seed, slot). */
+export function generatePuzzle(puzzle: Puzzle, runSeed: string): PuzzleData {
+  return puzzle.generate(generateContext(puzzle, runSeed));
 }

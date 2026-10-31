@@ -6,6 +6,7 @@ import { byText, deviceIds } from "./device-ids";
 import type { DoorScan } from "./door-scans";
 import type { House } from "./houses";
 import { clockAt, NIGHT_SECONDS, type UtcOffset } from "./night-clock";
+import type { PorchLight } from "./porch-lights";
 import { townRng, weighted } from "./town";
 
 /** The pieces one kid took at one door, tied to the scan that recorded the visit. */
@@ -127,6 +128,12 @@ interface Change {
   readonly pieces: number;
 }
 
+/** When a porch first lights up and when it goes dark for the night. */
+interface Porch {
+  readonly on: number;
+  readonly off: number;
+}
+
 interface Simulation {
   readonly bowl: CandyBowl;
   readonly handouts: CandyHandout[];
@@ -138,17 +145,21 @@ function simulate(
   house: House,
   deviceId: string,
   candy: Candy,
+  porch: Porch,
   visits: readonly DoorScan[],
   pieces: readonly number[],
 ): Simulation {
   const first = visits[0]?.nightSecond;
   const last = visits.at(-1)?.nightSecond;
-  const setOutAt =
-    first === undefined
-      ? rng.int(0, 30 * MINUTE)
-      : Math.max(0, first - rng.int(MINUTE, 15 * MINUTE));
+  // The bowl goes out once the porch is lit and comes in by the time the light goes off.
+  // The porch lights up before the first knock and stays lit past the last, so both fit.
+  const setOutAt = Math.max(
+    porch.on,
+    first === undefined ? rng.int(0, 30 * MINUTE) : first - rng.int(MINUTE, 15 * MINUTE),
+  );
   const takenInAt = Math.min(
     NIGHT_SECONDS - 1,
+    porch.off,
     last === undefined
       ? setOutAt + rng.int(HOUR, 3 * HOUR)
       : last + rng.int(5 * MINUTE, 45 * MINUTE),
@@ -245,14 +256,16 @@ function weightAt(bowl: CandyBowl, changes: readonly Change[], second: number, g
 }
 
 /**
- * Every candy-giving house's bowl: what each kid took, when the household refilled, and what
- * the scale reported, sorted by true time then device. Clean and on time: the batch
+ * Every candy-giving house's bowl, out on the porch only between lighting up and switching
+ * off for the night: what each kid took, when the household refilled, and what the scale
+ * reported, sorted by true time then device. Clean and on time: the batch
  * scheduler adds resends and delays.
  */
 export function generateCandyBowls(
   runSeed: string,
   houses: readonly House[],
   scans: readonly DoorScan[],
+  lights: readonly PorchLight[],
 ): CandyBowlFeed {
   const giving = houses.filter((h) => h.givesCandy);
   const ids = deviceIds(
@@ -260,6 +273,7 @@ export function generateCandyBowls(
     "BWL",
     giving.map((h) => h.houseId),
   );
+  const porches = new Map(lights.map((l) => [l.houseId, l.lit]));
   const visitsAt = Map.groupBy(scans, (s) => s.houseId);
   const marked = markedHouses(runSeed, visitsAt);
   const candies = CANDY_CATALOG.map((c) => [c, c.popularity] as const);
@@ -270,12 +284,17 @@ export function generateCandyBowls(
   for (const house of giving) {
     const deviceId = ids.get(house.houseId);
     if (!deviceId) throw new RangeError(`House ${house.houseId} has no bowl scale.`);
+    const lit = porches.get(house.houseId) ?? [];
+    const [on, off] = [lit[0]?.from, lit.at(-1)?.to];
+    if (on === undefined || off === undefined) {
+      throw new RangeError(`House ${house.houseId} gives candy but never lights its porch.`);
+    }
     // A stream per house, so one bowl's draws never shift another's.
     const rng = townRng(runSeed, `candy-bowls/${house.houseId}`);
     const candy = weighted(rng, candies);
     const visits = visitsAt.get(house.houseId) ?? [];
     const pieces = piecesPerVisit(rng, visits.length, marked.has(house.houseId));
-    const run = simulate(rng, house, deviceId, candy, visits, pieces);
+    const run = simulate(rng, house, deviceId, candy, { on, off }, visits, pieces);
     bowls.push(run.bowl);
     handouts.push(...run.handouts);
     readingTimes(rng, run.bowl, run.changes).forEach((nightSecond, i) => {
