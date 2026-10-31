@@ -6,6 +6,15 @@ export type CharacterId = "intern" | "night_clerk" | "purist" | "old_wren";
 export type RelicId =
   "wrens-lantern" | "ravens-feather" | "hourglass" | "black-cat" | "spare-candle";
 
+/**
+ * One relic use and what it was pointed at. The target is fixed at the moment of use, so the
+ * reveal can be rebuilt from the event alone however far the hour has moved on since.
+ */
+export type RelicUse =
+  | { readonly relic: "wrens-lantern"; readonly feed: string }
+  | { readonly relic: "ravens-feather"; readonly batch: number }
+  | { readonly relic: "hourglass"; readonly table: string; readonly checkpointId: string };
+
 export type CurseId = "possession" | "fog" | "short-memory" | "darkness";
 
 /** The ending a boss clear reveals, one per act. */
@@ -83,7 +92,7 @@ export type RunEvent =
   | { readonly kind: "relic_offered"; readonly relics: readonly RelicId[] }
   | { readonly kind: "relic_chosen"; readonly relic: RelicId }
   | { readonly kind: "relic_declined" }
-  | { readonly kind: "relic_used"; readonly relic: RelicId }
+  | ({ readonly kind: "relic_used" } & RelicUse)
   | { readonly kind: "run_abandoned" };
 
 export type RunEventKind = RunEvent["kind"];

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createPuzzleRegistry } from "../registry";
 import type { Slot } from "../slots";
 import { fakePuzzle } from "../testing/fake-puzzle";
-import { machine, open, reach, start, started } from "../testing/night-run";
+import { machine, open, reach, start, started, used } from "../testing/night-run";
 import { RunEventError, type RunErrorCode } from "./errors";
 import { createRunMachine } from "./reducer";
 import type { CharacterId, CurseId, RunConfig, RunEvent, RunState } from "./types";
@@ -387,39 +387,22 @@ describe("relic choices", () => {
 
 describe("relic_used", () => {
   it("spends a relic in hand during the hour", () => {
-    const state = machine.reduce(inHour(2, ["wrens-lantern", "hourglass"]), {
-      kind: "relic_used",
-      relic: "hourglass",
-    });
+    const state = machine.reduce(inHour(2, ["wrens-lantern", "hourglass"]), used("hourglass"));
     expect(state.relics).toEqual(["wrens-lantern"]);
     expect(state.phase).toBe("in-hour");
   });
 
-  it("is refused for a relic not in hand, the Black Cat, in the dark, or between hours", () => {
-    rejects(
-      inHour(2, ["hourglass"]),
-      { kind: "relic_used", relic: "ravens-feather" },
-      "relic-not-held",
-    );
-    rejects(
-      inHour(2, ["black-cat"]),
-      { kind: "relic_used", relic: "black-cat" },
-      "relic-needs-skip",
-    );
-    rejects(
-      inHour(2, ["hourglass"], "darkness"),
-      { kind: "relic_used", relic: "hourglass" },
-      "darkness",
-    );
-    rejects(start(), { kind: "relic_used", relic: "wrens-lantern" }, "wrong-phase");
+  it("is refused for a relic not in hand, the Black Cat, a Spare Candle, in the dark, or between hours", () => {
+    rejects(inHour(2, ["hourglass"]), used("ravens-feather"), "relic-not-held");
+    rejects(inHour(2, ["black-cat"]), used("black-cat"), "relic-needs-skip");
+    rejects(inHour(2, []), used("spare-candle"), "relic-not-held");
+    rejects(inHour(2, ["hourglass"], "darkness"), used("hourglass"), "darkness");
+    rejects(start(), used("wrens-lantern"), "wrong-phase");
   });
 
   it("works under every other curse", () => {
     for (const curse of ["possession", "fog", "short-memory"] as const) {
-      expect(
-        machine.reduce(inHour(2, ["hourglass"], curse), { kind: "relic_used", relic: "hourglass" })
-          .relics,
-      ).toEqual([]);
+      expect(machine.reduce(inHour(2, ["hourglass"], curse), used("hourglass")).relics).toEqual([]);
     }
   });
 });
