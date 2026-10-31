@@ -226,6 +226,7 @@ describe("tombstones", () => {
       handle: "A New Hire",
       characterTitle: "The Intern",
       epitaph: epitaph(death),
+      hour: "Porch Lights",
       wentOut: "went out at 7:15pm, Halloween 2026",
       seed: "raven-pumpkin-13",
       hollowYear: false,

@@ -106,3 +106,34 @@
     animation: none;
   }
 }
+
+/*
+ * Death (art direction §6.4): the run fades to `void` over a ceremony, then the stone rises
+ * once the dark has settled. Calm motion keeps the fade, whose token is already a 220ms
+ * crossfade, and turns the rise into a crossfade with no travel and no wait (§7.3).
+ */
+@keyframes death-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes tomb-rise {
+  from {
+    opacity: 0;
+    translate: 0 2rem;
+  }
+}
+
+@utility death-fade {
+  animation: death-fade var(--transition-duration-ceremony) var(--ease-inout) both;
+}
+
+@utility tomb-rise {
+  animation: tomb-rise var(--transition-duration-ceremony) var(--ease-out)
+    var(--transition-duration-ceremony) both;
+
+  @variant motion-calm {
+    animation: death-fade var(--transition-duration-base) var(--ease-out) both;
+  }
+}
