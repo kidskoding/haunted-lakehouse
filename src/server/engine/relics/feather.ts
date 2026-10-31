@@ -1,4 +1,5 @@
 import "server-only";
+import { assertVisibleBatchCount, isBatchVisible } from "../batches/visibility";
 import type { Batch, PuzzleData } from "../puzzle";
 import { RelicError } from "./errors";
 
@@ -19,14 +20,9 @@ export function peekBatch(data: PuzzleData, batch: number): Batch {
  * `visibleBatchCount` batches. Peeking at one they can already query would waste the relic.
  */
 export function expectHidden(data: PuzzleData, batch: number, visibleBatchCount: number): void {
-  const { length } = data.batches;
-  if (!Number.isInteger(visibleBatchCount) || visibleBatchCount < 0 || visibleBatchCount > length) {
-    throw new RangeError(
-      `Between 0 and ${String(length)} batches can be visible, not ${String(visibleBatchCount)}.`,
-    );
-  }
+  assertVisibleBatchCount(data, visibleBatchCount);
   peekBatch(data, batch);
-  if (batch < visibleBatchCount) {
+  if (isBatchVisible(batch, visibleBatchCount)) {
     throw new RelicError("batch-not-hidden", `Batch ${String(batch)} is already in bronze.`);
   }
 }

@@ -21,6 +21,9 @@ export function createPuzzleRegistry(puzzles: readonly Puzzle[]): PuzzleRegistry
     if (!Number.isInteger(puzzle.retention) || puzzle.retention < 1) {
       throw new Error(`Puzzle ${puzzle.id} must retain at least one batch.`);
     }
+    if (!Number.isInteger(puzzle.visibleBatchCount) || puzzle.visibleBatchCount < 1) {
+      throw new Error(`Puzzle ${puzzle.id} must show at least one batch before the night.`);
+    }
     byId.set(puzzle.id, puzzle);
   }
 

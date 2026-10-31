@@ -66,6 +66,12 @@ export interface Puzzle {
   readonly prerequisites: readonly string[];
   /** How many of the most recent batches bronze keeps. */
   readonly retention: number;
+  /**
+   * How many batches, from the first, the player may query before running the night. Later
+   * batches stay hidden until a night attempt (or The Raven's Feather). Must leave at least
+   * one batch hidden so the night can surprise them.
+   */
+  readonly visibleBatchCount: number;
   /** The gold tables the player must build, which checkpoints compare. */
   readonly goldTables: readonly string[];
   /** Where the Curse of Possession may strike. Without any, the curse passes this hour by. */
@@ -91,6 +97,17 @@ export function validatePuzzleData(puzzle: Puzzle, data: PuzzleData): string[] {
     if (batch.index !== i)
       problems.push(`Batch at position ${String(i)} has index ${String(batch.index)}.`);
   });
+
+  const { visibleBatchCount } = puzzle;
+  if (
+    !Number.isInteger(visibleBatchCount) ||
+    visibleBatchCount < 1 ||
+    visibleBatchCount >= batches.length
+  ) {
+    problems.push(
+      `Between 1 and ${String(batches.length - 1)} batches must be visible before the night, not ${String(visibleBatchCount)}.`,
+    );
+  }
 
   if (checkpoints.length === 0) problems.push("There are no checkpoints.");
   const seen = new Set<string>();

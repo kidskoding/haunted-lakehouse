@@ -37,6 +37,7 @@ const bowlHour: Puzzle = {
   title: "The Bowl Hour",
   prerequisites: [],
   retention: 2,
+  visibleBatchCount: 10,
   goldTables: ["gold.bowl_weights"],
   possessable: [
     { feed: "candy_bowls", column: "weight_g", aliases: ["weight_grams", "wt"], unit: "g" },

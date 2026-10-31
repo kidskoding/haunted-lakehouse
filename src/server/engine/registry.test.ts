@@ -24,6 +24,16 @@ describe("createPuzzleRegistry", () => {
     ["duplicate ids", [fakePuzzle(), fakePuzzle()], /share the id fake/],
     ["no retention", [fakePuzzle({ retention: 0 })], /at least one batch/],
     ["fractional retention", [fakePuzzle({ retention: 1.5 })], /at least one batch/],
+    [
+      "no visible batches",
+      [fakePuzzle({ visibleBatchCount: 0 })],
+      /at least one batch before the night/,
+    ],
+    [
+      "fractional visible batches",
+      [fakePuzzle({ visibleBatchCount: 1.5 })],
+      /at least one batch before the night/,
+    ],
     ["an unknown prerequisite", [fakePuzzle({ prerequisites: ["ghost"] })], /not registered/],
     [
       "a prerequisite in the same slot",
