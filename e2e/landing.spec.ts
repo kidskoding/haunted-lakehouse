@@ -28,7 +28,10 @@ test("the server sends the still scene and a working link before any script runs
   await page.goto("/");
 
   await expect(page.locator("[data-scene-state] svg")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Enter the night" })).toHaveAttribute("href", "/run");
+  await expect(page.getByRole("link", { name: "Enter the night" })).toHaveAttribute(
+    "href",
+    "/run/new",
+  );
   await context.close();
 });
 
@@ -63,7 +66,7 @@ test("the scene arriving does not move anything on the page", async ({ page }) =
   expect(await boxes()).toEqual(before);
 });
 
-test("Enter the night is the first stop for the keyboard and leads to the run", async ({
+test("Enter the night is the first stop for the keyboard and leads to character select", async ({
   page,
 }) => {
   const errors = collectConsoleErrors(page);
@@ -74,12 +77,8 @@ test("Enter the night is the first stop for the keyboard and leads to the run", 
   await expect(enter).toBeFocused();
   await page.keyboard.press("Enter");
 
-  await expect(page).toHaveURL("/run");
-  await expect(
-    page.getByRole("heading", { level: 1, name: "The night isn’t ready yet." }),
-  ).toBeVisible();
-  await page.getByRole("link", { name: "Back to Hollow Creek" }).click();
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL("/run/new");
+  await expect(page.getByRole("heading", { level: 1, name: "Who takes the night?" })).toBeVisible();
 
   expect(errors).toEqual([]);
 });

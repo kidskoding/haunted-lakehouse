@@ -5,7 +5,7 @@ const ROOMS = [
   { name: "The Codex", path: "/crypt/codex", title: "The Codex is still being bound." },
   { name: "The Graveyard", path: "/crypt/graveyard", title: "The Graveyard gate is chained." },
   { name: "The Ledger", path: "/crypt/ledger", title: "The Ledger stays shut tonight." },
-  { name: "Characters", path: "/crypt/characters", title: "Nobody is waiting at the door yet." },
+  { name: "Characters", path: "/crypt/characters" },
   { name: "The Daily Haunt", path: "/crypt/daily", title: "Today’s haunt isn’t posted." },
 ] as const;
 
@@ -25,14 +25,18 @@ test("the Crypt lists its five rooms with a new player's counts", async ({ page 
   // No session yet: a new player holds the Intern and no pages.
   await expect(rooms(page).filter({ hasText: "Characters" })).toContainText("1 of 4 unlocked");
   await expect(rooms(page).filter({ hasText: "The Ledger" })).toContainText("0 of 7 pages found");
-  await expect(page.getByRole("link", { name: "Enter the night" })).toHaveAttribute("href", "/run");
+  await expect(page.getByRole("link", { name: "Enter the night" })).toHaveAttribute(
+    "href",
+    "/run/new",
+  );
 
   expect(errors).toEqual([]);
 });
 
-test("every room answers with its own page and a way back", async ({ page }) => {
+test("every closed room answers with its own page and a way back", async ({ page }) => {
   const errors = collectConsoleErrors(page);
   for (const room of ROOMS) {
+    if (!("title" in room)) continue;
     await page.goto("/crypt");
     await rooms(page).filter({ hasText: room.name }).click();
     await expect(page).toHaveURL(room.path);
@@ -40,6 +44,15 @@ test("every room answers with its own page and a way back", async ({ page }) => 
     await page.getByRole("link", { name: "Back to the Crypt" }).click();
     await expect(page).toHaveURL("/crypt");
   }
+  expect(errors).toEqual([]);
+});
+
+test("Characters opens onto the character select", async ({ page }) => {
+  const errors = collectConsoleErrors(page);
+  await page.goto("/crypt");
+  await rooms(page).filter({ hasText: "Characters" }).click();
+  await expect(page).toHaveURL("/run/new");
+  await expect(page.getByRole("heading", { level: 1, name: "Who takes the night?" })).toBeVisible();
   expect(errors).toEqual([]);
 });
 

@@ -19,7 +19,7 @@ export default function Home() {
           your lakehouse, batch by batch: late, twice, and out of order. Something is already in it.
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
-          <Link href="/run" className={buttonClassName("primary", "lg")}>
+          <Link href="/run/new" className={buttonClassName("primary", "lg")}>
             Enter the night
           </Link>
           <Link href="/crypt" className={buttonClassName("ghost", "lg")}>

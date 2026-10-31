@@ -22,7 +22,7 @@ export function CryptHub({ counts }: CryptHubProps) {
           she doesn&rsquo;t ask why you&rsquo;ve come down.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <Link href="/run" className={buttonClassName("primary", "lg")}>
+          <Link href="/run/new" className={buttonClassName("primary", "lg")}>
             Enter the night
           </Link>
           <Link href="/" className={buttonClassName("ghost", "lg")}>
