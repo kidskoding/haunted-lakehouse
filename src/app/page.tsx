@@ -22,6 +22,9 @@ export default function Home() {
           <Link href="/run" className={buttonClassName("primary", "lg")}>
             Enter the night
           </Link>
+          <Link href="/crypt" className={buttonClassName("ghost", "lg")}>
+            Visit the Crypt
+          </Link>
           <p className="type-ui text-ash">
             {/* The run screen needs a laptop; phones can still read the story and the Crypt. */}
             <span className="xl:hidden">Best played on a laptop.</span>
