@@ -9,6 +9,8 @@ export interface Tally {
  * hub then omits them rather than guessing.
  */
 export interface CryptCounts {
+  /** Autopsies earned, out of one per registered puzzle. */
+  readonly autopsies: Tally;
   readonly characters: Tally;
   readonly pages: Tally;
 }
@@ -30,6 +32,7 @@ export const CRYPT_DESTINATIONS: readonly CryptDestination[] = [
     name: "The Codex",
     href: "/crypt/codex",
     line: "Every autopsy you’ve earned, kept where you can read it again.",
+    count: "autopsies",
   },
   {
     id: "graveyard",
@@ -59,9 +62,15 @@ export const CRYPT_DESTINATIONS: readonly CryptDestination[] = [
   },
 ];
 
+const TALLY_SUFFIX: Readonly<Record<keyof CryptCounts, string>> = {
+  autopsies: " written",
+  characters: " unlocked",
+  pages: " pages found",
+};
+
 /** The count line under a destination, such as "3 of 7 pages found" or "All 4 unlocked". */
 export function tallyLine(kind: keyof CryptCounts, { held, total }: Tally): string {
-  const suffix = kind === "pages" ? " pages found" : " unlocked";
+  const suffix = TALLY_SUFFIX[kind];
   return held >= total
     ? `All ${String(total)}${suffix}`
     : `${String(held)} of ${String(total)}${suffix}`;

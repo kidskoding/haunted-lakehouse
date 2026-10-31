@@ -11,7 +11,8 @@ afterEach(() => {
 
 describe("cryptCountsFrom", () => {
   it("gives a new player the Intern and no pages", () => {
-    expect(cryptCountsFrom(FRESH_UNLOCKS)).toEqual({
+    expect(cryptCountsFrom(FRESH_UNLOCKS, [])).toEqual({
+      autopsies: { held: 0, total: 3 },
       characters: { held: 1, total: 4 },
       pages: { held: 0, total: 7 },
     });
@@ -19,12 +20,32 @@ describe("cryptCountsFrom", () => {
 
   it("counts unlocked characters and held pages", () => {
     expect(
-      cryptCountsFrom({
-        ...FRESH_UNLOCKS,
-        characters: ["intern", "night_clerk"],
-        fragments: ["page-1", "page-4", "page-6"],
-      }),
-    ).toEqual({ characters: { held: 2, total: 4 }, pages: { held: 3, total: 7 } });
+      cryptCountsFrom(
+        {
+          ...FRESH_UNLOCKS,
+          characters: ["intern", "night_clerk"],
+          fragments: ["page-1", "page-4", "page-6"],
+        },
+        [],
+      ),
+    ).toEqual({
+      autopsies: { held: 0, total: 3 },
+      characters: { held: 2, total: 4 },
+      pages: { held: 3, total: 7 },
+    });
+  });
+
+  it("counts each registered puzzle cleared once, however often", () => {
+    const clear = {
+      puzzleId: "porch-lights",
+      seed: "raven-pumpkin-13",
+      character: "intern",
+      curse: null,
+      candles: 4,
+    } as const;
+    expect(
+      cryptCountsFrom(FRESH_UNLOCKS, [clear, { ...clear, seed: "moth-lantern-7" }]).autopsies,
+    ).toEqual({ held: 1, total: 3 });
   });
 });
 

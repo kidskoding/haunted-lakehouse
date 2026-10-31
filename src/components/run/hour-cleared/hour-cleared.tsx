@@ -3,13 +3,14 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
 import { RadioForm } from "@/components/character-select/radio-form";
 import { RelicGlyph } from "@/components/run/bottom-bar/relic-glyph";
+import { AutopsySections } from "@/components/run/hour-cleared/autopsy-sections";
 import { StoryScene } from "@/components/run/story";
 import { StoryText } from "@/components/run/story/story-text";
 import { Button } from "@/components/ui/button";
 import { cx } from "@/components/ui/cx";
 import type { RelicKind, RelicView } from "@/lib/run/bottom-bar";
 import { useSound } from "@/lib/sound/react";
-import type { RenderedAutopsy, RenderedLine, RenderedPage, Segment } from "@/lib/story/types";
+import type { RenderedAutopsy, RenderedLine, RenderedPage } from "@/lib/story/types";
 
 export interface HourClearedProps {
   /** The hour's title: "Porch Lights". */
@@ -195,23 +196,6 @@ function BeatStep({
   );
 }
 
-function AutopsySection({
-  heading,
-  segments,
-}: {
-  readonly heading: string;
-  readonly segments: readonly Segment[];
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <h4 className="text-parchment type-ui-l">{heading}</h4>
-      <p className="text-pretty text-parchment type-prose-s">
-        <StoryText segments={segments} voiced={false} />
-      </p>
-    </div>
-  );
-}
-
 function AutopsyStep({
   autopsy,
   headingRef,
@@ -224,22 +208,7 @@ function AutopsyStep({
       <StepHeading headingRef={headingRef} className="text-parchment type-display-m">
         <StoryText segments={autopsy.title} voiced={false} />
       </StepHeading>
-      <AutopsySection heading="In your data" segments={autopsy.town} />
-      <AutopsySection heading="Why the easy answer was tempting" segments={autopsy.tempting} />
-      <AutopsySection heading="The idea" segments={autopsy.idea} />
-      <AutopsySection heading="In production" segments={autopsy.production} />
-      {autopsy.search.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <h4 className="text-parchment type-ui-l">To look up</h4>
-          <ul className="flex flex-wrap gap-2">
-            {autopsy.search.map((term) => (
-              <li key={term} className="rounded-xs bg-inset px-2 py-1 text-ash type-ui">
-                {term}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <AutopsySections autopsy={autopsy} />
     </article>
   );
 }

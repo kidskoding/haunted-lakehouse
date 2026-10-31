@@ -8,6 +8,11 @@ describe("tallyLine", () => {
     expect(tallyLine("pages", { held: 7, total: 7 })).toBe("All 7 pages found");
   });
 
+  it("counts autopsies written", () => {
+    expect(tallyLine("autopsies", { held: 0, total: 3 })).toBe("0 of 3 written");
+    expect(tallyLine("autopsies", { held: 3, total: 3 })).toBe("All 3 written");
+  });
+
   it("counts characters unlocked", () => {
     expect(tallyLine("characters", { held: 1, total: 4 })).toBe("1 of 4 unlocked");
     expect(tallyLine("characters", { held: 4, total: 4 })).toBe("All 4 unlocked");

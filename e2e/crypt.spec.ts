@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { collectConsoleErrors } from "./console-errors";
 
 const ROOMS = [
-  { name: "The Codex", path: "/crypt/codex", title: "The Codex is still being bound." },
+  { name: "The Codex", path: "/crypt/codex" },
   { name: "The Graveyard", path: "/crypt/graveyard", title: "The Graveyard gate is chained." },
   { name: "The Ledger", path: "/crypt/ledger", title: "The Ledger stays shut tonight." },
   { name: "Characters", path: "/crypt/characters" },
@@ -22,7 +22,8 @@ test("the Crypt lists its five rooms with a new player's counts", async ({ page 
     await expect(rooms(page).nth(index)).toHaveAttribute("href", room.path);
     await expect(rooms(page).nth(index)).toContainText(room.name);
   }
-  // No session yet: a new player holds the Intern and no pages.
+  // No session yet: a new player holds the Intern, no autopsies, and no pages.
+  await expect(rooms(page).filter({ hasText: "The Codex" })).toContainText("0 of 3 written");
   await expect(rooms(page).filter({ hasText: "Characters" })).toContainText("1 of 4 unlocked");
   await expect(rooms(page).filter({ hasText: "The Ledger" })).toContainText("0 of 7 pages found");
   await expect(page.getByRole("link", { name: "Enter the night" })).toHaveAttribute(
@@ -85,9 +86,11 @@ test("the landing page leads to the Crypt", async ({ page }) => {
 test.describe("gallery states", () => {
   test("counts read for a player partway through, and complete", async ({ page }) => {
     await page.goto("/dev/crypt?state=midway");
+    await expect(rooms(page).filter({ hasText: "The Codex" })).toContainText("2 of 3 written");
     await expect(rooms(page).filter({ hasText: "Characters" })).toContainText("2 of 4 unlocked");
     await expect(rooms(page).filter({ hasText: "The Ledger" })).toContainText("3 of 7 pages found");
     await page.goto("/dev/crypt?state=complete");
+    await expect(rooms(page).filter({ hasText: "The Codex" })).toContainText("All 3 written");
     await expect(rooms(page).filter({ hasText: "Characters" })).toContainText("All 4 unlocked");
     await expect(rooms(page).filter({ hasText: "The Ledger" })).toContainText("All 7 pages found");
   });
@@ -95,7 +98,7 @@ test.describe("gallery states", () => {
   test("unreadable counts are left out, not guessed", async ({ page }) => {
     await page.goto("/dev/crypt?state=unavailable");
     await expect(rooms(page)).toHaveCount(ROOMS.length);
-    await expect(page.getByText(/unlocked|pages found/)).toHaveCount(0);
+    await expect(page.getByText(/unlocked|pages found|written/)).toHaveCount(0);
   });
 });
 

@@ -10,9 +10,21 @@ export const metadata: Metadata = {
 };
 
 const STATES: Readonly<Record<string, CryptCounts | null>> = {
-  fresh: { characters: { held: 1, total: 4 }, pages: { held: 0, total: 7 } },
-  midway: { characters: { held: 2, total: 4 }, pages: { held: 3, total: 7 } },
-  complete: { characters: { held: 4, total: 4 }, pages: { held: 7, total: 7 } },
+  fresh: {
+    autopsies: { held: 0, total: 3 },
+    characters: { held: 1, total: 4 },
+    pages: { held: 0, total: 7 },
+  },
+  midway: {
+    autopsies: { held: 2, total: 3 },
+    characters: { held: 2, total: 4 },
+    pages: { held: 3, total: 7 },
+  },
+  complete: {
+    autopsies: { held: 3, total: 3 },
+    characters: { held: 4, total: 4 },
+    pages: { held: 7, total: 7 },
+  },
   unavailable: null,
 };
 
