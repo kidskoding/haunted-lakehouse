@@ -1,2 +1,32 @@
 /* Scan only src/ so local-only material like docs/ never feeds classes into the app. */
 @import "tailwindcss" source("..");
+@import "./tokens.css";
+
+@layer base {
+  /* The game is always at night: native scrollbars and form controls render dark too. */
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-night);
+    color: var(--color-parchment);
+  }
+
+  ::selection {
+    background-color: var(--color-selection);
+  }
+
+  /*
+   * One focus ring everywhere, keyboard-only and never removed: a `glow` outline with a dark
+   * halo so it stays distinct against amber buttons. Outlines follow border-radius. The halo
+   * also goes in Tailwind's ring-offset slot, so elements with a `shadow-*` utility (whose
+   * box-shadow wins over this layer) still get it alongside their own shadow.
+   */
+  :focus-visible {
+    --tw-ring-offset-shadow: 0 0 0 4px var(--color-night);
+    outline: 2px solid var(--color-glow);
+    outline-offset: 2px;
+    box-shadow: var(--tw-ring-offset-shadow);
+  }
+}
