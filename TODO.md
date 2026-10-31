@@ -13,7 +13,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **0.3 Server-side generation.** A route handler that generates about 2 MB of seeded JSON, CSV, and Parquet in TypeScript within Vercel's limits. Pick the Parquet writer library based on bundle size and correctness. Record the results.
 - [x] **0.4 Delta log feasibility.** Generate a tiny Delta table's `_delta_log` (JSON commits plus a Parquet checkpoint) in TypeScript, then validate it by reading it with the `deltalake` Python package in a local script. Record the approach.
 - [x] **0.5 Scene library.** Build the same small scene (a flickering candle plus a clock hand sweep) in Phaser and in PixiJS. Compare bundle size, performance, and dev experience, and pick one in `docs/decisions/0002-scene-library.md`.
-- [ ] **0.6 Spike review.** Summarize all spike results in `docs/decisions/0003-architecture.md`. **Stop and ask the repo owner to review before Phase 1.**
+- [x] **0.6 Spike review.** Summarize all spike results in `docs/decisions/0003-architecture.md`. **Stop and ask the repo owner to review before Phase 1.**
 
 ---
 
