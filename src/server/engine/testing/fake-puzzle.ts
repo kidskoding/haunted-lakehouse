@@ -13,6 +13,7 @@ export function fakePuzzle(overrides: Partial<Omit<Puzzle, "generate">> = {}): P
     retention: 2,
     visibleBatchCount: 2,
     goldTables: ["gold.totals"],
+    goldColumns: { "gold.totals": ["total"] },
     ...overrides,
     generate({ rng }): PuzzleData {
       const readings = rng("readings");

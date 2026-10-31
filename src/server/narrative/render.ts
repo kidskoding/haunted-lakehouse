@@ -1,26 +1,12 @@
 import "server-only";
 import { addressFor, type Bindings, type Voice } from "./bindings";
 import { formatClock, formatNumber, numberWord, plural, pluralWords } from "./format";
-import { parseTemplate, placeholdersOf, type Format, type Style } from "./template";
-import type { Line, Scene, Speaker } from "./types";
+import type { RenderedLine, Segment } from "../../lib/story/types";
+import { parseTemplate, placeholdersOf, type Format } from "./template";
+import type { Line, Scene } from "./types";
 
-/**
- * Rendered story text: plain strings with a style, so the client can set numbers apart
- * without ever parsing markup or trusting HTML.
- */
-export type Segment =
-  | { readonly kind: "text"; readonly text: string; readonly style: Style }
-  /** A value from the run. */
-  | { readonly kind: "value"; readonly key: string; readonly text: string; readonly style: Style }
-  /** A value the Curse of the Fog withheld. */
-  | { readonly kind: "fog"; readonly key: string; readonly text: string; readonly style: Style };
-
-export interface RenderedLine {
-  readonly speaker: Speaker;
-  /** Old Wren's own lines are thoughts, not speech. */
-  readonly thought: boolean;
-  readonly segments: readonly Segment[];
-}
+// The rendered shapes live in lib so the client can share them without the engine.
+export type { RenderedLine, Segment };
 
 export interface RenderContext {
   readonly bindings: Bindings;

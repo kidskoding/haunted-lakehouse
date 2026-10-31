@@ -127,6 +127,7 @@ describe("relic offers", () => {
         kind: "attempt_failed",
         slot: 2,
         checkpointId: "late",
+        revealedBatch: 2,
       }),
     );
     expect(drawOffer(withFailure)).toEqual(offerAfter(seed));
