@@ -48,10 +48,10 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **2.2.5 Costume votes.** Ballots with edits and revisions, cast only by kids present that night.
 - [x] **2.2.6 Pumpkin sensors.** Candle-flame readings with realistic flicker and burn-out.
 - [x] **2.2.7 Porch lights and candy bowls.** Porch-light sensors that report state changes (some go silent), and candy-bowl scales that report weight, with per-candy-type weights and refills.
-- [ ] **2.2.8 Cross-feed consistency.** A test suite proving all feeds agree across 20 seeds.
+- [x] **2.2.8 Cross-feed consistency.** A test suite proving all feeds agree across 20 seeds.
 
 ### 2.3 Batches
-- [ ] **2.3.1 Batch scheduler.** Splits a feed into arrival-ordered batches with seeded injections: late arrivals, duplicates, out-of-order delivery, and schema drift. Each injection is declarative per puzzle.
+- [x] **2.3.1 Batch scheduler.** Splits a feed into arrival-ordered batches with seeded injections: late arrivals, duplicates, out-of-order delivery, and schema drift. Each injection is declarative per puzzle.
 - [ ] **2.3.2 Visible vs hidden.** Marks batches as visible (preview) or hidden (run-the-night only), and a route handler serves hidden batches only for an active run-the-night attempt.
 
 ### 2.4 Runs and meta-progression
@@ -66,7 +66,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 ## 3. Pipeline runtime (client)
 
 - [ ] **3.1 Engine worker.** DuckDB-WASM in a Web Worker behind a typed message API, loaded in the background on page load, with progress reporting.
-- [ ] **3.2 Runtime contract doc.** `docs/pipeline-runtime.md` precisely specifies `view`, `table`, and `incremental` (`{{ this }}`, `{{ new_batch }}`, `unique_key`), bronze retention, checkpoints, and idempotency replays.
+- [x] **3.2 Runtime contract doc.** `docs/pipeline-runtime.md` precisely specifies `view`, `table`, and `incremental` (`{{ this }}`, `{{ new_batch }}`, `unique_key`), bronze retention, checkpoints, and idempotency replays.
 - [ ] **3.3 Model compiler.** Parses model files, resolves references into a DAG, detects cycles with clear errors, and renders templated SQL.
 - [ ] **3.4 Night executor.** Replays batches in order, applies retention, runs models in DAG order per batch, and hashes gold at checkpoints. Supports preview mode and run-the-night mode.
 - [ ] **3.5 Failure reporting.** Identifies the first failing checkpoint and the batch that preceded it, and reveals that batch's data to the player.

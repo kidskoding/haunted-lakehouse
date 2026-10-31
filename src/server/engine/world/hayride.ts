@@ -201,6 +201,8 @@ export function generateHayrideTaps(
 
   const taps: TrueTap[] = [];
   for (const [groupId, members] of groups) {
+    // A group that never knocked on a door wasn't out tonight, so it can't ride either.
+    if (!scanTimes.has(groupId)) continue;
     // Each group has its own stream, so one group's ride never shifts another's.
     const rng = townRng(runSeed, `hayride:${groupId}`);
     if (rng.float() >= RIDE_CHANCE) continue;
