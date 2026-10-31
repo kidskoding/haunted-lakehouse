@@ -47,7 +47,7 @@ function parseJudgeBody(
 export async function handleListBatches(runId: string): Promise<Response> {
   const playerId = await currentPlayerId();
   if (!playerId) return errorResponse("unauthorized");
-  const result = await listPreviewBatches(db(), runId, playerId);
+  const result = await listPreviewBatches(await db(), runId, playerId);
   if (!result.ok) return errorResponse(result.error);
   return Response.json({
     puzzleId: result.puzzleId,
@@ -66,7 +66,7 @@ export async function handleGetBatch(
   const playerId = await currentPlayerId();
   if (!playerId) return errorResponse("unauthorized");
   if (!Number.isInteger(index) || index < 0) return errorResponse("unknown-batch");
-  const result = await getBatch(db(), {
+  const result = await getBatch(await db(), {
     runId,
     playerId,
     index,
@@ -82,7 +82,7 @@ export async function handleGetBatch(
 export async function handleStartNightAttempt(runId: string): Promise<Response> {
   const playerId = await currentPlayerId();
   if (!playerId) return errorResponse("unauthorized");
-  const result = await startNightAttempt(db(), {
+  const result = await startNightAttempt(await db(), {
     runId,
     playerId,
     now: nowSeconds(),
@@ -113,7 +113,7 @@ export async function handleJudgeNight(runId: string, request: Request): Promise
   const parsed = parseJudgeBody(body);
   if (!parsed) return errorResponse("invalid-body");
 
-  const result = await judgeNightAttempt(db(), {
+  const result = await judgeNightAttempt(await db(), {
     runId,
     playerId,
     attemptToken: parsed.attemptToken,

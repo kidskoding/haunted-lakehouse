@@ -204,7 +204,7 @@ export async function loadGraveyardWith(
  */
 export async function loadGraveyard(filter: GraveyardFilter): Promise<GraveyardPage | null> {
   try {
-    return await loadGraveyardWith(db(), filter);
+    return await loadGraveyardWith(await db(), filter);
   } catch (error) {
     console.error("The Graveyard couldn't read the dead runs", error);
     return null;

@@ -12,6 +12,10 @@ export interface CharacterSelectProps {
   readonly view: CharacterSelectView;
   /** Where confirming goes; the chosen character arrives as `?character=<id>`. */
   readonly action?: string;
+  /** A seed to replay, sent along as `&seed=<seed>`; null draws a fresh night. */
+  readonly seed?: string | null;
+  /** Sends `&daily=1`, so the run is today's Daily Haunt. */
+  readonly daily?: boolean;
 }
 
 const TITLE_ID = "character-select-title";
@@ -20,10 +24,17 @@ const TITLE_ID = "character-select-title";
  * The run's first choice. Native radios give the APG radio group for free: arrows move and
  * check, locked characters are skipped, and the form sends the choice. Script only adds Enter to confirm.
  */
-export function CharacterSelect({ view, action = "/run" }: CharacterSelectProps) {
+export function CharacterSelect({
+  view,
+  action = "/run",
+  seed = null,
+  daily = false,
+}: CharacterSelectProps) {
   return (
     <main className="mx-auto w-full max-w-page px-4 py-12 sm:px-8 lg:py-20">
       <RadioForm action={action} method="get" className="flex flex-col gap-10">
+        {seed === null ? null : <input type="hidden" name="seed" value={seed} />}
+        {daily ? <input type="hidden" name="daily" value="1" /> : null}
         <div className="flex max-w-copy flex-col gap-3">
           <h1 id={TITLE_ID} className="type-display-l text-parchment">
             Who takes the night?

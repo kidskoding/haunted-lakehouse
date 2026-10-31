@@ -1,6 +1,6 @@
 import "server-only";
 import { eq, max } from "drizzle-orm";
-import { runEvents, runs } from "../db/schema";
+import { dailyResults, runEvents, runs } from "../db/schema";
 import type { RunEvent, RunState } from "../engine/run/types";
 import { rowFromEvent } from "./events";
 import type { RunDatabase } from "./load";
@@ -23,7 +23,10 @@ export function persistedStatus(
   }
 }
 
-/** Appends one event at the next sequence number and syncs the run row's status. */
+/**
+ * Appends one event at the next sequence number and syncs the run row's status. A Daily Haunt
+ * run that ends here also posts its result to that day's board.
+ */
 export async function appendRunEvent(
   database: RunDatabase,
   runId: string,
@@ -46,4 +49,21 @@ export async function appendRunEvent(
       endedAt: status === "active" ? null : new Date(),
     })
     .where(eq(runs.id, runId));
+  if (status === "active") return;
+
+  const [run] = await database
+    .select({ playerId: runs.playerId, dailyDate: runs.dailyDate })
+    .from(runs)
+    .where(eq(runs.id, runId));
+  if (!run?.dailyDate) return;
+  await database
+    .insert(dailyResults)
+    .values({
+      dailyDate: run.dailyDate,
+      playerId: run.playerId,
+      runId,
+      slotsCleared: state.history.filter((hour) => hour.outcome === "cleared").length,
+      candlesLeft: state.candles,
+    })
+    .onConflictDoNothing();
 }

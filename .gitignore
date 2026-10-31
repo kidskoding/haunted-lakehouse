@@ -12,3 +12,6 @@ next-env.d.ts
 # Environment files can hold secrets; only the documented template is tracked.
 .env*
 !.env.example
+
+# The local PGlite database dev and CI use in place of Postgres.
+/.data/

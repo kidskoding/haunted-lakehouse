@@ -115,15 +115,34 @@ test("filters work before any script runs", async ({ browser }) => {
   await context.close();
 });
 
-test("an unreadable hill says so and offers the gate again", async ({ page }) => {
-  // The e2e server has no database, so the real room shows its error state.
+test("the real room reads the hill from the database", async ({ page }) => {
+  const errors = collectConsoleErrors(page);
   await page.goto("/crypt/graveyard?hour=thirteenth-door");
+  await expect(filterLink(page, "Where it broke", "The Thirteenth Door")).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
+  // The test server reads a local database: the hill shows its stones, or says none match.
+  await expect(
+    page
+      .getByRole("region", { name: "Stones" })
+      .or(page.getByRole("heading", { level: 2, name: "No stone here answers to that." }))
+      .first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "The gate won't open tonight." }),
+  ).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test("an unreadable hill says so and offers the gate again", async ({ page }) => {
+  await page.goto("/dev/graveyard?state=error");
   await expect(
     page.getByRole("heading", { level: 2, name: "The gate won't open tonight." }),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Try the gate again" })).toHaveAttribute(
     "href",
-    "/crypt/graveyard?hour=thirteenth-door",
+    "/crypt/graveyard",
   );
   await page.getByRole("link", { name: "Back to the Crypt" }).click();
   await expect(page).toHaveURL("/crypt");

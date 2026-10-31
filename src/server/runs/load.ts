@@ -1,9 +1,6 @@
 import "server-only";
 import { and, asc, eq } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type { PgliteDatabase } from "drizzle-orm/pglite";
-import { db } from "../db/client";
-import * as schema from "../db/schema";
+import { db, type RunDatabase } from "../db/client";
 import { runEvents, runs } from "../db/schema";
 import { ALL_PUZZLES } from "../engine/puzzles";
 import { createPuzzleRegistry } from "../engine/registry";
@@ -14,8 +11,7 @@ import { eventFromRow } from "./events";
 const registry = createPuzzleRegistry(ALL_PUZZLES);
 const machine = createRunMachine(registry);
 
-/** Either Postgres driver the app or its PGlite tests bind to the schema. */
-export type RunDatabase = NodePgDatabase<typeof schema> | PgliteDatabase<typeof schema>;
+export type { RunDatabase };
 
 export interface OwnedRun {
   readonly id: string;
@@ -25,19 +21,23 @@ export interface OwnedRun {
   readonly state: RunState;
 }
 
+// Run ids arrive from URLs; Postgres rejects a malformed uuid with an error, not an empty result.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
- * Loads an active run the player owns and replays its event log. Returns null when the run
- * is missing, belongs to someone else, or is no longer active.
+ * Loads a run the player owns, in any status, and replays its event log. Returns null when the
+ * run is missing or belongs to someone else.
  */
-export async function loadOwnedRunWith(
+export async function loadPlayerRunWith(
   database: RunDatabase,
   runId: string,
   playerId: string,
 ): Promise<OwnedRun | null> {
+  if (!UUID.test(runId)) return null;
   const [run] = await database
     .select()
     .from(runs)
-    .where(and(eq(runs.id, runId), eq(runs.playerId, playerId), eq(runs.status, "active")))
+    .where(and(eq(runs.id, runId), eq(runs.playerId, playerId)))
     .limit(1);
   if (!run) return null;
 
@@ -57,9 +57,22 @@ export async function loadOwnedRunWith(
   };
 }
 
-/** {@link loadOwnedRunWith} against the shared Postgres pool. */
+/**
+ * Loads an active run the player owns and replays its event log. Returns null when the run
+ * is missing, belongs to someone else, or is no longer active.
+ */
+export async function loadOwnedRunWith(
+  database: RunDatabase,
+  runId: string,
+  playerId: string,
+): Promise<OwnedRun | null> {
+  const run = await loadPlayerRunWith(database, runId, playerId);
+  return run?.status === "active" ? run : null;
+}
+
+/** {@link loadOwnedRunWith} against the shared database. */
 export async function loadOwnedRun(runId: string, playerId: string): Promise<OwnedRun | null> {
-  return loadOwnedRunWith(db(), runId, playerId);
+  return loadOwnedRunWith(await db(), runId, playerId);
 }
 
 export { machine as runMachine, registry as puzzleRegistry };

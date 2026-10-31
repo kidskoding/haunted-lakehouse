@@ -73,7 +73,7 @@ export function codexEntries(earned: readonly EarnedClear[]): CodexEntry[] {
 export async function loadCodex(): Promise<CodexEntry[] | null> {
   try {
     const playerId = await currentPlayerId();
-    return codexEntries(playerId ? await loadEarnedClears(db(), playerId) : []);
+    return codexEntries(playerId ? await loadEarnedClears(await db(), playerId) : []);
   } catch (error) {
     console.error("The Codex couldn't read this player's runs", error);
     return null;

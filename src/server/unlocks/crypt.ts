@@ -30,9 +30,10 @@ export async function loadCryptCounts(): Promise<CryptCounts | null> {
   try {
     const playerId = await currentPlayerId();
     if (!playerId) return cryptCountsFrom(FRESH_UNLOCKS, []);
+    const database = await db();
     const [unlocks, earned] = await Promise.all([
-      loadPlayerUnlocks(db(), playerId),
-      loadEarnedClears(db(), playerId),
+      loadPlayerUnlocks(database, playerId),
+      loadEarnedClears(database, playerId),
     ]);
     return cryptCountsFrom(unlocks, earned);
   } catch (error) {

@@ -16,6 +16,7 @@ const STATES = [
 const SEED = "phantom-gumdrop-79";
 
 const board = (page: Page) => page.getByRole("region", { name: "Today’s board" });
+const TODAY_HREF = /\/run\/new\?seed=[a-z]+-[a-z]+-[1-9][0-9]?&daily=1$/;
 const begin = (page: Page) => page.getByRole("link", { name: "Begin today’s haunt" });
 
 test("the hub's Daily Haunt posts today's seed", async ({ page }) => {
@@ -28,11 +29,24 @@ test("the hub's Daily Haunt posts today's seed", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "The Daily Haunt" })).toBeVisible();
   await expect(page.getByText(/^[a-z]+-[a-z]+-[1-9][0-9]?$/)).toBeVisible();
   await expect(page.locator("time")).toHaveAttribute("datetime", /T00:00:00\.000Z$/);
-  // The test server has no database, so the board says it can't be read rather than look empty.
-  await expect(board(page).getByRole("status")).toContainText("Wren can’t read the board");
-  await expect(begin(page)).toHaveCount(0);
+  // The test server reads a local database, so a new hire sees the board and may begin.
+  await expect(board(page).getByText("Wren can’t read the board")).toHaveCount(0);
+  await expect(begin(page)).toHaveAttribute("href", TODAY_HREF);
   await page.getByRole("link", { name: "Back to the Crypt" }).click();
   await expect(page).toHaveURL("/crypt");
+});
+
+test("beginning today's haunt starts a run and spends the day's one attempt", async ({ page }) => {
+  await page.goto("/crypt/daily");
+  await begin(page).click();
+  await expect(page).toHaveURL(TODAY_HREF);
+  await page.getByRole("button", { name: "Start the night" }).click();
+  await page.waitForURL(/\/run\?run=[0-9a-f-]{36}$/);
+  await expect(page.getByRole("heading", { level: 2, name: "Porch Lights" })).toBeVisible();
+
+  await page.goto("/crypt/daily");
+  await expect(page.getByText("Your haunt is still under way.", { exact: false })).toBeVisible();
+  await expect(begin(page)).toHaveCount(0);
 });
 
 test("a new hire can begin today's haunt on the day's seed", async ({ page }) => {

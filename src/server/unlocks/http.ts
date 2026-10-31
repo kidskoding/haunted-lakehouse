@@ -21,7 +21,7 @@ function errorResponse(error: string): Response {
 export async function handleGetUnlocks(): Promise<Response> {
   const playerId = await currentPlayerId();
   if (!playerId) return errorResponse("unauthorized");
-  const progress = await loadPlayerUnlocks(db(), playerId);
+  const progress = await loadPlayerUnlocks(await db(), playerId);
   return Response.json(progress);
 }
 
@@ -52,7 +52,7 @@ export async function handleGrantFragment(request: Request): Promise<Response> {
 
   let findingRunId: string | null = null;
   if (typeof runId === "string") {
-    const database = db();
+    const database = await db();
     const [owned] = await database
       .select({ id: runs.id })
       .from(runs)
@@ -62,6 +62,6 @@ export async function handleGrantFragment(request: Request): Promise<Response> {
     findingRunId = owned.id;
   }
 
-  const granted = await grantFragment(db(), playerId, fragmentId, findingRunId);
+  const granted = await grantFragment(await db(), playerId, fragmentId, findingRunId);
   return Response.json({ granted, fragmentId }, { status: granted ? 201 : 200 });
 }

@@ -45,7 +45,7 @@ export function ledgerView(
 export async function loadLedger(): Promise<LedgerView | null> {
   try {
     const playerId = await currentPlayerId();
-    const unlocks = playerId ? await loadPlayerUnlocks(db(), playerId) : FRESH_UNLOCKS;
+    const unlocks = playerId ? await loadPlayerUnlocks(await db(), playerId) : FRESH_UNLOCKS;
     return ledgerView(unlocks.fragments, unlocks.endings);
   } catch (error) {
     console.error("The Ledger couldn't read this player's pages", error);

@@ -29,4 +29,20 @@ describe("CharacterSelect", () => {
     const html = renderToStaticMarkup(<CharacterSelect view={characterSelectView(COMPLETE)} />);
     expect(html).toContain('value="old_wren"');
   });
+
+  it("carries a replayed seed through the form, and none when there is none", () => {
+    const view = characterSelectView(FRESH_UNLOCKS);
+    expect(renderToStaticMarkup(<CharacterSelect view={view} seed="raven-pumpkin-13" />)).toContain(
+      '<input type="hidden" name="seed" value="raven-pumpkin-13"/>',
+    );
+    expect(renderToStaticMarkup(<CharacterSelect view={view} />)).not.toContain('name="seed"');
+  });
+
+  it("marks a Daily Haunt run, and nothing else", () => {
+    const view = characterSelectView(FRESH_UNLOCKS);
+    expect(renderToStaticMarkup(<CharacterSelect view={view} daily />)).toContain(
+      '<input type="hidden" name="daily" value="1"/>',
+    );
+    expect(renderToStaticMarkup(<CharacterSelect view={view} />)).not.toContain('name="daily"');
+  });
 });

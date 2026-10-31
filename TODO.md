@@ -98,6 +98,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **5.3.6 Editor.** CodeMirror 6 SQL with schema-aware autocomplete, per-model tabs, materialization picker, format, and shortcuts.
 - [x] **5.3.7 Results grid.** Virtualized, resizable columns, copy-to-clipboard, and clear error display.
 - [x] **5.3.8 Relic bar and run buttons.** Relic tooltips and activation, Preview, and Run the night.
+- [x] **5.3.9 Run route.** /run starts a run for the chosen character and seed and mounts the run screen on real run state, with Preview and Run the night working end to end.
 
 ### 5.4 Moments
 - [x] **5.4.1 Run the night.** A timeline animation of batches landing, checkpoints passing or cracking, and the clock sweeping. Skippable.

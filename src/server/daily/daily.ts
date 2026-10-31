@@ -94,8 +94,8 @@ export async function dailyAttemptWith(
 }
 
 /** {@link dailyAttemptWith} against the shared Postgres pool. */
-export function dailyAttempt(playerId: string, date: string): Promise<DailyAttempt> {
-  return dailyAttemptWith(db(), playerId, date);
+export async function dailyAttempt(playerId: string, date: string): Promise<DailyAttempt> {
+  return dailyAttemptWith(await db(), playerId, date);
 }
 
 /**
@@ -156,7 +156,7 @@ export async function loadDailyStanding(date: string): Promise<DailyStanding | n
     const playerId = await currentPlayerId();
     const [attempt, board] = await Promise.all([
       playerId ? dailyAttempt(playerId, date) : ({ kind: "none" } as const),
-      dailyBoardWith(db(), date, playerId),
+      dailyBoardWith(await db(), date, playerId),
     ]);
     // The run id stays on the server; the page needs only what the attempt came to.
     const { kind } = attempt;
