@@ -16,10 +16,21 @@ export const TABBABLE_SELECTOR = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
+/**
+ * Whether the element is in the browser Tab sequence for visibility. Matches
+ * `checkVisibility({ visibilityProperty: true })`: `visibility: hidden` is omitted, while
+ * default `checkVisibility()` would still count it.
+ */
+export function isTabVisible(element: {
+  checkVisibility: (options?: { visibilityProperty?: boolean }) => boolean;
+}): boolean {
+  return element.checkVisibility({ visibilityProperty: true });
+}
+
 /** The elements inside `root` that Tab can reach, in document order. */
 export function tabbableIn(root: Element): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR)).filter(
-    (element) => element.tabIndex >= 0 && !element.closest("[inert]") && element.checkVisibility(),
+    (element) => element.tabIndex >= 0 && !element.closest("[inert]") && isTabVisible(element),
   );
 }
 

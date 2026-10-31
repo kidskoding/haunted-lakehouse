@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { TABBABLE_SELECTOR, wrappedTabIndex, wrapTarget, type RadioState } from "./focus-trap";
+import {
+  isTabVisible,
+  TABBABLE_SELECTOR,
+  wrappedTabIndex,
+  wrapTarget,
+  type RadioState,
+} from "./focus-trap";
 
 describe("TABBABLE_SELECTOR", () => {
   it("includes contenteditable hosts so Tab does not skip controls after an editor", () => {
@@ -8,6 +14,20 @@ describe("TABBABLE_SELECTOR", () => {
 
   it("includes summary so a details disclosure does not break the trap wrap", () => {
     expect(TABBABLE_SELECTOR.split(",")).toContain("summary");
+  });
+});
+
+describe("isTabVisible", () => {
+  it("asks checkVisibility to treat visibility:hidden as not tabbable", () => {
+    const seen: unknown[] = [];
+    const element = {
+      checkVisibility: (options?: { visibilityProperty?: boolean }) => {
+        seen.push(options);
+        return false;
+      },
+    };
+    expect(isTabVisible(element)).toBe(false);
+    expect(seen).toEqual([{ visibilityProperty: true }]);
   });
 });
 
