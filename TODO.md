@@ -65,7 +65,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 
 ## 3. Pipeline runtime (client)
 
-- [ ] **3.1 Engine worker.** DuckDB-WASM in a Web Worker behind a typed message API, loaded in the background on page load, with progress reporting.
+- [x] **3.1 Engine worker.** DuckDB-WASM in a Web Worker behind a typed message API, loaded in the background on page load, with progress reporting.
 - [x] **3.2 Runtime contract doc.** `docs/pipeline-runtime.md` precisely specifies `view`, `table`, and `incremental` (`{{ this }}`, `{{ new_batch }}`, `unique_key`), bronze retention, checkpoints, and idempotency replays.
 - [x] **3.3 Model compiler.** Parses model files, resolves references into a DAG, detects cycles with clear errors, and renders templated SQL.
 - [x] **3.4 Night executor.** Replays batches in order, applies retention, runs models in DAG order per batch, and hashes gold at checkpoints. Supports preview mode and run-the-night mode.
@@ -145,7 +145,7 @@ Every puzzle follows the same five steps:
 ### 7.2 The Thirteenth Door (6:45pm, ★★)
 *Houses that gave out exactly 13 pieces before 7pm are cursed, but nothing counts pieces. Candy bowls report weight, candy types weigh differently, and bowls get refilled. Gold: the street with the most cursed houses. Trap: counting door scans as pieces, or treating refills as negative giving.*
 - [x] **7.2.1** Design doc
-- [ ] **7.2.2** Generator
+- [x] **7.2.2** Generator
 - [ ] **7.2.3** Reference and trap pipelines with tests
 - [ ] **7.2.4** Narrative
 - [ ] **7.2.5** Playtest note
@@ -153,7 +153,7 @@ Every puzzle follows the same five steps:
 ### 7.3 The Possessed Feed (7:30pm, ★★, Act I boss)
 *The decorations vendor's feed renames, retypes (`"lots"` in an integer column), and reorders columns mid-night. Gold must keep the possessed rows by recovering their values. Trap: dropping or nulling malformed rows.*
 - [x] **7.3.1** Design doc
-- [ ] **7.3.2** Generator
+- [x] **7.3.2** Generator
 - [ ] **7.3.3** Reference and trap pipelines with tests
 - [ ] **7.3.4** Narrative, including the Act I ending
 - [ ] **7.3.5** Playtest note
