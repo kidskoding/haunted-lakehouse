@@ -25,31 +25,45 @@ async function hmacKey(secret: string): Promise<CryptoKey> {
   );
 }
 
-/** Signs a player id into a session token of the form `<playerId>.<signature>`. */
-export async function signSessionToken(playerId: string, secret: string): Promise<string> {
+/** Signs a player id and its expiry into a token of the form `<playerId>.<expiresAt>.<signature>`. */
+export async function signSessionToken(
+  playerId: string,
+  expiresAt: number,
+  secret: string,
+): Promise<string> {
   if (!UUID.test(playerId)) {
     throw new Error("A session's player id must be a lowercase UUID.");
   }
+  if (!Number.isSafeInteger(expiresAt) || expiresAt < 0) {
+    throw new Error("A session's expiry must be a whole number of Unix seconds.");
+  }
+  const payload = `${playerId}.${String(expiresAt)}`;
   const key = await hmacKey(secret);
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(PURPOSE + playerId));
-  return `${playerId}.${toBase64Url(signature)}`;
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(PURPOSE + payload));
+  return `${payload}.${toBase64Url(signature)}`;
 }
 
 /**
- * Returns the player id inside a session token, or null if the token is malformed or its
- * signature does not match. Verification goes through `crypto.subtle.verify`, which compares
- * in constant time.
+ * Returns the player id inside a session token, or null if the token is malformed, expired
+ * at `now` (Unix seconds), or its signature does not match. The expiry is signed, so a copied
+ * cookie stops working when it lapses even if the client ignores the cookie's own lifetime.
+ * Verification goes through `crypto.subtle.verify`, which compares in constant time.
  */
-export async function verifySessionToken(token: string, secret: string): Promise<string | null> {
-  const [playerId, signature, ...rest] = token.split(".");
-  if (playerId === undefined || signature === undefined || rest.length > 0) return null;
-  if (!UUID.test(playerId) || !/^[A-Za-z0-9_-]+$/.test(signature)) return null;
+export async function verifySessionToken(
+  token: string,
+  now: number,
+  secret: string,
+): Promise<string | null> {
+  const [playerId, expiresAt, signature, ...rest] = token.split(".");
+  if (playerId === undefined || expiresAt === undefined || signature === undefined) return null;
+  if (rest.length > 0 || !UUID.test(playerId) || !/^[0-9]{1,15}$/.test(expiresAt)) return null;
+  if (!/^[A-Za-z0-9_-]+$/.test(signature)) return null;
   const key = await hmacKey(secret);
   const valid = await crypto.subtle.verify(
     "HMAC",
     key,
     Buffer.from(signature, "base64url"),
-    encoder.encode(PURPOSE + playerId),
+    encoder.encode(`${PURPOSE}${playerId}.${expiresAt}`),
   );
-  return valid ? playerId : null;
+  return valid && Number(expiresAt) > now ? playerId : null;
 }

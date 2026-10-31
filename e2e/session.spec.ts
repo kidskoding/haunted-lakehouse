@@ -14,6 +14,8 @@ test("a new visitor gets an anonymous session that persists across requests", as
 
   const second = await request.post("/api/session");
   expect(second.status()).toBe(200);
+  // Each visit renews the session, so an active player never lapses.
+  expect(second.headers()["set-cookie"]).toContain("hl_session=");
   expect(await second.json()).toEqual({ playerId });
 });
 
@@ -24,7 +26,7 @@ test("a tampered session cookie is replaced with a fresh anonymous player", asyn
   const request = await playwright.request.newContext({
     baseURL: baseURL ?? "",
     extraHTTPHeaders: {
-      cookie: "hl_session=00000000-0000-4000-8000-000000000000.forged",
+      cookie: "hl_session=00000000-0000-4000-8000-000000000000.99999999999.forged",
     },
   });
   const response = await request.post("/api/session");
