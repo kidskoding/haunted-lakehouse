@@ -62,11 +62,19 @@ export const loadDuckDB: LoadDatabase = async (onStatus) => {
   onStatus({ phase: "downloading", bytesLoaded: 0, bytesTotal });
   const progress = progressReporter(onStatus, bytesTotal);
   const db = new AsyncDuckDB(new VoidLogger(), new Worker(bundle.mainWorker));
-  await db.instantiate(bundle.mainModule, null, progress.onProgress);
-  progress.instantiating();
-  await db.open({});
-  const version = await db.getVersion();
-  let connection: AsyncDuckDBConnection = await db.connect();
+  let version: string;
+  let connection: AsyncDuckDBConnection;
+  try {
+    await db.instantiate(bundle.mainModule, null, progress.onProgress);
+    progress.instantiating();
+    await db.open({});
+    version = await db.getVersion();
+    connection = await db.connect();
+  } catch (error) {
+    // The host retries a failed load, so a worker left behind here would pile up per attempt.
+    await db.terminate();
+    throw error;
+  }
 
   const database: Database = {
     version,
