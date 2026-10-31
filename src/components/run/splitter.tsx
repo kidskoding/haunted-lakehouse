@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { cx } from "@/components/ui/cx";
 import { keyAction, type PaneSide, type SplitterOrientation } from "./layout";
 
@@ -23,17 +23,17 @@ export interface SplitterProps {
   readonly shareAt: (clientX: number, clientY: number) => number;
   /** A new share. `commit` is false while a drag is still moving. */
   readonly onResize: (value: number, commit: boolean) => void;
-  /** Ends a drag at its last value. */
-  readonly onCommit: () => void;
   readonly onReset: () => void;
+  /** A drag starting or ending. One that ends without a release was cancelled. */
   readonly onDragChange?: (dragging: boolean) => void;
 }
 
 /**
  * A window splitter (WAI-ARIA separator): drag it, or focus it and use the arrows along its
  * axis (Shift for bigger steps), Home and End for the pane's smallest and largest size, and
- * Enter or a double-click to restore the default. At rest it is the one-pixel seam between
- * two panels; its hit area reaches four pixels into each.
+ * Enter or a double-click to restore the default. At rest it is the four-pixel gutter between
+ * two panes; it shows the control line on hover, focus, and drag. Its hit area reaches four
+ * pixels into the pane after it, clear of the scrollbars on a pane's right and bottom edges.
  */
 export function Splitter({
   orientation,
@@ -46,18 +46,20 @@ export function Splitter({
   side,
   shareAt,
   onResize,
-  onCommit,
   onReset,
   onDragChange,
 }: SplitterProps) {
   const [dragging, setDragging] = useState(false);
+  // The pointer driving a drag. A ref rather than state: the browser can deliver the last move
+  // and the release in one task, before React has rendered the drag starting or moving.
+  const dragPointer = useRef<number | null>(null);
   const vertical = orientation === "vertical";
 
   const endDrag = () => {
-    if (!dragging) return;
+    if (dragPointer.current === null) return;
+    dragPointer.current = null;
     setDragging(false);
     onDragChange?.(false);
-    onCommit();
   };
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -66,13 +68,21 @@ export function Splitter({
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     event.currentTarget.focus({ preventScroll: true });
+    dragPointer.current = event.pointerId;
     setDragging(true);
     onDragChange?.(true);
   };
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!dragging) return;
+    if (dragPointer.current !== event.pointerId) return;
     onResize(shareAt(event.clientX, event.clientY), false);
+  };
+
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (dragPointer.current !== event.pointerId) return;
+    // Commit where the pointer let go, not the last rendered move, which may be stale.
+    onResize(shareAt(event.clientX, event.clientY), true);
+    endDrag();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -109,29 +119,20 @@ export function Splitter({
       data-dragging={dragging || undefined}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      // Fires once a drag ends for any reason: release, cancel, or the capture being taken.
+      onPointerUp={handlePointerUp}
+      // Losing the capture without a release is a cancel: the drag ends uncommitted.
       onLostPointerCapture={endDrag}
       onDoubleClick={onReset}
       onKeyDown={handleKeyDown}
       className={cx(
-        "group/splitter relative z-10 touch-none bg-line-faint",
-        // The hit area: invisible, and wider than the seam it belongs to.
+        "relative z-10 touch-none bg-night transition-colors duration-fast",
+        "hover:bg-line-control focus-visible:bg-line-control data-dragging:bg-line-control",
+        // The hit area: the gutter, plus four invisible pixels into the pane after it.
         "before:absolute before:content-['']",
         vertical
-          ? "w-px cursor-col-resize before:inset-y-0 before:-inset-x-1"
-          : "h-px cursor-row-resize before:inset-x-0 before:-inset-y-1",
+          ? "w-1 cursor-col-resize before:inset-y-0 before:left-0 before:-right-1"
+          : "h-1 cursor-row-resize before:inset-x-0 before:top-0 before:-bottom-1",
       )}
-    >
-      {/* The lit line: two pixels, drawn over the seam so nothing shifts. */}
-      <span
-        aria-hidden="true"
-        className={cx(
-          "pointer-events-none absolute opacity-0 transition-[opacity,background-color] duration-fast",
-          vertical ? "inset-y-0 -left-px w-0.5" : "inset-x-0 -top-px h-0.5",
-          "bg-flame group-hover/splitter:opacity-100 group-data-dragging/splitter:opacity-100",
-          "group-focus-visible/splitter:bg-glow group-focus-visible/splitter:opacity-100",
-        )}
-      />
-    </div>
+    />
   );
 }

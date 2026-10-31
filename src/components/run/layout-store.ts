@@ -68,6 +68,9 @@ function save(sizes: RunLayoutSizes) {
   notify();
 }
 
+/** The store behind {@link useSavedLayout}, exposed so it can be tested without a renderer. */
+export const layoutStore = { subscribe, snapshot, save } as const;
+
 /**
  * The player's saved run-screen layout and a setter that remembers it. The server and the
  * hydrating client both render the defaults, so markup always matches; the saved sizes

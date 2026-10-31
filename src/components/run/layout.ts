@@ -50,17 +50,101 @@ function tidy(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+/** The gutter between two panes, which is also their splitter. */
+export const GUTTER_REM = 0.25;
+
 /**
- * The range a pane may take given the others. The DAG and results share the right column
- * with the editor, so each one's ceiling drops as the other grows.
+ * The fewest rems each grid track may shrink to, so every pane stays usable on a short window.
+ * `right` is the right column and `tables` the table browser; the rest are the panes.
  */
-export function paneBounds(sizes: RunLayoutSizes, pane: PaneId): Bounds {
+export const TRACK_FLOOR_REM = {
+  left: 18,
+  right: 36,
+  story: 8,
+  tables: 8,
+  dag: 6,
+  editor: 12,
+  results: 6,
+} as const;
+
+export type Track = keyof typeof TRACK_FLOOR_REM;
+
+/** Each track's floor as a percentage of its region, once the region has been measured. */
+export type TrackFloors = Readonly<Record<Track, number>>;
+
+export const NO_FLOORS: TrackFloors = {
+  left: 0,
+  right: 0,
+  story: 0,
+  tables: 0,
+  dag: 0,
+  editor: 0,
+  results: 0,
+};
+
+/** The measured regions the splitters divide, in CSS pixels. */
+export interface RegionSizes {
+  readonly width: number;
+  readonly leftHeight: number;
+  readonly rightHeight: number;
+}
+
+/**
+ * Converts the rem floors into percentages of the measured regions, so the limits a splitter
+ * offers are sizes the grid can really give. A share is of the region less its gutters, which
+ * is what the grid's `fr` tracks divide. Rounded up, so a pane at its limit is never below its
+ * floor. A region with no size (a hidden one) has no floors.
+ */
+export function trackFloors(regions: RegionSizes, remPx: number): TrackFloors {
+  const share = (track: Track, length: number, gutters: number): number => {
+    const space = length - gutters * GUTTER_REM * remPx;
+    if (!(space > 0) || !(remPx > 0)) return 0;
+    return Math.ceil(((TRACK_FLOOR_REM[track] * remPx) / space) * 1000) / 10;
+  };
+  return {
+    left: share("left", regions.width, 1),
+    right: share("right", regions.width, 1),
+    story: share("story", regions.leftHeight, 1),
+    tables: share("tables", regions.leftHeight, 1),
+    dag: share("dag", regions.rightHeight, 2),
+    editor: share("editor", regions.rightHeight, 2),
+    results: share("results", regions.rightHeight, 2),
+  };
+}
+
+/**
+ * The range a pane may take given the others and the measured floors. The DAG and results
+ * share the right column with the editor, so each one's ceiling drops as the other grows.
+ */
+export function paneBounds(
+  sizes: RunLayoutSizes,
+  pane: PaneId,
+  floors: TrackFloors = NO_FLOORS,
+): Bounds {
   const limits = PANE_LIMITS[pane];
-  if (pane === "dag")
-    return { min: limits.min, max: Math.min(limits.max, 100 - EDITOR_MIN - sizes.results) };
-  if (pane === "results")
-    return { min: limits.min, max: Math.min(limits.max, 100 - EDITOR_MIN - sizes.dag) };
-  return limits;
+  const editorMin = Math.max(EDITOR_MIN, floors.editor);
+  switch (pane) {
+    case "left":
+      return {
+        min: Math.max(limits.min, floors.left),
+        max: Math.min(limits.max, 100 - floors.right),
+      };
+    case "story":
+      return {
+        min: Math.max(limits.min, floors.story),
+        max: Math.min(limits.max, 100 - floors.tables),
+      };
+    case "dag":
+      return {
+        min: Math.max(limits.min, floors.dag),
+        max: Math.min(limits.max, 100 - editorMin - sizes.results),
+      };
+    case "results":
+      return {
+        min: Math.max(limits.min, floors.results),
+        max: Math.min(limits.max, 100 - editorMin - sizes.dag),
+      };
+  }
 }
 
 /** The editor's share of the right column. */
@@ -69,25 +153,29 @@ export function editorShare(sizes: RunLayoutSizes): number {
 }
 
 /** Sets one pane, clamped to what the rest of the layout allows. Non-finite input is ignored. */
-export function setPane(sizes: RunLayoutSizes, pane: PaneId, value: number): RunLayoutSizes {
+export function setPane(
+  sizes: RunLayoutSizes,
+  pane: PaneId,
+  value: number,
+  floors: TrackFloors = NO_FLOORS,
+): RunLayoutSizes {
   if (!Number.isFinite(value)) return sizes;
-  return { ...sizes, [pane]: tidy(clamp(value, paneBounds(sizes, pane))) };
+  return { ...sizes, [pane]: tidy(clamp(value, paneBounds(sizes, pane, floors))) };
 }
 
 /**
- * Brings any combination of sizes into range. The DAG is settled first and the results fit
- * around it; the limits leave room for both at their floors, so this always succeeds.
+ * Brings any combination of sizes into range. The DAG is settled first, leaving the results
+ * room for their floor, and the results fit around it.
  */
-export function clampLayout(sizes: RunLayoutSizes): RunLayoutSizes {
-  const left = tidy(clamp(sizes.left, PANE_LIMITS.left));
-  const story = tidy(clamp(sizes.story, PANE_LIMITS.story));
-  const dag = tidy(clamp(sizes.dag, PANE_LIMITS.dag));
-  const results = tidy(
-    clamp(sizes.results, {
-      min: PANE_LIMITS.results.min,
-      max: Math.min(PANE_LIMITS.results.max, 100 - EDITOR_MIN - dag),
-    }),
-  );
+export function clampLayout(
+  sizes: RunLayoutSizes,
+  floors: TrackFloors = NO_FLOORS,
+): RunLayoutSizes {
+  const left = tidy(clamp(sizes.left, paneBounds(sizes, "left", floors)));
+  const story = tidy(clamp(sizes.story, paneBounds(sizes, "story", floors)));
+  const resultsMin = paneBounds(sizes, "results", floors).min;
+  const dag = tidy(clamp(sizes.dag, paneBounds({ ...sizes, results: resultsMin }, "dag", floors)));
+  const results = tidy(clamp(sizes.results, paneBounds({ ...sizes, dag }, "results", floors)));
   return { left, story, dag, results };
 }
 

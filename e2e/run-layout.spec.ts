@@ -39,6 +39,37 @@ test("renders every pane with real separators and no console errors", async ({ p
   expect(errors).toEqual([]);
 });
 
+test("a splitter is a calm night gutter that shows the control line, never amber", async ({
+  page,
+}) => {
+  await open(page);
+  const column = splitter(page, /story and tables column/);
+  const results = splitter(page, /Resize the results/);
+  const look = (separator: Locator) =>
+    separator.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const box = element.getBoundingClientRect();
+      return { background: style.backgroundColor, width: box.width, height: box.height };
+    });
+  const night = "rgb(10, 14, 24)";
+  const control = "rgb(94, 110, 148)";
+
+  expect(await look(column)).toMatchObject({ background: night, width: 4 });
+  expect(await look(results)).toMatchObject({ background: night, height: 4 });
+
+  // The hit area reaches past the gutter into the pane after it.
+  const box = await column.boundingBox();
+  if (box === null) throw new Error("splitter has no box");
+  await page.mouse.move(box.x + box.width + 3, box.y + box.height / 2);
+  await expect.poll(async () => (await look(column)).background).toBe(control);
+
+  await page.mouse.move(box.x + 300, box.y + box.height / 2);
+  await results.focus();
+  await page.keyboard.press("ArrowUp");
+  await expect.poll(async () => (await look(results)).background).toBe(control);
+  await expect.poll(async () => (await look(column)).background).toBe(night);
+});
+
 test("arrow keys, Home, End, and Enter resize from the keyboard", async ({ page }) => {
   await open(page);
   const column = splitter(page, /story and tables column/);
@@ -92,6 +123,116 @@ test("dragging a splitter resizes its pane, and a double-click resets it", async
 
   await column.dblclick();
   await expect(column).toHaveAttribute("aria-valuenow", "32");
+});
+
+/**
+ * Dispatches pointer events on a splitter in one task, the way Chrome delivers a drag's last
+ * move and its release: nothing renders between them.
+ */
+async function pointerBurst(
+  separator: Locator,
+  events: readonly { readonly type: string; readonly x: number; readonly y: number }[],
+) {
+  await separator.evaluate((element, burst) => {
+    for (const { type, x, y } of burst) {
+      element.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          pointerId: 1,
+          pointerType: "mouse",
+          isPrimary: true,
+          button: 0,
+          buttons: type === "pointerup" ? 0 : 1,
+          clientX: x,
+          clientY: y,
+        }),
+      );
+    }
+  }, events);
+}
+
+test("a drag commits where the pointer lets go, before any move renders", async ({ page }) => {
+  await open(page);
+  const column = splitter(page, /story and tables column/);
+  const box = await column.boundingBox();
+  if (box === null) throw new Error("splitter has no box");
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  const stored = () => page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
+
+  // A flick: press, one move, and release, all before React renders the press.
+  await pointerBurst(column, [
+    { type: "pointerdown", x, y },
+    { type: "pointermove", x: 1440 * 0.45, y },
+    { type: "pointerup", x: 1440 * 0.45, y },
+  ]);
+  await expect(column).toHaveAttribute("aria-valuenow", "45");
+  expect(await stored()).toContain('"left":45');
+
+  // A drag whose last move and release arrive together: the release wins over the stale move.
+  const moved = await column.boundingBox();
+  if (moved === null) throw new Error("splitter has no box");
+  await pointerBurst(column, [
+    { type: "pointerdown", x: moved.x + moved.width / 2, y },
+    { type: "pointermove", x: 1440 * 0.3, y },
+  ]);
+  await expect(column).toHaveAttribute("aria-valuenow", "30");
+  await pointerBurst(column, [
+    { type: "pointermove", x: 1440 * 0.4, y },
+    { type: "pointerup", x: 1440 * 0.4, y },
+  ]);
+  await expect(column).toHaveAttribute("aria-valuenow", "40");
+  expect(await stored()).toContain('"left":40');
+  await expect(column).not.toHaveAttribute("data-dragging");
+});
+
+test("on a short window each separator reports the share its pane really gets", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 650 });
+  await open(page);
+
+  /** The controlled pane's share of its region, less the region's gutters, as the grid lays it out. */
+  const rendered = (separator: Locator) =>
+    separator.evaluate((element) => {
+      const pane = document.getElementById(element.getAttribute("aria-controls") ?? "");
+      const region = element.parentElement;
+      if (pane === null || region === null) return Number.NaN;
+      const vertical = element.getAttribute("aria-orientation") === "vertical";
+      const length = (box: DOMRect) => (vertical ? box.width : box.height);
+      const gutters = region.querySelectorAll(":scope > [role=separator]").length;
+      const space =
+        length(region.getBoundingClientRect()) - gutters * length(element.getBoundingClientRect());
+      return (length(pane.getBoundingClientRect()) / space) * 100;
+    });
+
+  for (const name of [/Resize the story$/, /story and tables column/, /pipeline/, /results/]) {
+    const separator = splitter(page, name);
+    await separator.focus();
+    for (const key of ["End", "Home"]) {
+      await page.keyboard.press(key);
+      await expect
+        .poll(async () => Math.abs((await rendered(separator)) - (await valueOf(separator))))
+        .toBeLessThanOrEqual(1);
+      // The key reached the real limit: the separator offers nothing past it.
+      const limit = await separator.getAttribute(key === "End" ? "aria-valuemax" : "aria-valuemin");
+      await expect(separator).toHaveAttribute("aria-valuenow", String(limit));
+    }
+  }
+
+  // The story's ceiling is the tables' floor, not the 80% a taller window allows.
+  const story = splitter(page, /Resize the story$/);
+  await story.focus();
+  await page.keyboard.press("End");
+  expect(await valueOf(story)).toBeLessThan(80);
+  const tables = await page.getByTestId("run-layout").evaluate((layout) => {
+    const separator = layout.querySelector('[role=separator][aria-label="Resize the story"]');
+    return separator?.nextElementSibling?.getBoundingClientRect().height ?? 0;
+  });
+  expect(tables).toBeGreaterThanOrEqual(127);
+  expect(tables).toBeLessThanOrEqual(130);
 });
 
 test("the layout survives a reload, and bad stored values fall back", async ({ page }) => {

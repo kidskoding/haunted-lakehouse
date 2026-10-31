@@ -6,6 +6,7 @@ import {
   EDITOR_MIN,
   editorShare,
   keyAction,
+  NO_FLOORS,
   PANE_LIMITS,
   paneBounds,
   parseLayout,
@@ -13,6 +14,7 @@ import {
   setPane,
   shareAt,
   STEP,
+  trackFloors,
 } from "./layout";
 
 describe("setPane", () => {
@@ -69,6 +71,36 @@ describe("clampLayout", () => {
       results: 100 - EDITOR_MIN - PANE_LIMITS.dag.max,
     });
     expect(editorShare(fixed)).toBeGreaterThanOrEqual(EDITOR_MIN);
+  });
+});
+
+describe("trackFloors", () => {
+  // A 1280x650 window: the columns span 1280px, and each column is 530px tall.
+  const short = trackFloors({ width: 1280, leftHeight: 530, rightHeight: 530 }, 16);
+
+  it("turns each rem floor into a share of its region less its gutters", () => {
+    expect(short.left).toBe(22.6); // 288 / 1276
+    expect(short.right).toBe(45.2); // 576 / 1276
+    expect(short.tables).toBe(24.4); // 128 / 526
+    expect(short.editor).toBe(36.8); // 192 / 522
+  });
+
+  it("has no floors for a region with no size", () => {
+    expect(trackFloors({ width: 0, leftHeight: 0, rightHeight: 0 }, 16)).toEqual(NO_FLOORS);
+  });
+
+  it("lowers a splitter's limits to what the window can really give", () => {
+    expect(paneBounds(DEFAULT_LAYOUT, "story", short)).toEqual({ min: 25, max: 75.6 });
+    expect(paneBounds(DEFAULT_LAYOUT, "left", short)).toEqual({ min: 22.6, max: 50 });
+    expect(paneBounds(DEFAULT_LAYOUT, "results", short).max).toBe(100 - 36.8 - 24);
+    expect(setPane(DEFAULT_LAYOUT, "story", 80, short).story).toBe(75.6);
+  });
+
+  it("fits a layout saved on a taller window inside the floors", () => {
+    const fitted = clampLayout({ left: 32, story: 80, dag: 42, results: 24 }, short);
+    expect(fitted.story).toBe(75.6);
+    expect(fitted.dag + fitted.results + short.editor).toBeLessThanOrEqual(100);
+    expect(fitted.results).toBeGreaterThanOrEqual(short.results);
   });
 });
 
