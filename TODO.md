@@ -55,7 +55,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [ ] **2.3.2 Visible vs hidden.** Marks batches as visible (preview) or hidden (run-the-night only), and a route handler serves hidden batches only for an active run-the-night attempt.
 
 ### 2.4 Runs and meta-progression
-- [ ] **2.4.1 Run state machine.** Slots, pool draws (respecting prerequisites), candles, boss rules, curses, relic offers and choices, and death. A pure reducer with exhaustive tests.
+- [x] **2.4.1 Run state machine.** Slots, pool draws (respecting prerequisites), candles, boss rules, curses, relic offers and choices, and death. A pure reducer with exhaustive tests.
 - [ ] **2.4.2 Checkpoint validation API.** The client submits gold hashes per checkpoint; the server compares, records the attempt, and updates candles. Returns only the first failing checkpoint.
 - [ ] **2.4.3 Relics v1.** Wren's Lantern, Raven's Feather, Hourglass, Black Cat, and Spare Candle, implemented as engine effects with tests.
 - [ ] **2.4.4 Curses v1.** Possession, Fog, Short Memory, and Darkness, implemented as engine effects with tests.
