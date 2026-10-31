@@ -1,7 +1,7 @@
 import { quoteIdentifier, type DescribedColumn } from "../canonical/sql";
 import type { CompiledModel, CompiledPipeline } from "../pipeline/compile";
 import { BRONZE, BronzeFeed } from "./bronze";
-import { relationName, type SqlConnection } from "./connection";
+import { countRows, relationName, type SqlConnection } from "./connection";
 import { StepFailure, asStepFailure } from "./failure";
 import { hashRelation } from "./gold";
 import { SCRATCH, newBatchRelation, stepModel, type StepScope } from "./materialize";
@@ -24,8 +24,21 @@ const SETTINGS = [
   "SET preserve_insertion_order = true",
   "SET default_order = 'ASC'",
   "SET default_null_order = 'NULLS_LAST'",
-  "SET TimeZone = 'UTC'",
 ];
+
+/**
+ * Sets the session time zone to UTC where there is one. `TimeZone` belongs to the ICU
+ * extension, which native DuckDB ships loaded and DuckDB-WASM does not: there, naming it
+ * would make DuckDB fetch ICU over the network. Without ICU every TIMESTAMPTZ already reads
+ * and prints in UTC, so both engines see the same clock either way.
+ */
+async function setUtc(connection: SqlConnection): Promise<void> {
+  const zoned = await countRows(
+    connection,
+    "(SELECT 1 FROM duckdb_settings() WHERE name = 'TimeZone')",
+  );
+  if (zoned > 0) await connection.run("SET TimeZone = 'UTC'");
+}
 
 export interface ExecutionOptions {
   /** Milliseconds from any fixed origin, for the time limits. Defaults to `performance.now`. */
@@ -106,6 +119,7 @@ export async function* execute(
   const started = now();
 
   for (const statement of SETTINGS) await connection.run(statement);
+  await setUtc(connection);
   for (const schema of [BRONZE, "silver", "gold", SCRATCH]) {
     await connection.run(`CREATE SCHEMA ${quoteIdentifier(schema)}`);
   }
