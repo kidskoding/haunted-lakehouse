@@ -79,7 +79,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [ ] **4.1 Art direction doc.** `docs/art-direction.md`: mood, palette (with contrast-checked tokens), typography (chosen typefaces and scale), iconography, motion principles, sound palette, and a wireframe of every screen. **Stop and ask the repo owner to review before 4.2.**
 - [ ] **4.2 Design tokens.** Colors, type scale, spacing, radii, shadows, and motion durations and easings as Tailwind theme tokens.
 - [ ] **4.3 Core components.** Button, panel, tabs, tooltip, dialog, toast, and kbd hint. Accessible, keyboard-complete, every state designed. A `/dev/components` gallery page covers them (excluded from production).
-- [ ] **4.4 Scene shell.** The chosen scene library mounted behind a React component, with a reduced-motion fallback and a lazy-loaded bundle.
+- [x] **4.4 Scene shell.** The chosen scene library mounted behind a React component, with a reduced-motion fallback and a lazy-loaded bundle.
 - [ ] **4.5 Sound system.** Ambient loop and stings. Muted by default, one-click enable, volume persisted.
 
 ---
