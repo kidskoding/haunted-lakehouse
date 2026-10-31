@@ -95,7 +95,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [ ] **5.3.3 Story panel.** Narrative rendering with typographic polish and character portraits or monograms.
 - [ ] **5.3.4 Table browser.** Bronze sources with schema, row counts, and the batches seen so far.
 - [x] **5.3.5 Pipeline DAG.** Live graph of models, with clickable nodes that open their editor tab.
-- [ ] **5.3.6 Editor.** CodeMirror 6 SQL with schema-aware autocomplete, per-model tabs, materialization picker, format, and shortcuts.
+- [x] **5.3.6 Editor.** CodeMirror 6 SQL with schema-aware autocomplete, per-model tabs, materialization picker, format, and shortcuts.
 - [x] **5.3.7 Results grid.** Virtualized, resizable columns, copy-to-clipboard, and clear error display.
 - [ ] **5.3.8 Relic bar and run buttons.** Relic tooltips and activation, Preview, and Run the night.
 
