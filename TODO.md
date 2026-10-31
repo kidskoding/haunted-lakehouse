@@ -155,7 +155,7 @@ Every puzzle follows the same five steps:
 - [x] **7.3.1** Design doc
 - [x] **7.3.2** Generator
 - [x] **7.3.3** Reference and trap pipelines with tests
-- [ ] **7.3.4** Narrative, including the Act I ending
+- [x] **7.3.4** Narrative, including the Act I ending
 - [ ] **7.3.5** Playtest note
 
 ### 7.4 Act I release
