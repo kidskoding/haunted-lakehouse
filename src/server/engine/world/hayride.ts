@@ -115,11 +115,21 @@ function planRide(rng: Rng, kidIds: readonly string[]): RidePlan {
   return { walkIn, walkOut, boardGate, leaveGate, tapIns, tapOuts, span };
 }
 
-/** The free stretches between a group's busy moments, plus the open ends of the night. */
-function gapsBetween(busy: readonly number[]): Gap[] {
-  const sorted = [...busy].sort((a, b) => a - b);
-  const bounds = [null, ...sorted, null];
-  return bounds.slice(1).map((before, i) => ({ after: bounds[i] ?? null, before }));
+/** A stretch of the night, in night seconds, when a group is already somewhere. */
+type Busy = readonly [start: number, end: number];
+
+/** The free stretches between a group's busy spans, plus the open ends of the night. */
+function gapsBetween(busy: readonly Busy[]): Gap[] {
+  const sorted = [...busy].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const gaps: Gap[] = [];
+  let after: number | null = null;
+  for (const [start, end] of sorted) {
+    // Overlapping or touching spans leave no gap between them.
+    if (after === null || start > after) gaps.push({ after, before: start });
+    after = after === null ? end : Math.max(after, end);
+  }
+  gaps.push({ after, before: null });
+  return gaps;
 }
 
 /**
@@ -141,7 +151,7 @@ function window(gap: Gap, ride: RidePlan): readonly [number, number] | null {
 function placeRide(
   rng: Rng,
   kidIds: readonly string[],
-  busy: readonly number[],
+  busy: readonly Busy[],
   readers: ReadonlyMap<HayrideGate, string>,
 ): TrueTap[] | null {
   const ride = planRide(rng, kidIds);
@@ -195,14 +205,15 @@ export function generateHayrideTaps(
     const rng = townRng(runSeed, `hayride:${groupId}`);
     if (rng.float() >= RIDE_CHANCE) continue;
     const kidIds = members.map((k) => k.kidId).sort();
-    const busy = (scanTimes.get(groupId) ?? []).map((s) => s.nightSecond);
+    const busy: Busy[] = (scanTimes.get(groupId) ?? []).map((s) => [s.nightSecond, s.nightSecond]);
     const rides = rng.float() < SECOND_RIDE_CHANCE ? 2 : 1;
     for (let r = 0; r < rides; r++) {
       const ride = placeRide(rng, kidIds, busy, readers);
       if (!ride) break;
       taps.push(...ride);
-      // A later ride must leave the group time to walk off this one first.
-      busy.push(...ride.map((t) => t.nightSecond));
+      // The whole ride is busy, not just its taps, so a later ride can't start on board.
+      const times = ride.map((t) => t.nightSecond);
+      busy.push([Math.min(...times), Math.max(...times)]);
     }
   }
 

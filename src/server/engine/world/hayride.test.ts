@@ -176,3 +176,15 @@ describe("hayride taps", () => {
     });
   });
 });
+
+describe("groups that ride twice", () => {
+  it("never board again before getting off, across many seeds", () => {
+    for (let i = 0; i < 300; i++) {
+      const { taps } = night(`twice-${String(i)}`);
+      const byKid = Map.groupBy(taps, (t) => t.kidId);
+      for (const kidTaps of byKid.values()) {
+        expect(kidTaps.map((t) => t.direction).join(",")).toMatch(/^(in,out)(,in,out)*$/);
+      }
+    }
+  });
+});
