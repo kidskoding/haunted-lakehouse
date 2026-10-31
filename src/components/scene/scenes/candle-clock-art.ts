@@ -36,6 +36,11 @@ export type FlameState = keyof typeof FLICKER_AMPLITUDE;
 
 export interface CandleClockProps {
   readonly flame: FlameState;
+  /**
+   * Pins the hand to this hour on the 12-hour dial (7.25 is 7:15), sweeping to each new one,
+   * for a clock that follows the night. Absent, the hand walks hour to hour on its own.
+   */
+  readonly hour?: number;
 }
 
 /**
@@ -48,4 +53,13 @@ export function clockHandHour(timeMs: number): number {
   const within = timeMs - step * period;
   const progress = within < REST_MS ? 0 : easeInOut((within - REST_MS) / SWEEP_MS);
   return (START_HOUR + step + progress) % 12;
+}
+
+/**
+ * The hour the hand should sweep to from `from` so it takes the short way round the dial:
+ * forward from 11:50 to 12:10, and back when the clocks fall back from 1:59 to 1:00.
+ */
+export function sweepTarget(from: number, to: number): number {
+  const delta = ((((to - from) % 12) + 18) % 12) - 6;
+  return from + delta;
 }

@@ -100,7 +100,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **5.3.8 Relic bar and run buttons.** Relic tooltips and activation, Preview, and Run the night.
 
 ### 5.4 Moments
-- [ ] **5.4.1 Run the night.** A timeline animation of batches landing, checkpoints passing or cracking, and the clock sweeping. Skippable.
+- [x] **5.4.1 Run the night.** A timeline animation of batches landing, checkpoints passing or cracking, and the clock sweeping. Skippable.
 - [ ] **5.4.2 Hour cleared.** Story beat, then the "What really happened" autopsy card, then the relic choice of two.
 - [ ] **5.4.3 Candle lost.** Guttering animation, a character reaction, and the failing batch revealed.
 - [ ] **5.4.4 Curse intro and boss intro.** Fog overlay and the dimmed boss presentation.
