@@ -1,4 +1,5 @@
 import "server-only";
+import { relicsUsable } from "../curses/limits";
 import type { PuzzleRegistry } from "../registry";
 import { isSlot, slotDefinition, type Act, type Slot } from "../slots";
 import { CHARACTERS, isCharacterId } from "./characters";
@@ -257,7 +258,7 @@ function expectUsable(state: RunState, relic: RelicId): void {
   if (!state.relics.includes(relic)) {
     throw new RunEventError("relic-not-held", `${relic} isn't in hand.`);
   }
-  if (state.hour?.curse === "darkness") {
+  if (!relicsUsable(state)) {
     throw new RunEventError("darkness", "Relics can't be used in the dark.");
   }
 }
