@@ -39,6 +39,7 @@ const bowlHour: Puzzle = {
   retention: 2,
   visibleBatchCount: 10,
   goldTables: ["gold.bowl_weights"],
+  goldColumns: { "gold.bowl_weights": ["house_id", "weight_g"] },
   possessable: [
     { feed: "candy_bowls", column: "weight_g", aliases: ["weight_grams", "wt"], unit: "g" },
     { feed: "candy_bowls", column: "read_at_local", aliases: ["read_at"] },

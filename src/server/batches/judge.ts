@@ -64,7 +64,7 @@ export async function judgeNightAttempt(
     return { ok: false, error: "invalid-attempt" };
   }
 
-  const expected = await expectedHashes(open.data);
+  const expected = await expectedHashes(open.puzzle, open.data);
   const verdict = validateNight(open.data.checkpoints, expected, input.checkpoints);
   const slot = open.hour.slot;
 

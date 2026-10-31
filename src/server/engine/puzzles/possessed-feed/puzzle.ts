@@ -143,6 +143,7 @@ export const possessedFeed: Puzzle = {
   retention: 3,
   visibleBatchCount: HIDDEN_FROM,
   goldTables: [GOLD_TABLE],
+  goldColumns: { [GOLD_TABLE]: ["item", "pieces", "disputed"] },
   // The Fog hides the vague spelling the Mayor quotes, the one clue that some drops can't count.
   symptoms: ["example_vague"],
   generate,

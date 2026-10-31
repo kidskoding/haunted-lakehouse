@@ -82,7 +82,7 @@ describe("judgeNightAttempt", () => {
   it("clears the hour when every hash matches and records hour_cleared", async () => {
     const { player, run, attemptToken } = await openPorchRun(database);
     const data = generatePuzzle(porchLights, "raven-pumpkin-13");
-    const checkpoints = await expectedHashes(data);
+    const checkpoints = await expectedHashes(porchLights, data);
 
     const result = await judgeNightAttempt(database, {
       runId: run.id,
@@ -112,7 +112,7 @@ describe("judgeNightAttempt", () => {
   it("returns only the first failing checkpoint, spends a candle, and keeps the run alive", async () => {
     const { player, run, attemptToken } = await openPorchRun(database);
     const data = generatePuzzle(porchLights, "raven-pumpkin-13");
-    const expected = await expectedHashes(data);
+    const expected = await expectedHashes(porchLights, data);
     const first = data.checkpoints[0];
     if (!first) throw new Error("missing checkpoint");
     const checkpoints = {
@@ -150,7 +150,7 @@ describe("judgeNightAttempt", () => {
     // Intern starts with 4; three prior failures leave one candle for this miss.
     const { player, run, attemptToken } = await openPorchRun(database, 3);
     const data = generatePuzzle(porchLights, "raven-pumpkin-13");
-    const expected = await expectedHashes(data);
+    const expected = await expectedHashes(porchLights, data);
     const first = data.checkpoints[0];
     if (!first) throw new Error("missing checkpoint");
     const checkpoints = {
