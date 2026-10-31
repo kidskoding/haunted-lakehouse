@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { analyzeQuery, type QueryAnalysis } from "./extract-refs";
+import { DuckDBInstance } from "@duckdb/node-api";
+import { analyzeQuery, VOLATILE_FUNCTIONS, type QueryAnalysis } from "./extract-refs";
 import { nativeParser } from "./test-parsers";
 import type { SqlParser } from "./types";
 
@@ -111,6 +112,7 @@ describe("analyzeQuery rejections", () => {
     ["select parquet_metadata('x')", "forbidden_function", 7],
     ["select pg_catalog.pg_typeof(1)", "forbidden_function", 7],
     ["select current_date", "forbidden_function", 7],
+    ["select current_localtimestamp()", "forbidden_function", 7],
     ["select 1 where localtimestamp > '2026-10-31'", "forbidden_function", 15],
     ["select count(*) filter (where random() < 0.5) from silver.a", "forbidden_function", 30],
     ["select row_number() over (order by random())", "forbidden_function", 35],
@@ -132,6 +134,29 @@ describe("analyzeQuery rejections", () => {
     ["select 'héllo 🎃', from from", "syntax_error", 24],
   ])("rejects %j with %s at %j", async (sql, code, at) => {
     expect(await issuesOf(sql)).toEqual([{ code, at }]);
+  });
+
+  it("rejects every function DuckDB marks as varying, except the harmless ones", async () => {
+    // These vary only by session or by raising, never in a model's rows: the catalog and schema
+    // names are fixed by the runtime, `error` aborts the query, and `stats` is a debug string.
+    const harmless = new Set([
+      "current_database",
+      "current_schema",
+      "current_schemas",
+      "in_search_path",
+      "error",
+      "stats",
+    ]);
+    const connection = await (await DuckDBInstance.create(":memory:")).connect();
+    const reader = await connection.runAndReadAll(
+      "select distinct function_name from duckdb_functions() " +
+        "where stability <> 'CONSISTENT' order by 1",
+    );
+    const varying = reader.getRowsJS().map(([name]) => (typeof name === "string" ? name : ""));
+    expect(varying.length).toBeGreaterThan(0);
+    expect(varying.filter((name) => !harmless.has(name) && !VOLATILE_FUNCTIONS.has(name))).toEqual(
+      [],
+    );
   });
 
   it("allows column names that only look like forbidden functions", async () => {

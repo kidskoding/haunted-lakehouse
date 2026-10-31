@@ -25,10 +25,11 @@ export const PIPELINE_SCHEMAS: ReadonlySet<string> = new Set(["bronze", "silver"
 
 /**
  * Functions that would make a model's result change between runs. The runtime contract (2.5)
- * gives the base list; `uuidv4`, `uuidv7`, `current_query`, `getvariable`, and `txid_current`
- * are added because they vary just the same.
+ * gives the base list. The rest are every function DuckDB itself marks as varying, plus the ICU
+ * clock functions and the clock macros, which its catalog does not flag. A test checks this
+ * list against DuckDB's catalog, so a new varying function can't slip through.
  */
-const VOLATILE_FUNCTIONS: ReadonlySet<string> = new Set([
+export const VOLATILE_FUNCTIONS: ReadonlySet<string> = new Set([
   "random",
   "setseed",
   "uuid",
@@ -47,9 +48,17 @@ const VOLATILE_FUNCTIONS: ReadonlySet<string> = new Set([
   "localtime",
   "today",
   "transaction_timestamp",
+  "current_localtimestamp",
+  "current_localtime",
+  "pg_conf_load_time",
+  "pg_postmaster_start_time",
   "current_query",
+  "current_query_id",
+  "current_connection_id",
+  "current_transaction_id",
   "getvariable",
   "txid_current",
+  "write_log",
 ]);
 
 /**
