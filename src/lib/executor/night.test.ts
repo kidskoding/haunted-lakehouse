@@ -211,6 +211,11 @@ describe("Run the night", () => {
     await expect(night(TRAP_FILES, { batches: BATCHES.slice(1) })).rejects.toThrow(/0..B-1/);
   });
 
+  it("rejects a night whose first batch leaves a feed empty", async () => {
+    const silent = [{ index: 0, feeds: { porch_events: [] } }, ...BATCHES.slice(1)];
+    await expect(night(TRAP_FILES, { batches: silent })).rejects.toThrow(/porch_events/);
+  });
+
   it("runs every active model, so a broken leftover breaks the night", async () => {
     const events = eventsOf(
       await night({
