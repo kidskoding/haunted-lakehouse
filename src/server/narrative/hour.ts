@@ -1,7 +1,7 @@
 import "server-only";
 import type { Bindings, Voice } from "./bindings";
 import { renderTemplate, type RenderContext, type Segment } from "./render";
-import type { NarrativePack, Scene } from "./types";
+import type { Callout, NarrativePack, Scene } from "./types";
 import { hollowNamed } from "./wren";
 
 /** The intro the player hears: Old Wren has her own for the hours where she'd think it. */
@@ -16,6 +16,18 @@ export function clearedScene(pack: NarrativePack, bindings: Bindings, voice: Voi
     return pack.clearedIfNone.scene;
   }
   return pack.cleared;
+}
+
+export interface RenderedCallout extends Omit<Callout, "text"> {
+  readonly segments: readonly Segment[];
+}
+
+/** The hour's controls tour, with the run's times and candles in it; empty for most hours. */
+export function renderCallouts(pack: NarrativePack, context: RenderContext): RenderedCallout[] {
+  return (pack.tutorial ?? []).map(({ text, ...callout }) => ({
+    ...callout,
+    segments: renderTemplate(text, context),
+  }));
 }
 
 export interface RenderedAutopsy {

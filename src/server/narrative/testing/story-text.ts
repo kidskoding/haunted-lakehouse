@@ -3,7 +3,7 @@ import type { CharacterId } from "../../engine/run/types";
 import { runBindings, type Bindings, type Voice } from "../bindings";
 import { ending } from "../endings";
 import { CURSE_FLAVOR, RELIC_FLAVOR } from "../flavor";
-import { clearedScene, introScene, renderAutopsy } from "../hour";
+import { clearedScene, introScene, renderAutopsy, renderCallouts } from "../hour";
 import { NARRATIVE_PACKS } from "../packs";
 import { LEDGER_PAGES } from "../pages";
 import { OWNER_LOST_CANDLE, WREN_BOSS_COST, WREN_ONE_LEFT, characterRunStart } from "../reactions";
@@ -80,12 +80,16 @@ export function autopsyTemplates(pack: NarrativePack): string[] {
   return [title, town, tempting, idea, production];
 }
 
+export function calloutTemplates(pack: NarrativePack): string[] {
+  return (pack.tutorial ?? []).map((callout) => callout.text);
+}
+
 /** Every template a pack holds, fog variants included. */
 export function packTemplates(pack: NarrativePack): string[] {
   return packScenes(pack)
     .flat()
     .flatMap((line) => (line.fog === undefined ? [line.text] : [line.text, line.fog]))
-    .concat(autopsyTemplates(pack), pack.epitaphs);
+    .concat(calloutTemplates(pack), autopsyTemplates(pack), pack.epitaphs);
 }
 
 /** The symptoms a pack's lines hold: what the Curse of the Fog would take. */
@@ -114,6 +118,7 @@ export function renderPack(pack: NarrativePack, context: RenderContext): string[
       texts.push(...renderScene(scene, context, voice).map((line) => plainText(line.segments)));
     }
   }
+  texts.push(...renderCallouts(pack, context).map((callout) => plainText(callout.segments)));
   const autopsy = renderAutopsy(pack, context);
   texts.push(
     ...[autopsy.title, autopsy.town, autopsy.tempting, autopsy.idea, autopsy.production].map(
@@ -127,7 +132,7 @@ export function renderPack(pack: NarrativePack, context: RenderContext): string[
 /** A piece of story text, labelled by what kind of thing it is, for the writing-bar checks. */
 export interface StoryString {
   readonly where: string;
-  readonly kind: "beat" | "autopsy" | "ending" | "fixed";
+  readonly kind: "beat" | "callout" | "autopsy" | "ending" | "fixed";
   readonly speaker: Speaker | null;
   readonly source: string;
 }
@@ -147,6 +152,14 @@ export function allStoryStrings(): StoryString[] {
   const strings: StoryString[] = [];
   for (const pack of NARRATIVE_PACKS) {
     strings.push(...fromLines(pack.puzzleId, "beat", packScenes(pack).flat()));
+    strings.push(
+      ...(pack.tutorial ?? []).map((callout) => ({
+        where: `${pack.puzzleId} callout ${callout.id}`,
+        kind: "callout" as const,
+        speaker: null,
+        source: callout.text,
+      })),
+    );
     strings.push(
       ...autopsyTemplates(pack).map((source) => ({
         where: `${pack.puzzleId} autopsy`,
