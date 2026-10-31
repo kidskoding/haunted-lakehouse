@@ -23,10 +23,59 @@
    * also goes in Tailwind's ring-offset slot, so elements with a `shadow-*` utility (whose
    * box-shadow wins over this layer) still get it alongside their own shadow.
    */
-  :focus-visible {
+  :focus-visible,
+  [data-preview-state~="focus"] {
     --tw-ring-offset-shadow: 0 0 0 4px var(--color-night);
     outline: 2px solid var(--color-glow);
     outline-offset: 2px;
-    box-shadow: var(--tw-ring-offset-shadow);
+    box-shadow: var(--tw-ring-offset-shadow); /* taste-skill-ignore: focus, never at rest */
+  }
+}
+
+/*
+ * Interaction variants for controls. Each also answers to `data-preview-state`, so the
+ * /dev/components gallery can pin a specimen in its hover, pressed, or focused state for
+ * review. Hover and press skip disabled and busy controls; disabled ones use `aria-disabled`
+ * and stay focusable so the reason they are disabled can be read in a tooltip.
+ */
+@custom-variant ui-hover {
+  @media (hover: hover) {
+    &:hover:not([aria-disabled="true"], [aria-busy="true"]) {
+      @slot;
+    }
+  }
+  &[data-preview-state~="hover"] {
+    @slot;
+  }
+}
+
+@custom-variant ui-active {
+  &:active:not([aria-disabled="true"], [aria-busy="true"]) {
+    @slot;
+  }
+  &[data-preview-state~="active"] {
+    @slot;
+  }
+}
+
+/* A container that holds the player's focus, such as the panel they are working in. */
+@custom-variant ui-focus-within {
+  &:focus-within {
+    @slot;
+  }
+  &[data-preview-state~="focus-within"] {
+    @slot;
+  }
+}
+
+/* Reduced motion as tokens.css defines it: the OS preference unless the game overrides it. */
+@custom-variant motion-calm {
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-motion="full"]) & {
+      @slot;
+    }
+  }
+  :root[data-motion="reduce"] & {
+    @slot;
   }
 }
