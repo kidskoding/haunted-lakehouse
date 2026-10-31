@@ -42,16 +42,17 @@ describe("byTabOrder", () => {
 
 describe("isDisabledForTab", () => {
   it("treats :disabled and fieldset[disabled] descendants as out of Tab order", () => {
-    expect(isDisabledForTab({ matches: (s: string) => s === ":disabled", closest: () => null })).toBe(
-      true,
-    );
+    const none = null as Element | null;
+    expect(
+      isDisabledForTab({ matches: (s: string) => s === ":disabled", closest: () => none }),
+    ).toBe(true);
     expect(
       isDisabledForTab({
         matches: () => false,
-        closest: (s: string) => (s === "fieldset[disabled]" ? {} : null),
+        closest: (s: string) => (s === "fieldset[disabled]" ? ({} as Element) : none),
       }),
     ).toBe(true);
-    expect(isDisabledForTab({ matches: () => false, closest: () => null })).toBe(false);
+    expect(isDisabledForTab({ matches: () => false, closest: () => none })).toBe(false);
   });
 });
 
