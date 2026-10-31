@@ -41,18 +41,9 @@ describe("byTabOrder", () => {
 });
 
 describe("isDisabledForTab", () => {
-  it("treats :disabled and fieldset[disabled] descendants as out of Tab order", () => {
-    const none = null as Element | null;
-    expect(
-      isDisabledForTab({ matches: (s: string) => s === ":disabled", closest: () => none }),
-    ).toBe(true);
-    expect(
-      isDisabledForTab({
-        matches: () => false,
-        closest: (s: string) => (s === "fieldset[disabled]" ? ({} as Element) : none),
-      }),
-    ).toBe(true);
-    expect(isDisabledForTab({ matches: () => false, closest: () => none })).toBe(false);
+  it("follows :disabled only, so non-form tabindex hosts in a disabled fieldset stay", () => {
+    expect(isDisabledForTab({ matches: (s: string) => s === ":disabled" })).toBe(true);
+    expect(isDisabledForTab({ matches: () => false })).toBe(false);
   });
 });
 

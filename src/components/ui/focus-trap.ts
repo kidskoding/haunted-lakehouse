@@ -37,12 +37,12 @@ export function byTabOrder(a: { tabIndex: number }, b: { tabIndex: number }): nu
   return aRank - bRank;
 }
 
-/** True when the element, or a fieldset that owns it, is disabled and out of the Tab sequence. */
-export function isDisabledForTab(element: {
-  matches: (selectors: string) => boolean;
-  closest: (selectors: string) => Element | null;
-}): boolean {
-  return element.matches(":disabled") || Boolean(element.closest("fieldset[disabled]"));
+/**
+ * True when the control is disabled for Tab. `:disabled` already covers form controls inside
+ * `fieldset[disabled]`; non-form `tabIndex` hosts in such a fieldset stay tabbable per HTML.
+ */
+export function isDisabledForTab(element: { matches: (selectors: string) => boolean }): boolean {
+  return element.matches(":disabled");
 }
 
 /** The elements inside `root` that Tab can reach, in browser Tab order. */
