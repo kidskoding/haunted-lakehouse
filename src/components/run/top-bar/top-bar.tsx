@@ -68,7 +68,7 @@ export interface TopBarProps {
 export function TopBar({ view, className }: TopBarProps) {
   const now = currentSlot(view);
   return (
-    <header
+    <section
       aria-label="The night so far"
       className={cx(
         // The clock holds the centre while the sides have room; at the tightest widths it gives way.
@@ -83,6 +83,6 @@ export function TopBar({ view, className }: TopBarProps) {
         <ActIndicator act={now.act} />
         <SeedButton seed={view.seed} />
       </div>
-    </header>
+    </section>
   );
 }

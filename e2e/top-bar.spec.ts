@@ -85,7 +85,7 @@ test.describe("art-direction widths", () => {
   for (const width of [1280, 1440, 1920] as const) {
     test(`fits one row at ${String(width)}`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
-      const bars = page.locator("header[aria-label='The night so far']");
+      const bars = page.getByRole("region", { name: "The night so far" });
       await expect(bars).toHaveCount(7);
       for (const bar of await bars.all()) {
         const box = await bar.boundingBox();
