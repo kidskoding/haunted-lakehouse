@@ -58,7 +58,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **2.4.1 Run state machine.** Slots, pool draws (respecting prerequisites), candles, boss rules, curses, relic offers and choices, and death. A pure reducer with exhaustive tests.
 - [ ] **2.4.2 Checkpoint validation API.** The client submits gold hashes per checkpoint; the server compares, records the attempt, and updates candles. Returns only the first failing checkpoint.
 - [ ] **2.4.3 Relics v1.** Wren's Lantern, Raven's Feather, Hourglass, Black Cat, and Spare Candle, implemented as engine effects with tests.
-- [ ] **2.4.4 Curses v1.** Possession, Fog, Short Memory, and Darkness, implemented as engine effects with tests.
+- [x] **2.4.4 Curses v1.** Possession, Fog, Short Memory, and Darkness, implemented as engine effects with tests.
 - [ ] **2.4.5 Unlocks.** Act gating, characters, endings, and ledger fragments, persisted per player.
 
 ---
@@ -76,7 +76,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 
 ## 4. Art direction and design system
 
-- [ ] **4.1 Art direction doc.** `docs/art-direction.md`: mood, palette (with contrast-checked tokens), typography (chosen typefaces and scale), iconography, motion principles, sound palette, and a wireframe of every screen. **Stop and ask the repo owner to review before 4.2.**
+- [x] **4.1 Art direction doc.** `docs/art-direction.md`: mood, palette (with contrast-checked tokens), typography (chosen typefaces and scale), iconography, motion principles, sound palette, and a wireframe of every screen. **Stop and ask the repo owner to review before 4.2.**
 - [ ] **4.2 Design tokens.** Colors, type scale, spacing, radii, shadows, and motion durations and easings as Tailwind theme tokens.
 - [ ] **4.3 Core components.** Button, panel, tabs, tooltip, dialog, toast, and kbd hint. Accessible, keyboard-complete, every state designed. A `/dev/components` gallery page covers them (excluded from production).
 - [ ] **4.4 Scene shell.** The chosen scene library mounted behind a React component, with a reduced-motion fallback and a lazy-loaded bundle.
@@ -120,7 +120,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 
 ## 6. Story framework
 
-- [ ] **6.1 Story bible.** `docs/story.md` covers cast voices with sample lines, the full mystery, every ending, the fragment locations, and Wren's dialogue progression. **Stop and ask the repo owner to review.**
+- [x] **6.1 Story bible.** `docs/story.md` covers cast voices with sample lines, the full mystery, every ending, the fragment locations, and Wren's dialogue progression. **Stop and ask the repo owner to review.**
 - [ ] **6.2 Narrative engine.** Story intros, beats, autopsies, and character reactions are templated from the run's actual data, with a test that every puzzle renders with no unfilled placeholders.
 
 ---
