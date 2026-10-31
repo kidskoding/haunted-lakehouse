@@ -86,7 +86,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 
 ## 5. Screens
 
-- [ ] **5.1 Landing.** Hollow Creek at dusk (scene), title, tagline, and an "Enter the night" button. Interactive in under 2s. Includes the Open Graph image.
+- [x] **5.1 Landing.** Hollow Creek at dusk (scene), title, tagline, and an "Enter the night" button. Interactive in under 2s. Includes the Open Graph image.
 - [ ] **5.2 Character select.** Locked and unlocked states, with candle counts and starting relics.
 
 ### 5.3 Run screen
