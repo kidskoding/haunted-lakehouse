@@ -163,7 +163,7 @@ function ensureUnseen(rng: Rng, spellings: Spellings, plan: SpellingPlan) {
 
 /**
  * The text each drop's quantity arrives as from the retype on, keyed by drop id. Mostly a
- * seeded mix by the weights above, then nudged so the possession is visible before the seven
+ * seeded mix by the weights above, then nudged so the possession is visible before the eight
  * o'clock check, a strict cast fails in the retype's own batch, and the hidden batches still
  * hold surprises.
  */

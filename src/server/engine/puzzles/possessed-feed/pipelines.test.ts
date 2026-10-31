@@ -77,7 +77,7 @@ describe("the possessed feed's pipelines", () => {
     NIGHT_TIMEOUT_MS,
   );
 
-  // The retype lands before seven o'clock, and on some seeds before the first look.
+  // The retype lands before eight o'clock, and on some seeds before the first look.
   const traps = SEEDS.flatMap((seed) => [
     { trap: "disputing", project: DISPUTE_UNCAST_TRAP, seed },
     { trap: "dropping", project: DROP_UNCAST_TRAP, seed },
@@ -89,7 +89,7 @@ describe("the possessed feed's pipelines", () => {
       const failure = await play(project, seed);
       if (failure?.kind !== "checkpoint") throw new Error(`Expected a checkpoint failure.`);
       expect(failure.tables).toEqual([GOLD_TABLE]);
-      expect(["first-look", "seven-oclock"]).toContain(failure.checkpointId);
+      expect(["first-look", "eight-oclock"]).toContain(failure.checkpointId);
       expect(failure.checkpointId).toBe(firstTextCheck(seed));
     },
     NIGHT_TIMEOUT_MS,
