@@ -1,17 +1,35 @@
 import type { Metadata } from "next";
-import { ClosedRoom } from "@/components/crypt/closed-room";
+import { Graveyard } from "@/components/crypt/graveyard";
+import {
+  GRAVEYARD_CHARACTERS,
+  GRAVEYARD_HOURS,
+  graveyardFilterFrom,
+  loadGraveyard,
+} from "@/server/crypt/graveyard";
 
 export const metadata: Metadata = {
   title: "The Graveyard",
-  robots: { index: false, follow: false },
+  description: "Recent tombstones from Hollow Creek's Halloween nights, each replayable by seed.",
+  robots: { index: false, follow: true },
 };
 
-/** Where the tombstone wall will stand, until the Graveyard is built. */
-export default function GraveyardPage() {
+interface GraveyardPageProps {
+  readonly searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+/** Recent stones across players. Read per request, since the hill changes with every death. */
+export default async function GraveyardPage({ searchParams }: GraveyardPageProps) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(await searchParams)) {
+    const values = typeof value === "string" ? [value] : (value ?? []);
+    for (const each of values) params.append(key, each);
+  }
+  const filter = graveyardFilterFrom(params);
   return (
-    <ClosedRoom
-      title="The Graveyard gate is chained."
-      line="The stones are up on the hill, but nobody has cut the paths between them yet."
+    <Graveyard
+      filter={filter}
+      options={{ characters: GRAVEYARD_CHARACTERS, hours: GRAVEYARD_HOURS }}
+      page={await loadGraveyard(filter)}
     />
   );
 }

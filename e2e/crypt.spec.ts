@@ -3,7 +3,7 @@ import { collectConsoleErrors } from "./console-errors";
 
 const ROOMS = [
   { name: "The Codex", path: "/crypt/codex" },
-  { name: "The Graveyard", path: "/crypt/graveyard", title: "The Graveyard gate is chained." },
+  { name: "The Graveyard", path: "/crypt/graveyard" },
   { name: "The Ledger", path: "/crypt/ledger" },
   { name: "Characters", path: "/crypt/characters" },
   { name: "The Daily Haunt", path: "/crypt/daily", title: "Today’s haunt isn’t posted." },
