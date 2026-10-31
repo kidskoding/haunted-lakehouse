@@ -621,8 +621,8 @@ from {{ new_batch('scans') }}`,
         2,
       ),
     (result) => {
-      // The failing cast is the executor's own, so DuckDB's position points into executor SQL
-      // and the error carries no line or column in the model.
+      // The failing cast is the executor's own: its SQL stays out of the message, and the
+      // error carries no line or column, since there is no place in the model to point at.
       expect(result).toEqual({
         completed: [0],
         error: {
@@ -630,11 +630,12 @@ from {{ new_batch('scans') }}`,
           batch: 1,
           model: "silver.seen",
           phase: "step",
-          message: expect.stringMatching(
-            /^Conversion Error: Could not convert string 'two' to INT64 when casting from source column n\b/,
-          ) as unknown,
+          message:
+            "Conversion Error: Could not convert string 'two' to INT64 when casting from source column n",
         },
       });
+      const message = result.error?.message ?? "";
+      expect(message).not.toMatch(/__hl|LINE|\^/);
     },
   ),
 

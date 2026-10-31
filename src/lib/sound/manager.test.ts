@@ -156,6 +156,7 @@ describe("sound manager", () => {
   it("starts off, with no audio context, until the player turns sound on", () => {
     const { env, state } = fakeEnvironment();
     const manager = createSoundManager(env);
+    expect(manager.snapshot.status).toBe("loading");
     manager.start();
     expect(manager.snapshot).toMatchObject({ status: "off", muted: true });
     expect(state.contexts).toHaveLength(0);
