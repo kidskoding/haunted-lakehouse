@@ -1,4 +1,5 @@
 import "server-only";
+import { revealBatch } from "../../../lib/executor/reveal";
 import type { Batch, PuzzleData } from "../puzzle";
 
 /**
@@ -26,4 +27,19 @@ export function isBatchVisible(index: number, visibleBatchCount: number): boolea
 export function visibleBatches(data: PuzzleData, visibleBatchCount: number): readonly Batch[] {
   assertVisibleBatchCount(data, visibleBatchCount);
   return data.batches.slice(0, visibleBatchCount);
+}
+
+/**
+ * The batch indices the player can query now: the first `visibleBatchCount`, plus the batch
+ * each failed night revealed. Folding through `revealBatch` keeps this equal to the client's.
+ */
+export function visibleIndices(
+  data: PuzzleData,
+  visibleBatchCount: number,
+  revealed: readonly number[],
+): readonly number[] {
+  return revealed.reduce<readonly number[]>(
+    (visible, revealedBatch) => revealBatch(data.batches, visible, { revealedBatch }),
+    visibleBatches(data, visibleBatchCount).map((batch) => batch.index),
+  );
 }

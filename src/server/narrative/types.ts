@@ -1,6 +1,8 @@
 import "server-only";
 
-export type Speaker = "mayor" | "wren" | "marisol" | "thorne" | "moribund" | "narrator";
+import type { Speaker } from "../../lib/story/types";
+
+export type { Speaker };
 
 /** The cast members who can answer for an hour. */
 export type HourOwner = "mayor" | "wren" | "marisol" | "thorne";
