@@ -32,7 +32,7 @@ function arbitraryEvent(rng: Rng): RunEvent {
       curse: rng.pick([null, ...CURSES]),
     },
     { kind: "pool_exhausted", slot },
-    { kind: "attempt_failed", slot, checkpointId: "early" },
+    { kind: "attempt_failed", slot, checkpointId: "early", revealedBatch: 0 },
     { kind: "hour_cleared", slot },
     { kind: "hour_skipped", slot },
     { kind: "relic_offered", relics: RELICS.filter(() => rng.float() < 0.5) },
@@ -56,7 +56,8 @@ function legalMove(state: RunState, rng: Rng): RunEvent {
   }
   const usable = state.hour?.curse === "darkness" ? [] : state.relics;
   const roll = rng.float();
-  if (roll < 0.25) return { kind: "attempt_failed", slot: state.slot, checkpointId: "late" };
+  if (roll < 0.25)
+    return { kind: "attempt_failed", slot: state.slot, checkpointId: "late", revealedBatch: 2 };
   if (roll < 0.35 && usable.includes("black-cat") && !slotDefinition(state.slot).boss) {
     return { kind: "hour_skipped", slot: state.slot };
   }

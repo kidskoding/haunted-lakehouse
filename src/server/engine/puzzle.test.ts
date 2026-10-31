@@ -15,6 +15,29 @@ describe("validatePuzzleData", () => {
     expect(validatePuzzleData(puzzle, valid)).toEqual([]);
   });
 
+  it("checks that the replay batch is one of the hour's batches", () => {
+    expect(validatePuzzleData(fakePuzzle({ replayBatch: 1 }), valid)).toEqual([]);
+    expect(validatePuzzleData(fakePuzzle({ replayBatch: 3 }), valid)).toEqual([
+      "The replay batch 3 does not exist.",
+    ]);
+  });
+
+  it("requires gold table names in lowercase, as the pipeline names its models", () => {
+    const mixed = fakePuzzle({
+      goldTables: ["gold.Totals"],
+      goldColumns: { "gold.Totals": ["total"] },
+    });
+    const expected = Object.fromEntries(
+      Object.entries(valid.expected).map(([id, tables]) => [
+        id,
+        { "gold.Totals": tables["gold.totals"] ?? [] },
+      ]),
+    );
+    expect(validatePuzzleData(mixed, { ...valid, expected })).toEqual([
+      "Gold table gold.Totals must be lowercase, as the pipeline names it gold.totals.",
+    ]);
+  });
+
   it.each<[string, (data: PuzzleData) => PuzzleData, RegExp]>([
     ["no batches", (d) => ({ ...d, batches: [], checkpoints: [] }), /no batches/],
     [

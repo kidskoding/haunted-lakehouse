@@ -72,6 +72,8 @@ export interface Puzzle {
    * one batch hidden so the night can surprise them.
    */
   readonly visibleBatchCount: number;
+  /** The batch the night runs twice to check that gold doesn't flinch (Act III). Absent: none. */
+  readonly replayBatch?: number;
   /** The gold tables the player must build, which checkpoints compare. */
   readonly goldTables: readonly string[];
   /**
@@ -112,6 +114,20 @@ export function validatePuzzleData(puzzle: Puzzle, data: PuzzleData): string[] {
     problems.push(
       `Between 1 and ${String(batches.length - 1)} batches must be visible before the night, not ${String(visibleBatchCount)}.`,
     );
+  }
+
+  const { replayBatch } = puzzle;
+  if (replayBatch !== undefined && !batches.some((batch) => batch.index === replayBatch)) {
+    problems.push(`The replay batch ${String(replayBatch)} does not exist.`);
+  }
+
+  // Pipeline model ids are lowercase, so hashes for a mixed-case name could never match.
+  for (const table of puzzle.goldTables) {
+    if (table !== table.toLowerCase()) {
+      problems.push(
+        `Gold table ${table} must be lowercase, as the pipeline names it ${table.toLowerCase()}.`,
+      );
+    }
   }
 
   for (const table of puzzle.goldTables) {
