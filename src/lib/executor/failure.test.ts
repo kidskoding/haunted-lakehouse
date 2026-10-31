@@ -52,4 +52,12 @@ describe("asStepFailure", () => {
     expect(asStepFailure(failure)).toBe(failure);
     expect(asStepFailure("boom")).toMatchObject({ code: "sql", message: "boom" });
   });
+
+  it("drops the location trailer of an error raised by the executor's own SQL", () => {
+    const failure = asStepFailure(
+      new Error('Conversion Error: oops\n\nLINE 1: CREATE TABLE "__hl"."staged" AS x\n        ^'),
+    );
+    expect(failure).toMatchObject({ code: "sql", message: "Conversion Error: oops" });
+    expect(failure.position).toBeUndefined();
+  });
 });

@@ -17,7 +17,8 @@ const KINDS = new Set<RunEventKind>([
 
 /**
  * Rebuilds a {@link RunEvent} from a stored `run_events` row. The kind lives in its own
- * column; everything else is the JSON payload.
+ * column; everything else is the JSON payload. An `attempt_failed` stored before reveals
+ * were recorded reads as revealing nothing, which is what the server served then.
  */
 export function eventFromRow(kind: string, payload: unknown): RunEvent {
   if (!KINDS.has(kind as RunEventKind)) {
@@ -28,6 +29,14 @@ export function eventFromRow(kind: string, payload: unknown): RunEvent {
   }
   if ("kind" in payload) {
     throw new Error(`Run event ${kind} payload must not repeat the kind.`);
+  }
+  if (kind === "attempt_failed") {
+    const revealedBatch = "revealedBatch" in payload ? payload.revealedBatch : null;
+    return {
+      kind,
+      ...payload,
+      revealedBatch: Number.isInteger(revealedBatch) ? revealedBatch : null,
+    } as RunEvent;
   }
   return { kind, ...payload } as RunEvent;
 }

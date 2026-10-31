@@ -8,6 +8,8 @@ import { FEED, GOLD_TABLE, HIDDEN_FROM, possessedFeed } from "./puzzle";
 
 const SEEDS = Array.from({ length: 20 }, (_, i) => `seed-${String(i)}`);
 const SIZE_BUDGET = 1_000_000;
+// The autopsy promises the retype breaks a strict cast at once, so that holds on far more seeds.
+const RETYPE_SEEDS = 120;
 
 // Written from the design doc's rules, independently of the generator's spellings module.
 const ITEM_NAMES = new Set(["candle", "fog juice", "cobweb", "lantern", "skeleton", "glow stick"]);
@@ -32,6 +34,10 @@ function readQuantity(value: Cell): number | null {
   if (word >= 0) return word + 1;
   return DOZENS[text] ?? null;
 }
+
+/** A count the rules can read but a strict cast can't: units, words, or dozens. */
+const isTricky = (value: Cell) =>
+  typeof value === "string" && !/^\d+$/.test(value) && readQuantity(value) !== null;
 
 /** What a hurried `try_cast(... as integer)` makes of a value. */
 function castQuantity(value: Cell): number | null {
@@ -159,8 +165,6 @@ describe("the possessed feed", () => {
   });
 
   it("possesses values that can be read and values that can't, before seven and after dark", () => {
-    const isTricky = (value: Cell) =>
-      typeof value === "string" && !/^\d+$/.test(value) && readQuantity(value) !== null;
     for (const { data } of allData) {
       const quantities = (from: number, to: number) =>
         data.batches
@@ -196,6 +200,23 @@ describe("the possessed feed", () => {
       expect(sorted(tally(rows, castQuantity, true))).not.toEqual(expected);
     }
   });
+
+  it("breaks a strict cast at the first check after the text arrives, on every seed", () => {
+    for (let i = 0; i < RETYPE_SEEDS; i++) {
+      const seed = `retype-seed-${String(i)}`;
+      const data = generatePuzzle(possessedFeed, seed);
+      const retyped = firstBatchOf(data, "retyped");
+      const quantities = (data.batches[retyped]?.feeds[FEED] ?? []).map((r) => placed(r).quantity);
+      expect(quantities.some(isTricky), `${seed}'s retype batch`).toBe(true);
+
+      const check = data.checkpoints.find((c) => c.afterBatch >= retyped);
+      if (!check) throw new Error("No check follows the retype.");
+      const expected = sorted(data.expected[check.id]?.[GOLD_TABLE] ?? []);
+      const rows = rowsThrough(data, check.afterBatch);
+      expect(sorted(tally(rows, castQuantity, false))).not.toEqual(expected);
+      expect(sorted(tally(rows, castQuantity, true))).not.toEqual(expected);
+    }
+  }, 30_000);
 
   it("drops only at real houses, with candles only where there is a jack-o'-lantern", () => {
     for (const { seed, data } of allData) {

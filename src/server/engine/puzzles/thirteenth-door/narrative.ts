@@ -5,8 +5,8 @@ import type { House } from "../../world/houses";
 import type { Night } from "../../world/night";
 import type { CursedStreetRow } from "./cursed";
 
-/** "Lantern Row", "Lantern Row and Wick Street", "A, B, and C". */
-function listOf(items: readonly string[]): string {
+/** Tied streets as the story names them: "A", "A and B", "A, B, and C". */
+export function streetList(items: readonly string[]): string {
   if (items.length <= 2) return items.join(" and ");
   return `${items.slice(0, -1).join(", ")}, and ${items.at(-1) ?? ""}`;
 }
@@ -38,7 +38,7 @@ export function narrativeBindings(
     bags_sold: bagsSold,
     scans_before_bell: night.doorScans.filter((s) => s.nightSecond < CURSE_BELL).length,
     cursed_count: cursed.length,
-    cursed_street: listOf(streets),
+    cursed_street: streetList(streets),
     cursed_on_street: answer[0]?.cursed_houses ?? 0,
     cursed_household: first?.household ?? "",
   };
