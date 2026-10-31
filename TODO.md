@@ -136,7 +136,7 @@ Every puzzle follows the same five steps:
 
 ### 7.1 Porch Lights (6:00pm, ★, tutorial)
 *The Mayor wants to know how many houses are welcoming trick-or-treaters at each checkpoint. Porch-light sensors report changes, not states, and a few go silent. The tutorial teaches the editor, models, preview, and running the night. Trap: counting lights that were ever switched on.*
-- [ ] **7.1.1** Design doc
+- [x] **7.1.1** Design doc
 - [ ] **7.1.2** Generator
 - [ ] **7.1.3** Reference and trap pipelines with tests
 - [ ] **7.1.4** Narrative, including tutorial callouts
