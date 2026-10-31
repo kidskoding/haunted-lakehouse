@@ -5,6 +5,7 @@ import { fakePuzzle } from "../testing/fake-puzzle";
 import { bowlReadingRows, generateCandyBowls, type BowlReading } from "../world/candy-bowls";
 import { generateDoorScans } from "../world/door-scans";
 import { generateHouses } from "../world/houses";
+import { generatePorchLights } from "../world/porch-lights";
 import { NIGHT_SECONDS } from "../world/night-clock";
 import { generateTrickOrTreaters } from "../world/trick-or-treaters";
 import { generateHour } from "./apply";
@@ -44,7 +45,8 @@ const bowlHour: Puzzle = {
   generate({ runSeed }): PuzzleData {
     const houses = generateHouses(runSeed);
     const scans = generateDoorScans(runSeed, houses, generateTrickOrTreaters(runSeed, houses));
-    const { readings } = generateCandyBowls(runSeed, houses, scans);
+    const { lights } = generatePorchLights(runSeed, houses, scans);
+    const { readings } = generateCandyBowls(runSeed, houses, scans, lights);
     const count = NIGHT_SECONDS / HALF_HOUR;
     const landsAt = (index: number) => (index + 1) * HALF_HOUR;
     // A reading lands with the first batch at or after it.
