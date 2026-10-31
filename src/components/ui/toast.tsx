@@ -188,10 +188,35 @@ function TimedToast({
 }
 
 /**
- * Where toasts appear: bottom right, newest at the bottom. Two live regions are always in the
- * page, so screen readers hear each toast as it is added: errors through `role="alert"`, the
- * rest through `role="status"`. When a focused toast is dismissed, focus moves to the next
- * toast, or back to where it was before the player tabbed into the toasts.
+ * Speaks the shown toasts of some tones. It stays in the page while empty, so screen readers
+ * are already watching it when a toast arrives, and only additions are read, so a new toast
+ * doesn't repeat the ones before it.
+ */
+function Announcer({
+  role,
+  toasts,
+}: {
+  readonly role: "status" | "alert";
+  readonly toasts: readonly Toast[];
+}) {
+  return (
+    <div role={role} aria-atomic="false" aria-relevant="additions" className="sr-only">
+      {toasts.map((toast) => (
+        <p key={toast.id}>
+          {`${tones[toast.tone].word}: ${toast.title}.`}
+          {toast.description ? ` ${toast.description}` : null}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Where toasts appear: bottom right, in queue order with the newest at the bottom, whatever the
+ * tone. The visible stack isn't live: two always-present, visually hidden regions announce each
+ * toast as it appears, errors through `role="alert"` and the rest through `role="status"`, so
+ * how a toast is spoken never decides where it sits. When a focused toast is dismissed, focus
+ * moves to the next toast, or back to where it was before the player tabbed into the toasts.
  */
 export function ToastViewport({ className }: { readonly className?: string }) {
   const { queue, dismiss } = useToastContext("ToastViewport");
@@ -212,19 +237,6 @@ export function ToastViewport({ className }: { readonly className?: string }) {
     });
   };
 
-  const list = (tones: readonly ToastTone[]) =>
-    shown
-      .filter((toast) => tones.includes(toast.tone))
-      .map((toast) => (
-        <TimedToast
-          key={toast.id}
-          toast={toast}
-          onDismiss={() => {
-            dismissAndRefocus(toast.id);
-          }}
-        />
-      ));
-
   return (
     <section
       ref={regionRef}
@@ -241,12 +253,17 @@ export function ToastViewport({ className }: { readonly className?: string }) {
         }
       }}
     >
-      <div role="status" className="flex flex-col gap-2">
-        {list(["info", "success", "warning"])}
-      </div>
-      <div role="alert" className="flex flex-col gap-2">
-        {list(["error"])}
-      </div>
+      <Announcer role="status" toasts={shown.filter((toast) => toast.tone !== "error")} />
+      <Announcer role="alert" toasts={shown.filter((toast) => toast.tone === "error")} />
+      {shown.map((toast) => (
+        <TimedToast
+          key={toast.id}
+          toast={toast}
+          onDismiss={() => {
+            dismissAndRefocus(toast.id);
+          }}
+        />
+      ))}
     </section>
   );
 }

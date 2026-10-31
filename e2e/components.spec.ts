@@ -291,6 +291,24 @@ test.describe("toast", () => {
     await expect(dismiss).toHaveCount(1);
   });
 
+  test("stacks toasts oldest first, whatever their tone", async ({ page }) => {
+    const live = specimen(page, "Live");
+    const region = toasts(page);
+    await live.getByRole("button", { name: "Show an error" }).click();
+    await live.getByRole("button", { name: "Show a notice" }).click();
+
+    const top = async (title: string) => {
+      const box = await region.getByText(title, { exact: true }).boundingBox();
+      if (!box) throw new Error(`"${title}" is not on screen.`);
+      return box.y;
+    };
+    expect(await top("The night couldn't run")).toBeLessThan(await top("The engine is warm"));
+
+    // Each toast is still spoken once, in its tone's live region.
+    await expect(region.getByRole("alert")).toHaveText(/^Error: The night couldn't run\./);
+    await expect(region.getByRole("status")).toHaveText(/^Notice: The engine is warm\./);
+  });
+
   test("errors stay until dismissed; notices fade on their own", async ({ page }) => {
     await page.clock.install();
     await page.reload();
