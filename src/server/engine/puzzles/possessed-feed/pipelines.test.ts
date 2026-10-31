@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { judgeNight, runNight } from "../../../../lib/executor/night";
 import { compileProject, nativeConnection } from "../../../../lib/executor/test-connection";
 import { expectedHashes } from "../../../batches/expected";
+import { SHORT_MEMORY_RETENTION } from "../../curses/limits";
 import { generatePuzzle } from "../../registry";
 import { DISPUTE_UNCAST_TRAP, DROP_UNCAST_TRAP, REFERENCE, type Project } from "./pipelines";
 import { FEED, GOLD_TABLE, possessedFeed } from "./puzzle";
@@ -12,7 +13,21 @@ const SEEDS = Array.from({ length: 20 }, (_, i) => `seed-${String(i)}`);
 // The last upload: the hidden spellings and the reorder have both landed by then.
 const REPLAYED_BATCH = 8;
 
-async function play(project: Project, seed: string, replayBatch: number | null = null) {
+/** The first check after the quantities arrive as text, which the autopsy says a cast fails. */
+function firstTextCheck(seed: string): string | undefined {
+  const data = generatePuzzle(possessedFeed, seed);
+  const retyped = data.batches.findIndex((batch) =>
+    (batch.feeds[FEED] ?? []).some((row) => typeof row.quantity === "string"),
+  );
+  return data.checkpoints.find((c) => c.afterBatch >= retyped)?.id;
+}
+
+async function play(
+  project: Project,
+  seed: string,
+  replayBatch: number | null = null,
+  retention = possessedFeed.retention,
+) {
   const data = generatePuzzle(possessedFeed, seed);
   const expected = await expectedHashes(possessedFeed, data);
   const result = await runNight(
@@ -21,7 +36,7 @@ async function play(project: Project, seed: string, replayBatch: number | null =
       pipeline: await compileProject(project, [FEED]),
       batches: data.batches,
       checkpoints: data.checkpoints,
-      retention: possessedFeed.retention,
+      retention,
       goldTables: possessedFeed.goldTables,
       replayBatch,
     },
@@ -40,19 +55,28 @@ describe("the possessed feed's pipelines", () => {
     NIGHT_TIMEOUT_MS,
   );
 
-  // Every spelling kind has landed by seven o'clock; on some seeds the retype beats the first look.
+  it.each(SEEDS)(
+    "the reference survives the Curse of Short Memory (%s)",
+    async (seed) => {
+      expect(await play(REFERENCE, seed, null, SHORT_MEMORY_RETENTION)).toBeNull();
+    },
+    NIGHT_TIMEOUT_MS,
+  );
+
+  // The retype lands before seven o'clock, and on some seeds before the first look.
   const traps = SEEDS.flatMap((seed) => [
     { trap: "disputing", project: DISPUTE_UNCAST_TRAP, seed },
     { trap: "dropping", project: DROP_UNCAST_TRAP, seed },
   ]);
 
   it.each(traps)(
-    "$trap whatever a strict cast can't read breaks by seven o'clock ($seed)",
+    "$trap whatever a strict cast can't read breaks at the first check after the text ($seed)",
     async ({ project, seed }) => {
       const failure = await play(project, seed);
       if (failure?.kind !== "checkpoint") throw new Error(`Expected a checkpoint failure.`);
       expect(failure.tables).toEqual([GOLD_TABLE]);
       expect(["first-look", "seven-oclock"]).toContain(failure.checkpointId);
+      expect(failure.checkpointId).toBe(firstTextCheck(seed));
     },
     NIGHT_TIMEOUT_MS,
   );
