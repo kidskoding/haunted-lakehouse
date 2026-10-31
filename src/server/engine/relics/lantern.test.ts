@@ -129,6 +129,36 @@ describe("schemaHistory", () => {
     ]);
   });
 
+  it("keeps a retyped column's new type for the rest of the night", () => {
+    const history = schemaHistory(
+      nightOf([
+        ...[0, 1, 2].map((id) => [{ id, grams: 12 }]),
+        ...[3, 4, 5, 6].map((id) => [{ id, grams: "12 g" }]),
+      ]),
+      "readings",
+    );
+    expect(history.versions).toEqual([
+      {
+        fromBatch: 0,
+        arrivesAt: "18:00",
+        columns: [
+          { name: "id", type: "number" },
+          { name: "grams", type: "number" },
+        ],
+        changes: [],
+      },
+      {
+        fromBatch: 3,
+        arrivesAt: "18:03",
+        columns: [
+          { name: "id", type: "number" },
+          { name: "grams", type: "text" },
+        ],
+        changes: [{ kind: "retyped", column: "grams", from: "number", to: "text" }],
+      },
+    ]);
+  });
+
   it("treats nulls as fitting any type, and settles a type once a value shows it", () => {
     const history = schemaHistory(
       nightOf([

@@ -77,12 +77,17 @@ function shapeOf(rows: readonly Row[]): Column[] {
   return [...types].map(([name, type]) => ({ name, type }));
 }
 
-/** Gives each column the type the other shape knew for it, where this one saw only nulls. */
+/**
+ * Gives each column the type the other shape knew for it, where this one saw only nulls. A
+ * column this shape saw values for keeps its own type: folding in the other shape's would
+ * turn a retyped column into `mixed`, and every later batch of the new type into another
+ * retype.
+ */
 function refine(columns: readonly Column[], known: readonly Column[]): Column[] {
   const types = new Map(known.map(({ name, type }) => [name, type]));
   return columns.map(({ name, type }) => ({
     name,
-    type: combine(type, types.get(name) ?? "unknown"),
+    type: type === "unknown" ? (types.get(name) ?? "unknown") : type,
   }));
 }
 
