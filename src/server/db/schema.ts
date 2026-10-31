@@ -1,6 +1,7 @@
 import {
   bigint,
   date,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -56,6 +57,8 @@ export const runs = pgTable(
   (t) => [
     index("runs_player_id_idx").on(t.playerId),
     unique("runs_player_daily_date_key").on(t.playerId, t.dailyDate),
+    // Target of daily_results' composite foreign key.
+    unique("runs_id_player_daily_date_key").on(t.id, t.playerId, t.dailyDate),
   ],
 );
 
@@ -112,16 +115,20 @@ export const dailyResults = pgTable(
     playerId: uuid("player_id")
       .notNull()
       .references(() => players.id, { onDelete: "cascade" }),
-    runId: uuid("run_id")
-      .notNull()
-      .unique()
-      .references(() => runs.id, { onDelete: "cascade" }),
+    runId: uuid("run_id").notNull().unique(),
     slotsCleared: smallint("slots_cleared").notNull(),
     candlesLeft: smallint("candles_left").notNull(),
     createdAt: createdAt(),
   },
   (t) => [
     primaryKey({ columns: [t.dailyDate, t.playerId] }),
+    // A result must come from this player's own Daily Haunt run for this date. Non-daily
+    // runs have a null daily_date, so they can never match.
+    foreignKey({
+      name: "daily_results_run_fk",
+      columns: [t.runId, t.playerId, t.dailyDate],
+      foreignColumns: [runs.id, runs.playerId, runs.dailyDate],
+    }).onDelete("cascade"),
     index("daily_results_leaderboard_idx").on(
       t.dailyDate,
       t.slotsCleared.desc(),

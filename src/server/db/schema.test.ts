@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 import * as schema from "./schema";
-import { fragments, players, runEvents, runs, unlocks } from "./schema";
+import { dailyResults, fragments, players, runEvents, runs, unlocks } from "./schema";
 
 // The committed migrations are applied to an in-process Postgres, so these tests fail if
 // the schema and the migrations drift apart.
@@ -65,6 +65,36 @@ describe("database schema", () => {
     await newRun(db, player.id);
     await newRun(db, player.id, "2026-10-31");
     await expect(newRun(db, player.id, "2026-10-31")).rejects.toThrow();
+  });
+
+  it("records a daily result only for the player's own Daily Haunt run on that date", async () => {
+    const player = await newPlayer(db);
+    const other = await newPlayer(db);
+    const daily = await newRun(db, player.id, "2026-10-31");
+    const normal = await newRun(db, player.id);
+    const result = { slotsCleared: 3, candlesLeft: 1 };
+
+    await expect(
+      db
+        .insert(dailyResults)
+        .values({ ...result, dailyDate: "2026-10-31", playerId: other.id, runId: daily.id }),
+    ).rejects.toThrow();
+    await expect(
+      db
+        .insert(dailyResults)
+        .values({ ...result, dailyDate: "2026-11-01", playerId: player.id, runId: daily.id }),
+    ).rejects.toThrow();
+    await expect(
+      db
+        .insert(dailyResults)
+        .values({ ...result, dailyDate: "2026-10-31", playerId: player.id, runId: normal.id }),
+    ).rejects.toThrow();
+    await db
+      .insert(dailyResults)
+      .values({ ...result, dailyDate: "2026-10-31", playerId: player.id, runId: daily.id });
+
+    await db.delete(runs).where(eq(runs.id, daily.id));
+    expect(await db.select().from(dailyResults)).toHaveLength(0);
   });
 
   it("orders run events by a sequence number that is unique within a run", async () => {

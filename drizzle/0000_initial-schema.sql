@@ -47,7 +47,8 @@ CREATE TABLE "runs" (
 	"daily_date" date,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"ended_at" timestamp with time zone,
-	CONSTRAINT "runs_player_daily_date_key" UNIQUE("player_id","daily_date")
+	CONSTRAINT "runs_player_daily_date_key" UNIQUE("player_id","daily_date"),
+	CONSTRAINT "runs_id_player_daily_date_key" UNIQUE("id","player_id","daily_date")
 );
 --> statement-breakpoint
 CREATE TABLE "unlocks" (
@@ -59,7 +60,7 @@ CREATE TABLE "unlocks" (
 );
 --> statement-breakpoint
 ALTER TABLE "daily_results" ADD CONSTRAINT "daily_results_player_id_players_id_fk" FOREIGN KEY ("player_id") REFERENCES "public"."players"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "daily_results" ADD CONSTRAINT "daily_results_run_id_runs_id_fk" FOREIGN KEY ("run_id") REFERENCES "public"."runs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "daily_results" ADD CONSTRAINT "daily_results_run_fk" FOREIGN KEY ("run_id","player_id","daily_date") REFERENCES "public"."runs"("id","player_id","daily_date") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "fragments" ADD CONSTRAINT "fragments_player_id_players_id_fk" FOREIGN KEY ("player_id") REFERENCES "public"."players"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "fragments" ADD CONSTRAINT "fragments_run_id_runs_id_fk" FOREIGN KEY ("run_id") REFERENCES "public"."runs"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "run_events" ADD CONSTRAINT "run_events_run_id_runs_id_fk" FOREIGN KEY ("run_id") REFERENCES "public"."runs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

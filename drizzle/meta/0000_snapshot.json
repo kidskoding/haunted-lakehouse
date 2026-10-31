@@ -1,5 +1,5 @@
 {
-  "id": "ea040ca1-2946-4b5d-8886-8a31cb0f4082",
+  "id": "6b289dd0-5a6e-4228-b401-973aecbd67e2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -89,15 +89,19 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "daily_results_run_id_runs_id_fk": {
-          "name": "daily_results_run_id_runs_id_fk",
+        "daily_results_run_fk": {
+          "name": "daily_results_run_fk",
           "tableFrom": "daily_results",
           "tableTo": "runs",
           "columnsFrom": [
-            "run_id"
+            "run_id",
+            "player_id",
+            "daily_date"
           ],
           "columnsTo": [
-            "id"
+            "id",
+            "player_id",
+            "daily_date"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -425,6 +429,15 @@
           "name": "runs_player_daily_date_key",
           "nullsNotDistinct": false,
           "columns": [
+            "player_id",
+            "daily_date"
+          ]
+        },
+        "runs_id_player_daily_date_key": {
+          "name": "runs_id_player_daily_date_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
             "player_id",
             "daily_date"
           ]
