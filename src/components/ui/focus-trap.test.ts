@@ -5,6 +5,10 @@ describe("TABBABLE_SELECTOR", () => {
   it("includes contenteditable hosts so Tab does not skip controls after an editor", () => {
     expect(TABBABLE_SELECTOR).toContain("[contenteditable]:not([contenteditable='false'])");
   });
+
+  it("includes summary so a details disclosure does not break the trap wrap", () => {
+    expect(TABBABLE_SELECTOR.split(",")).toContain("summary");
+  });
 });
 
 describe("wrappedTabIndex", () => {
