@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { site } from "@/lib/site";
+import { fontVariables } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,8 +11,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
-      <body className="min-h-dvh bg-neutral-950 text-neutral-100 antialiased">{children}</body>
+    <html lang="en" className={fontVariables}>
+      <body className="type-ui min-h-dvh antialiased">{children}</body>
     </html>
   );
 }
