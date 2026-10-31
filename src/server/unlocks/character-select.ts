@@ -79,7 +79,8 @@ function unlockHint(requires: UnlockAward): string {
   return "Reach the true ending to unlock.";
 }
 
-function rulesFor(id: CharacterId): string[] {
+/** What sets a character apart at the table, in plain words: their relic offer and model rules. */
+export function rulesFor(id: CharacterId): string[] {
   const { offerSize, tableMaterialization } = CHARACTERS[id];
   const rules: string[] = [];
   rules.push(

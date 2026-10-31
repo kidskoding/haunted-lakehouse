@@ -105,7 +105,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **5.4.3 Candle lost.** Guttering animation, a character reaction, and the failing batch revealed.
 - [ ] **5.4.4 Curse intro and boss intro.** Fog overlay and the dimmed boss presentation.
 - [x] **5.4.5 Death.** Fade to black and an engraved tombstone, with Rise again, Share, and Replay seed. Shareable tombstone image via OG image generation.
-- [ ] **5.4.6 Endings.** Ending scenes and an act-unlock reveal.
+- [x] **5.4.6 Endings.** Ending scenes and an act-unlock reveal.
 
 ### 5.5 The Crypt
 - [x] **5.5.1 Hub.** Navigation to the Codex, Graveyard, Ledger, Characters, and Daily Haunt.
