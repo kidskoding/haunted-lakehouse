@@ -46,7 +46,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [ ] **2.2.3 Candy trades.** The Candy Co-op ledger, consistent with what kids collected.
 - [ ] **2.2.4 Hayride gates.** Tap-in and tap-out events. Kids on the hayride can't scan doors.
 - [ ] **2.2.5 Costume votes.** Ballots with edits and revisions, cast only by kids present that night.
-- [ ] **2.2.6 Pumpkin sensors.** Candle-flame readings with realistic flicker and burn-out.
+- [x] **2.2.6 Pumpkin sensors.** Candle-flame readings with realistic flicker and burn-out.
 - [ ] **2.2.7 Porch lights and candy bowls.** Porch-light sensors that report state changes (some go silent), and candy-bowl scales that report weight, with per-candy-type weights and refills.
 - [ ] **2.2.8 Cross-feed consistency.** A test suite proving all feeds agree across 20 seeds.
 
