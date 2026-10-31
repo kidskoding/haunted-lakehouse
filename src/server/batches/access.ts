@@ -40,17 +40,22 @@ async function hourFor(
   runId: string,
   playerId: string,
 ): Promise<
-  | { readonly ok: true; readonly puzzle: Puzzle; readonly data: PuzzleData; readonly seed: string }
+  | {
+      readonly ok: true;
+      readonly puzzle: Puzzle;
+      readonly data: PuzzleData;
+      readonly revealed: readonly number[];
+    }
   | { readonly ok: false; readonly error: Exclude<BatchAccessError, "hidden" | "unknown-batch"> }
 > {
   const owned = await loadOwnedRunWith(database, runId, playerId);
   if (!owned) return { ok: false, error: "not-found" };
   const open = openHourData(owned.state);
   if (!open) return { ok: false, error: "no-open-hour" };
-  return { ok: true, puzzle: open.puzzle, data: open.data, seed: owned.seed };
+  return { ok: true, puzzle: open.puzzle, data: open.data, revealed: open.hour.revealed };
 }
 
-/** Visible batches for the player's open hour. Never includes hidden landings. */
+/** Visible and revealed batches for the player's open hour. Never includes hidden landings. */
 export async function listPreviewBatches(
   database: RunDatabase,
   runId: string,
@@ -63,7 +68,7 @@ export async function listPreviewBatches(
     puzzleId: hour.puzzle.id,
     visibleBatchCount: hour.puzzle.visibleBatchCount,
     totalBatches: hour.data.batches.length,
-    batches: previewBatches(hour.puzzle, hour.data),
+    batches: previewBatches(hour.puzzle, hour.data, hour.revealed),
   };
 }
 
@@ -91,7 +96,13 @@ export async function getBatch(
     nightAttempt = matchesOpenHour(attempt, input.playerId, input.runId, hour.puzzle.id);
   }
 
-  const served: ServeBatchResult = serveBatch(hour.puzzle, hour.data, input.index, nightAttempt);
+  const served: ServeBatchResult = serveBatch(
+    hour.puzzle,
+    hour.data,
+    hour.revealed,
+    input.index,
+    nightAttempt,
+  );
   if (!served.ok) return { ok: false, error: served.reason };
   return { ok: true, batch: served.batch };
 }
