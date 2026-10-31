@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { rngFor, type Rng } from "../random";
 import { SLOTS, slotDefinition } from "../slots";
-import { machine, started } from "../testing/night-run";
+import { machine, started, used } from "../testing/night-run";
 import { CHARACTERS } from "./characters";
 import { CURSES } from "./curses";
 import { RunEventError } from "./errors";
@@ -38,7 +38,7 @@ function arbitraryEvent(rng: Rng): RunEvent {
     { kind: "relic_offered", relics: RELICS.filter(() => rng.float() < 0.5) },
     { kind: "relic_chosen", relic },
     { kind: "relic_declined" },
-    { kind: "relic_used", relic },
+    used(relic),
   ];
   return rng.pick(options);
 }
@@ -62,7 +62,7 @@ function legalMove(state: RunState, rng: Rng): RunEvent {
   }
   const spendable = usable.filter((relic) => relic !== "black-cat");
   if (roll < 0.45 && spendable.length > 0) {
-    return { kind: "relic_used", relic: rng.pick(spendable) };
+    return used(rng.pick(spendable));
   }
   return { kind: "hour_cleared", slot: state.slot };
 }
