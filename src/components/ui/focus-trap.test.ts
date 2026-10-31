@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { wrappedTabIndex } from "./focus-trap";
+import { wrappedTabIndex, wrapTarget, type RadioState } from "./focus-trap";
 
 describe("wrappedTabIndex", () => {
   it("wraps Tab from the last element to the first", () => {
@@ -28,5 +28,68 @@ describe("wrappedTabIndex", () => {
 
   it("does nothing when nothing can take focus", () => {
     expect(wrappedTabIndex(-1, 0, false)).toBeUndefined();
+  });
+});
+
+interface Stub {
+  readonly label: string;
+  readonly radio?: RadioState;
+}
+
+const button = (label: string): Stub => ({ label });
+const radio = (label: string, name: string, checked = false, form: object | null = null): Stub => ({
+  label,
+  radio: { name, checked, form },
+});
+const radioOf = (stub: Stub) => stub.radio;
+const wrap = (elements: readonly Stub[], active: Stub | null, backward: boolean) =>
+  wrapTarget(elements, active, backward, radioOf)?.label;
+
+describe("wrapTarget with radio groups", () => {
+  it("counts a checked group at the end as its checked radio", () => {
+    const cancel = button("cancel");
+    const dusk = radio("dusk", "act", true);
+    const elements = [cancel, dusk, radio("night", "act"), radio("witching", "act")];
+    expect(wrap(elements, dusk, false)).toBe("cancel");
+    expect(wrap(elements, cancel, true)).toBe("dusk");
+  });
+
+  it("counts an unchecked group at the end as its first radio", () => {
+    const cancel = button("cancel");
+    const dusk = radio("dusk", "act");
+    const elements = [cancel, dusk, radio("night", "act"), radio("witching", "act")];
+    expect(wrap(elements, dusk, false)).toBe("cancel");
+    expect(wrap(elements, null, true)).toBe("dusk");
+  });
+
+  it("counts a checked group at the start as its checked radio", () => {
+    const night = radio("night", "act", true);
+    const confirm = button("confirm");
+    const elements = [radio("dusk", "act"), night, confirm];
+    expect(wrap(elements, night, true)).toBe("confirm");
+    expect(wrap(elements, confirm, false)).toBe("night");
+  });
+
+  it("counts an unchecked group at the start as its first radio", () => {
+    const night = radio("night", "act");
+    const elements = [radio("dusk", "act"), night, button("confirm")];
+    // Focus can sit on any member (a click, or `data-autofocus`); Shift+Tab still leaves the group.
+    expect(wrap(elements, night, true)).toBe("confirm");
+    expect(wrap(elements, null, false)).toBe("dusk");
+  });
+
+  it("keeps groups with the same name in different forms apart", () => {
+    const first = {};
+    const second = {};
+    const last = radio("last", "act", true, second);
+    const elements = [radio("one", "act", true, first), last];
+    expect(wrap(elements, last, false)).toBe("one");
+  });
+
+  it("counts an unnamed radio as its own stop", () => {
+    const lone = radio("lone", "");
+    const elements = [button("cancel"), radio("other", ""), lone];
+    expect(wrap(elements, lone, false)).toBe("cancel");
+    expect(wrap(elements, null, true)).toBe("lone");
   });
 });

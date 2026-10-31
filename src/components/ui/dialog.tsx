@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { cx } from "./cx";
-import { tabbableIn, wrappedTabIndex } from "./focus-trap";
+import { radioOf, tabbableIn, wrapTarget } from "./focus-trap";
 
 interface DialogContextValue {
   readonly titleId: string;
@@ -95,10 +95,12 @@ export function Dialog({
         }}
         onKeyDown={(event) => {
           if (event.key !== "Tab") return;
-          const tabbable = tabbableIn(event.currentTarget);
-          const current = tabbable.findIndex((element) => element === document.activeElement);
-          const next = wrappedTabIndex(current, tabbable.length, event.shiftKey);
-          const target = next === undefined ? undefined : tabbable[next];
+          const target = wrapTarget(
+            tabbableIn(event.currentTarget),
+            document.activeElement,
+            event.shiftKey,
+            radioOf,
+          );
           if (!target) return;
           event.preventDefault();
           target.focus();

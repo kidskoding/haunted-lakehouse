@@ -36,3 +36,63 @@ export function wrappedTabIndex(
   if (!backward && current === count - 1) return 0;
   return undefined;
 }
+
+/** What a radio's Tab stop depends on: its group (`name` within one form owner) and state. */
+export interface RadioState {
+  readonly name: string;
+  readonly checked: boolean;
+  readonly form: object | null;
+}
+
+/**
+ * Maps each element to the Tab stop that stands for it. A same-name radio group is one stop:
+ * its checked radio, or its first radio when none is checked. Anything else, including an
+ * unnamed radio, is its own stop.
+ */
+function stopsFor<T>(
+  elements: readonly T[],
+  radioOf: (element: T) => RadioState | undefined,
+): Map<T, T> {
+  const groups = new Map<object | null, Map<string, T>>();
+  for (const element of elements) {
+    const radio = radioOf(element);
+    if (!radio || radio.name === "") continue;
+    const byName = groups.get(radio.form) ?? new Map<string, T>();
+    groups.set(radio.form, byName);
+    const stop = byName.get(radio.name);
+    if (stop === undefined || (radio.checked && !radioOf(stop)?.checked)) {
+      byName.set(radio.name, element);
+    }
+  }
+  return new Map(
+    elements.map((element) => {
+      const radio = radioOf(element);
+      const stop = radio ? groups.get(radio.form)?.get(radio.name) : undefined;
+      return [element, stop ?? element];
+    }),
+  );
+}
+
+/**
+ * The element Tab should move focus to when it would leave the trap, or `undefined` to let
+ * the browser move it. `elements` are the tabbable elements in document order; `radioOf`
+ * says which of them are radios.
+ */
+export function wrapTarget<T>(
+  elements: readonly T[],
+  active: unknown,
+  backward: boolean,
+  radioOf: (element: T) => RadioState | undefined,
+): T | undefined {
+  const stopOf = stopsFor(elements, radioOf);
+  const stops = elements.filter((element) => stopOf.get(element) === element);
+  const focused = elements.find((element) => element === active);
+  const current = focused === undefined ? -1 : stops.indexOf(stopOf.get(focused) ?? focused);
+  const next = wrappedTabIndex(current, stops.length, backward);
+  return next === undefined ? undefined : stops[next];
+}
+
+/** Reads a tabbable element as a radio, for `wrapTarget`. */
+export function radioOf(element: HTMLElement): RadioState | undefined {
+  return element instanceof HTMLInputElement && element.type === "radio" ? element : undefined;
+}
