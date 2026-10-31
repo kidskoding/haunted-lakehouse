@@ -146,7 +146,7 @@ Every puzzle follows the same five steps:
 *Houses that gave out exactly 13 pieces before 7pm are cursed, but nothing counts pieces. Candy bowls report weight, candy types weigh differently, and bowls get refilled. Gold: the street with the most cursed houses. Trap: counting door scans as pieces, or treating refills as negative giving.*
 - [x] **7.2.1** Design doc
 - [x] **7.2.2** Generator
-- [ ] **7.2.3** Reference and trap pipelines with tests
+- [x] **7.2.3** Reference and trap pipelines with tests
 - [ ] **7.2.4** Narrative
 - [ ] **7.2.5** Playtest note
 
