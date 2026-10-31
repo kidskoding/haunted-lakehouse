@@ -1,6 +1,6 @@
 import { createPuzzleRegistry } from "../registry";
 import { createRunMachine } from "../run/reducer";
-import type { CurseId, RunConfig, RunEvent, RunState } from "../run/types";
+import type { CurseId, RelicId, RunConfig, RunEvent, RunState } from "../run/types";
 import { SLOTS, type Slot } from "../slots";
 import { fakePuzzle } from "./fake-puzzle";
 
@@ -58,4 +58,22 @@ export function reach(slot: Slot, config: Partial<RunConfig> = {}): RunState {
     if (state.phase === "choosing") state = machine.reduce(state, { kind: "relic_declined" });
   }
   return state;
+}
+
+/**
+ * A `relic_used` event for any relic, aimed at the fake puzzle's feed, last batch, or gold
+ * table. The Black Cat and Spare Candle are forced in, as a hand-edited stored event could be.
+ */
+export function used(relic: RelicId): RunEvent {
+  switch (relic) {
+    case "wrens-lantern":
+      return { kind: "relic_used", relic, feed: "readings" };
+    case "ravens-feather":
+      return { kind: "relic_used", relic, batch: 2 };
+    case "hourglass":
+      return { kind: "relic_used", relic, table: "gold.totals", checkpointId: "late" };
+    case "black-cat":
+    case "spare-candle":
+      return { kind: "relic_used", relic, feed: "readings" } as unknown as RunEvent;
+  }
 }
