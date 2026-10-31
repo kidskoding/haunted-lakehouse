@@ -28,6 +28,8 @@ export const thirteenthDoor: Puzzle = {
   prerequisites: [],
   // Bronze keeps the whole hour: the reasoning here is about weight, not memory.
   retention: BATCH_COUNT,
+  // Preview stops before the post-bell uploads; the proclamation still has to earn them.
+  visibleBatchCount: BELL_BATCH + 1,
   goldTables: [GOLD_TABLE],
   // A scale that starts reporting "412 g", or renames its column, still says how much is left.
   possessable: [

@@ -52,7 +52,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 
 ### 2.3 Batches
 - [x] **2.3.1 Batch scheduler.** Splits a feed into arrival-ordered batches with seeded injections: late arrivals, duplicates, out-of-order delivery, and schema drift. Each injection is declarative per puzzle.
-- [ ] **2.3.2 Visible vs hidden.** Marks batches as visible (preview) or hidden (run-the-night only), and a route handler serves hidden batches only for an active run-the-night attempt.
+- [x] **2.3.2 Visible vs hidden.** Marks batches as visible (preview) or hidden (run-the-night only), and a route handler serves hidden batches only for an active run-the-night attempt.
 
 ### 2.4 Runs and meta-progression
 - [x] **2.4.1 Run state machine.** Slots, pool draws (respecting prerequisites), candles, boss rules, curses, relic offers and choices, and death. A pure reducer with exhaustive tests.

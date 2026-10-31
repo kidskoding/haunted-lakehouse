@@ -16,6 +16,8 @@ export const porchLights: Puzzle = {
   title: "Porch Lights",
   prerequisites: [],
   retention: BATCH_COUNT,
+  // The last two landings stay hidden so running the night still has something to reveal.
+  visibleBatchCount: BATCH_COUNT - 2,
   goldTables: [GOLD_TABLE],
   generate({ runSeed, rng }): PuzzleData {
     const night = generateNight(runSeed);

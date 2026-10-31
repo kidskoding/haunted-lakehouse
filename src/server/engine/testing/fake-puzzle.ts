@@ -11,6 +11,7 @@ export function fakePuzzle(overrides: Partial<Omit<Puzzle, "generate">> = {}): P
     title: "A Fake Hour",
     prerequisites: [],
     retention: 2,
+    visibleBatchCount: 2,
     goldTables: ["gold.totals"],
     ...overrides,
     generate({ rng }): PuzzleData {
