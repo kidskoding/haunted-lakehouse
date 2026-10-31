@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { hashTable, tableFromRows } from "../../../../lib/canonical/hash";
 import { judgeNight, runNight } from "../../../../lib/executor/night";
 import { compileProject, nativeConnection } from "../../../../lib/executor/test-connection";
-import type { ExpectedHashes } from "../../../../lib/executor/types";
+import { expectedHashes } from "../../../batches/expected";
 import { SHORT_MEMORY_RETENTION } from "../../curses/limits";
 import { drawPossession, possess } from "../../curses/possession";
 import type { PuzzleData } from "../../puzzle";
@@ -14,19 +13,7 @@ import { thirteenthDoor } from "./puzzle";
 // Each seed's night replays seven batches through DuckDB, so give a seed room to run.
 const NIGHT_TIMEOUT_MS = 30_000;
 const SEEDS = Array.from({ length: 20 }, (_, i) => `seed-${String(i)}`);
-const GOLD_COLUMNS = ["street", "cursed_houses"];
 const FEEDS = Object.keys(generatePuzzle(thirteenthDoor, "seed-0").batches[0]?.feeds ?? {});
-
-async function expectedHashes(data: PuzzleData): Promise<ExpectedHashes> {
-  const hashes: Record<string, Record<string, string>> = {};
-  for (const [checkpoint, tables] of Object.entries(data.expected)) {
-    hashes[checkpoint] = {};
-    for (const [table, rows] of Object.entries(tables)) {
-      hashes[checkpoint][table] = await hashTable(tableFromRows(GOLD_COLUMNS, rows));
-    }
-  }
-  return hashes;
-}
 
 interface Night {
   readonly data?: PuzzleData;
@@ -40,7 +27,7 @@ async function play(project: Project, seed: string, night: Night = {}) {
     replayBatch = null,
     retention = thirteenthDoor.retention,
   } = night;
-  const expected = await expectedHashes(data);
+  const expected = await expectedHashes(thirteenthDoor, data);
   const result = await runNight(
     await nativeConnection(),
     {

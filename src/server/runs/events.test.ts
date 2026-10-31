@@ -17,6 +17,19 @@ describe("run event rows", () => {
     expect(eventFromRow(row.kind, row.payload)).toEqual(event);
   });
 
+  it.each<[string, Record<string, unknown>]>([
+    ["no revealedBatch", { slot: 1, checkpointId: "late" }],
+    ["a fractional revealedBatch", { slot: 1, checkpointId: "late", revealedBatch: 1.5 }],
+    ["a string revealedBatch", { slot: 1, checkpointId: "late", revealedBatch: "2" }],
+  ])("reads a legacy attempt_failed with %s as revealing nothing", (_, payload) => {
+    expect(eventFromRow("attempt_failed", payload)).toEqual({
+      kind: "attempt_failed",
+      slot: 1,
+      checkpointId: "late",
+      revealedBatch: null,
+    });
+  });
+
   it("rejects an unknown kind or a payload that repeats kind", () => {
     expect(() => eventFromRow("not-a-kind", {})).toThrow(/Unknown/);
     expect(() => eventFromRow("run_abandoned", { kind: "run_abandoned" })).toThrow(/repeat/);
