@@ -147,7 +147,7 @@ Every puzzle follows the same five steps:
 - [x] **7.2.1** Design doc
 - [x] **7.2.2** Generator
 - [x] **7.2.3** Reference and trap pipelines with tests
-- [ ] **7.2.4** Narrative
+- [x] **7.2.4** Narrative
 - [ ] **7.2.5** Playtest note
 
 ### 7.3 The Possessed Feed (7:30pm, ★★, Act I boss)
