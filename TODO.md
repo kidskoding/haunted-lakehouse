@@ -41,7 +41,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **2.1.3 Canonical result hashing.** Sorts rows, applies defined numeric rounding and null encoding, and hashes. Identical results on DuckDB Node and DuckDB-WASM, tested with tricky values (floats, nulls, unicode, timestamps).
 
 ### 2.2 The Hollow Creek world
-- [ ] **2.2.1 Houses and kids.** Seeded `houses` and `trick_or_treaters` with realistic distributions. Include tests for determinism and distribution sanity.
+- [x] **2.2.1 Houses and kids.** Seeded `houses` and `trick_or_treaters` with realistic distributions. Include tests for determinism and distribution sanity.
 - [ ] **2.2.2 Door scans.** Routes through streets, with arrivals peaking 7–8pm. Local timestamps run 6pm to 3am across the DST fall-back. Each scan has a device ID and sequence number.
 - [ ] **2.2.3 Candy trades.** The Candy Co-op ledger, consistent with what kids collected.
 - [ ] **2.2.4 Hayride gates.** Tap-in and tap-out events. Kids on the hayride can't scan doors.
