@@ -222,15 +222,44 @@ function simulate(
 
 /**
  * When the scale reads: as the bowl goes out, once each burst of changes settles, after every
- * quiet stretch of HEARTBEAT, and as the bowl comes in.
+ * quiet stretch of HEARTBEAT, and as the bowl comes in. It also reads in the second before a
+ * change that would put a second bag, or a whole bag's worth of handouts, since its last
+ * reading. So between neighbouring readings there is at most one refill and fewer than a bag
+ * given, and every change in weight reads back exactly: a fall of n is n given, and a rise of
+ * r is one bag in and bag - r given.
  */
-function readingTimes(rng: Rng, bowl: CandyBowl, changes: readonly Change[]): number[] {
+function readingTimes(
+  rng: Rng,
+  bowl: CandyBowl,
+  changes: readonly Change[],
+  piecesPerBag: number,
+): number[] {
   const settled: number[] = [bowl.setOutAt];
+  let bags = 0;
+  let given = 0;
+  const fits = (more: readonly Change[]) =>
+    bags + more.filter((c) => c.pieces > 0).length <= 1 &&
+    given + more.reduce((sum, c) => sum + Math.max(0, -c.pieces), 0) < piecesPerBag;
+  const read = (second: number) => {
+    settled.push(second);
+    bags = 0;
+    given = 0;
+  };
   changes.forEach((change, i) => {
+    // Every split falls between seconds, so only one second's changes can break the bound.
+    if (!fits([change])) {
+      throw new RangeError(
+        `Bowl ${bowl.deviceId} changed too much at ${String(change.nightSecond)}.`,
+      );
+    }
+    if (change.pieces > 0) bags++;
+    else given -= change.pieces;
     const next = changes[i + 1]?.nightSecond ?? bowl.takenInAt;
     // Bursts end when nothing else lands within SETTLE, so this reading precedes the next change.
     if (next - change.nightSecond > SETTLE) {
-      settled.push(Math.min(change.nightSecond + rng.int(5, SETTLE), bowl.takenInAt - 1));
+      read(Math.min(change.nightSecond + rng.int(5, SETTLE), bowl.takenInAt - 1));
+    } else if (next > change.nightSecond && !fits(changes.filter((c) => c.nightSecond === next))) {
+      read(next - 1);
     }
   });
   settled.push(bowl.takenInAt);
@@ -277,17 +306,19 @@ function runBowl(
   const brimming =
     townRng(runSeed, `candy-bowls/${house.houseId}:brimming`).float() < BRIMMING_SHARE;
   const run = simulate(rng, house, deviceId, candy, porch, visits, pieces, brimming);
-  const readings = readingTimes(rng, run.bowl, run.changes).map((nightSecond, i) => {
-    const truth = weightAt(run.bowl, run.changes, nightSecond, candy.gramsPerPiece);
-    const noise = rng.int(-NOISE_G, NOISE_G + 1);
-    return {
-      deviceId,
-      seq: i + 1,
-      houseId: house.houseId,
-      nightSecond,
-      weightG: Math.max(0, truth + noise),
-    };
-  });
+  const readings = readingTimes(rng, run.bowl, run.changes, candy.piecesPerBag).map(
+    (nightSecond, i) => {
+      const truth = weightAt(run.bowl, run.changes, nightSecond, candy.gramsPerPiece);
+      const noise = rng.int(-NOISE_G, NOISE_G + 1);
+      return {
+        deviceId,
+        seq: i + 1,
+        houseId: house.houseId,
+        nightSecond,
+        weightG: Math.max(0, truth + noise),
+      };
+    },
+  );
   return { ...run, readings };
 }
 

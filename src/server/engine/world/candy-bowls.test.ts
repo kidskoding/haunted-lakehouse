@@ -14,6 +14,8 @@ import { generatePorchLights } from "./porch-lights";
 import { generateTrickOrTreaters } from "./trick-or-treaters";
 
 const SEEDS = Array.from({ length: 20 }, (_, i) => `seed-${String(i)}`);
+// The invariants below are cheap to check, so they get a wider sweep than the per-seed suite.
+const MANY_SEEDS = Array.from({ length: 150 }, (_, i) => `seed-${String(i)}`);
 const ROW_BUDGET = 10_000;
 // Each reading is off by at most 2 g, so a difference of two is off by at most 4 g.
 const NOISE_TOLERANCE = 4;
@@ -115,7 +117,7 @@ describe("candy bowls", () => {
     expect(piecesRecordedBefore(handouts, readings, 0)).toBe(0);
   });
 
-  it("show most refills as a jump in weight, though a rush at the door can hide one", () => {
+  it("show every refill as a jump in weight", () => {
     let jumps = 0;
     let refills = 0;
     for (const { bowls, readings } of allNights) {
@@ -132,7 +134,46 @@ describe("candy bowls", () => {
       }
     }
     expect(refills).toBeGreaterThan(100);
-    expect(jumps / refills).toBeGreaterThan(0.9);
+    expect(jumps).toBe(refills);
+  });
+
+  describe("between neighbouring readings of one scale, across many seeds", () => {
+    const intervals = MANY_SEEDS.flatMap((seed) => {
+      const { bowls, handouts, readings } = night(seed);
+      const byDevice = Map.groupBy(readings, (r) => r.deviceId);
+      const byHouse = Map.groupBy(handouts, (h) => h.houseId);
+      return bowls.flatMap((bowl) => {
+        const candy = CANDY_CATALOG.find((c) => c.candyType === bowl.candyType);
+        if (!candy) throw new Error(`Unknown candy ${bowl.candyType}`);
+        const own = byDevice.get(bowl.deviceId) ?? [];
+        const taken = byHouse.get(bowl.houseId) ?? [];
+        return own.slice(1).map((next, i) => {
+          const prev = own[i];
+          if (!prev) throw new Error("missing reading");
+          const within = (t: number) => t > prev.nightSecond && t <= next.nightSecond;
+          return {
+            candy,
+            rise: Math.round((next.weightG - prev.weightG) / candy.gramsPerPiece),
+            refills: bowl.refills.filter((r) => within(r.nightSecond)).length,
+            given: taken.filter((h) => within(h.nightSecond)).reduce((sum, h) => sum + h.pieces, 0),
+          };
+        });
+      });
+    });
+
+    it("there is at most one refill and fewer than a bag given", () => {
+      expect(intervals.some((iv) => iv.refills === 1)).toBe(true);
+      // One assertion over the whole sweep: an expect per interval is slow at this size.
+      expect(intervals.filter((iv) => iv.refills > 1 || iv.given >= iv.candy.piecesPerBag)).toEqual(
+        [],
+      );
+    });
+
+    it("a fall of n is n given, and a rise of r is a bag less r given", () => {
+      const read = ({ candy, rise }: (typeof intervals)[number]) =>
+        rise < 0 ? -rise : Math.ceil(rise / candy.piecesPerBag) * candy.piecesPerBag - rise;
+      expect(intervals.filter((iv) => read(iv) !== iv.given)).toEqual([]);
+    });
   });
 
   it("stock a variety of candy across the town", () => {
