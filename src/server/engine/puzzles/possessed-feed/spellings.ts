@@ -108,6 +108,24 @@ function ensureKind(rng: Rng, spellings: Spellings, drops: readonly Drop[], kind
 }
 
 /**
+ * Makes sure the retype's own batch holds a count a strict cast misses, by respelling one of
+ * its plain-digit drops, so a cast breaks at the first check after the text arrives. A batch
+ * of nothing but shrugs gets one of them counted instead: a cast skips a shrug just as the
+ * story does, so it would pass. The truth is read from the spellings afterwards, so it follows.
+ */
+function ensureTricky(rng: Rng, spellings: Spellings, drops: readonly Drop[]) {
+  if (drops.some((drop) => isTrickyCount(spellings.get(drop.dropId)))) return;
+  const digits = drops.filter((drop) => spellings.get(drop.dropId)?.kind === "digits");
+  const pool = digits.length > 0 ? digits : drops;
+  if (pool.length === 0) return;
+  const drop = rng.pick(pool);
+  const kind = rng.pick(
+    (["unit", "word", "dozen"] as const).filter((k) => canSpell(k, drop.quantity)),
+  );
+  spellings.set(drop.dropId, { kind, text: spell(rng, kind, drop.quantity) });
+}
+
+/**
  * Gives one hidden drop a readable spelling the visible batches never showed, so mapping the
  * strings seen so far, rather than reading them by the story's rules, fails the last check.
  */
@@ -149,7 +167,8 @@ function ensureUnseen(rng: Rng, spellings: Spellings, plan: SpellingPlan) {
 /**
  * The text each drop's quantity arrives as from the retype on, keyed by drop id. Mostly a
  * seeded mix by the weights above, then nudged so the possession is visible before the seven
- * o'clock check and the hidden batches still hold surprises.
+ * o'clock check, a strict cast fails in the retype's own batch, and the hidden batches still
+ * hold surprises.
  */
 export function assignSpellings(plan: SpellingPlan, rng: (...labels: string[]) => Rng): Spellings {
   const draw = rng("spellings");
@@ -161,6 +180,10 @@ export function assignSpellings(plan: SpellingPlan, rng: (...labels: string[]) =
     spellings.set(drop.dropId, { kind, text: spell(draw, kind, drop.quantity) });
   }
 
+  const retyped = plan.placed.filter((p) => p.batch === plan.from).map((p) => p.drop);
+  // Its own stream, so the guarantees drawn below keep their draws. It runs first because it
+  // may respell a shrug, and the early guarantees then still promise one.
+  ensureTricky(rng("spellings", "retype"), spellings, retyped);
   const fix = rng("spellings", "guarantees");
   const early = plan.placed
     .filter((p) => p.batch >= plan.from && p.batch <= plan.everyKindBy)

@@ -37,7 +37,7 @@ export function nextGameEvent(registry: PuzzleRegistry, state: RunState): RunEve
         kind: "hour_opened",
         slot: state.slot,
         puzzleId: puzzle.id,
-        curse: drawCurse(state.seed, state.slot),
+        curse: drawCurse(state.seed, state.slot, puzzle),
       };
     }
     case "offering":

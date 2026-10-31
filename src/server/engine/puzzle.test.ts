@@ -15,6 +15,29 @@ describe("validatePuzzleData", () => {
     expect(validatePuzzleData(puzzle, valid)).toEqual([]);
   });
 
+  it("checks that the replay batch is one of the hour's batches", () => {
+    expect(validatePuzzleData(fakePuzzle({ replayBatch: 1 }), valid)).toEqual([]);
+    expect(validatePuzzleData(fakePuzzle({ replayBatch: 3 }), valid)).toEqual([
+      "The replay batch 3 does not exist.",
+    ]);
+  });
+
+  it("requires gold table names in lowercase, as the pipeline names its models", () => {
+    const mixed = fakePuzzle({
+      goldTables: ["gold.Totals"],
+      goldColumns: { "gold.Totals": ["total"] },
+    });
+    const expected = Object.fromEntries(
+      Object.entries(valid.expected).map(([id, tables]) => [
+        id,
+        { "gold.Totals": tables["gold.totals"] ?? [] },
+      ]),
+    );
+    expect(validatePuzzleData(mixed, { ...valid, expected })).toEqual([
+      "Gold table gold.Totals must be lowercase, as the pipeline names it gold.totals.",
+    ]);
+  });
+
   it.each<[string, (data: PuzzleData) => PuzzleData, RegExp]>([
     ["no batches", (d) => ({ ...d, batches: [], checkpoints: [] }), /no batches/],
     [
@@ -81,7 +104,23 @@ describe("validatePuzzleData", () => {
       (d) => ({ ...d, expected: { ...d.expected, midnight: {} } }),
       /midnight matches no checkpoint/,
     ],
+    [
+      "an expected row with the wrong columns",
+      (d) => ({ ...d, expected: { ...d.expected, late: { "gold.totals": [{ sum: 1 }] } } }),
+      /late row 0 of gold.totals has columns sum, not total/,
+    ],
   ])("reports %s", (_, change, message) => {
     expect(problemsWith(change).join("\n")).toMatch(message);
+  });
+
+  it.each<[string, Partial<Parameters<typeof fakePuzzle>[0]>, RegExp]>([
+    ["a gold table without columns", { goldColumns: {} }, /gold.totals declares no columns/],
+    [
+      "columns for a table that is not gold",
+      { goldColumns: { "gold.totals": ["total"], "gold.extra": ["x"] } },
+      /declared for gold.extra, which is not a gold table/,
+    ],
+  ])("reports %s", (_, overrides, message) => {
+    expect(validatePuzzleData(fakePuzzle(overrides), valid).join("\n")).toMatch(message);
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { possessedFeed } from "../puzzles/possessed-feed/puzzle";
 import { createPuzzleRegistry } from "../registry";
 import { SLOTS, type Slot } from "../slots";
 import { fakePuzzle } from "../testing/fake-puzzle";
@@ -54,13 +55,18 @@ describe("puzzle draws", () => {
 });
 
 describe("curses", () => {
+  // An hour with a column to twist, so every curse can fall on it.
+  const haunted = fakePuzzle({
+    possessable: [{ feed: "readings", column: "value", aliases: ["reading"] }],
+  });
+
   it("never curses the first hour", () => {
-    expect(seeds.map((seed) => drawCurse(seed, 1))).toEqual(seeds.map(() => null));
+    expect(seeds.map((seed) => drawCurse(seed, 1, haunted))).toEqual(seeds.map(() => null));
   });
 
   it("curses about one hour in four, with every curse turning up", () => {
     const draws = seeds.flatMap((seed) =>
-      SLOTS.filter((s) => s.slot > 1).map((s) => drawCurse(seed, s.slot)),
+      SLOTS.filter((s) => s.slot > 1).map((s) => drawCurse(seed, s.slot, haunted)),
     );
     const cursed = draws.filter((curse) => curse !== null);
     expect(cursed.length / draws.length).toBeGreaterThan(0.2);
@@ -70,16 +76,32 @@ describe("curses", () => {
 
   it("is fixed by seed and slot", () => {
     for (const seed of seeds.slice(0, 20)) {
-      for (const { slot } of SLOTS) expect(drawCurse(seed, slot)).toBe(drawCurse(seed, slot));
+      for (const { slot } of SLOTS)
+        expect(drawCurse(seed, slot, haunted)).toBe(drawCurse(seed, slot, haunted));
     }
-    const perSeed = seeds.map((seed) => SLOTS.map(({ slot }) => drawCurse(seed, slot)).join());
+    const perSeed = seeds.map((seed) =>
+      SLOTS.map(({ slot }) => drawCurse(seed, slot, haunted)).join(),
+    );
     expect(new Set(perSeed).size).toBeGreaterThan(50);
+  });
+
+  it("never draws possession for an hour with nothing to possess", () => {
+    // The night's fake puzzles declare no possessable column, so possession would do nothing.
+    const curses = seeds.map((seed) => machine.next(reach(4, { seed })));
+    expect(curses.some((event) => event?.kind === "hour_opened" && event.curse !== null)).toBe(
+      true,
+    );
+    for (const event of curses) {
+      expect(event).toMatchObject({ kind: "hour_opened" });
+      if (event?.kind === "hour_opened") expect(event.curse).not.toBe("possession");
+    }
+    expect(seeds.map((seed) => drawCurse(seed, 3, possessedFeed))).not.toContain("possession");
   });
 
   it("travels in the hour the game opens", () => {
     for (const seed of seeds.slice(0, 20)) {
       const event = machine.next(reach(4, { seed }));
-      expect(event).toMatchObject({ kind: "hour_opened", curse: drawCurse(seed, 4) });
+      expect(event).toMatchObject({ kind: "hour_opened", curse: drawCurse(seed, 4, fakePuzzle()) });
     }
   });
 });
@@ -105,6 +127,7 @@ describe("relic offers", () => {
         kind: "attempt_failed",
         slot: 2,
         checkpointId: "late",
+        revealedBatch: 2,
       }),
     );
     expect(drawOffer(withFailure)).toEqual(offerAfter(seed));

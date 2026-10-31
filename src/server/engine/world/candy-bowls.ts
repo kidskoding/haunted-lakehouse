@@ -357,7 +357,8 @@ interface Candidate {
  * 13 pieces, its scale records all 13 before the bell. The street it haunts takes up to three
  * marks, one of them a bowl refilled before the bell where it can, so the weight a street's
  * bowls lost by the bell never tells their tally alone. Other streets take at most one stray
- * mark each, and only when the haunted street has two, so it always has the most marks.
+ * mark each, and only when the haunted street has two, so it always has the most marks. Its
+ * marks are not the whole answer: an unmarked bowl can reach 13 by chance on any street.
  */
 function markHouses(
   runSeed: string,
