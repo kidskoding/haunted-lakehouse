@@ -419,13 +419,8 @@ describe("injection composition", () => {
 
   it("applies late, duplicate, outOfOrder, then schemaDrift whatever the listed order", () => {
     const listed = scheduleBatches(plan([late, duplicate, shuffle, drift]), rngOf("a"));
-    // Streams follow listed position, so the reversed list keeps each injection's draws by
-    // relisting them with matching labels.
-    const reversedRng = (...labels: (string | number)[]) => {
-      const [feed, position, kind] = labels;
-      return rngOf("a")(feed ?? "", 3 - Number(position), kind ?? "");
-    };
-    const reversed = scheduleBatches(plan([drift, shuffle, duplicate, late]), reversedRng);
+    // Streams are keyed by kind, so callers can list injections in any order.
+    const reversed = scheduleBatches(plan([drift, shuffle, duplicate, late]), rngOf("a"));
     expect(reversed).toEqual(listed);
   });
 

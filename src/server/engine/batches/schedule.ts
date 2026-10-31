@@ -99,23 +99,28 @@ function driftStart(
 }
 
 function scheduleFeed(feed: string, plan: FeedPlan, landings: readonly number[], rng: ScheduleRng) {
-  // Injections keep their listed position as their stream label, so reordering the phases
-  // never changes which draws an injection gets.
+  // Each injection's stream is keyed by its kind and its position among injections of that
+  // kind, so listing kinds in a different order never changes which draws an injection gets.
+  const seen = new Map<Injection["kind"], number>();
   const injections = (plan.injections ?? [])
-    .map((injection, listed) => ({ injection, listed }))
+    .map((injection) => {
+      const ordinal = seen.get(injection.kind) ?? 0;
+      seen.set(injection.kind, ordinal + 1);
+      return { injection, ordinal };
+    })
     .sort(
       (a, b) =>
         INJECTION_ORDER.indexOf(a.injection.kind) - INJECTION_ORDER.indexOf(b.injection.kind) ||
-        a.listed - b.listed,
+        a.ordinal - b.ordinal,
     );
 
   let deliveries = onTimeDeliveries(feed, plan, landings);
   const drifts: { start: number; injection: Extract<Injection, { kind: "schemaDrift" }> }[] = [];
-  for (const { injection, listed } of injections) {
+  for (const { injection, ordinal } of injections) {
     const context: InjectionContext = {
       events: plan.events,
       landings,
-      rng: rng(feed, listed, injection.kind),
+      rng: rng(feed, injection.kind, ordinal),
     };
     switch (injection.kind) {
       case "late":
