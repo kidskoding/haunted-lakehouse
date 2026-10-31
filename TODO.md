@@ -26,7 +26,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 
 ### 1.2 Data and auth
 - [ ] **1.2.1 Database.** Postgres via Vercel's marketplace integration, with Drizzle ORM and the initial schema: players, runs, run_events, unlocks, fragments, daily_results. Migrations committed.
-- [ ] **1.2.2 Anonymous sessions.** Players can start immediately with an anonymous signed session cookie.
+- [x] **1.2.2 Anonymous sessions.** Players can start immediately with an anonymous signed session cookie.
 - [ ] **1.2.3 GitHub sign-in.** Auth.js with GitHub OAuth. Signing in claims the anonymous player's progress.
 
 ---

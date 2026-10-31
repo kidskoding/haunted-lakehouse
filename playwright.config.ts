@@ -31,5 +31,7 @@ export default defineConfig({
     command: `bun run dev --port ${String(port)}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
+    // A fixed secret for the throwaway test server only; deployments set their own.
+    env: { SESSION_SECRET: "playwright-only-session-secret-0123456789" },
   },
 });
