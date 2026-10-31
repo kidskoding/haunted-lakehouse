@@ -20,6 +20,7 @@ export const porchLights: Puzzle = {
   visibleBatchCount: BATCH_COUNT - 2,
   goldTables: [GOLD_TABLE],
   goldColumns: { [GOLD_TABLE]: ["houses"] },
+  symptoms: ["house_count"],
   generate({ runSeed, rng }): PuzzleData {
     const night = generateNight(runSeed);
     const events = hourEvents(night.porchLights.events);
