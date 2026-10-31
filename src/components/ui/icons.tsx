@@ -47,6 +47,15 @@ export function AlertIcon(props: IconProps) {
   );
 }
 
+/** Points right; a disclosure rotates it a quarter turn to show it is open. */
+export function ChevronIcon(props: IconProps) {
+  return (
+    <Glyph {...props}>
+      <path d="m9.5 6 6 6-6 6" />
+    </Glyph>
+  );
+}
+
 /** Info: moonlight. */
 export function MoonIcon(props: IconProps) {
   return (
