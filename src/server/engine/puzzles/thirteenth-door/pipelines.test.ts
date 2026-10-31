@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { judgeNight, runNight } from "../../../../lib/executor/night";
 import { compileProject, nativeConnection } from "../../../../lib/executor/test-connection";
 import { expectedHashes } from "../../../batches/expected";
-import { generatePuzzle } from "../../registry";
+import { SHORT_MEMORY_RETENTION } from "../../curses/limits";
+import { drawPossession, possess } from "../../curses/possession";
+import type { PuzzleData } from "../../puzzle";
+import { generateContext, generatePuzzle } from "../../registry";
 import { BELL_BATCH } from "./delivery";
 import { REFERENCE, WEIGHT_LOST_TRAP, type Project } from "./pipelines";
 import { thirteenthDoor } from "./puzzle";
@@ -12,8 +15,18 @@ const NIGHT_TIMEOUT_MS = 30_000;
 const SEEDS = Array.from({ length: 20 }, (_, i) => `seed-${String(i)}`);
 const FEEDS = Object.keys(generatePuzzle(thirteenthDoor, "seed-0").batches[0]?.feeds ?? {});
 
-async function play(project: Project, seed: string, replayBatch: number | null = null) {
-  const data = generatePuzzle(thirteenthDoor, seed);
+interface Night {
+  readonly data?: PuzzleData;
+  readonly replayBatch?: number | null;
+  readonly retention?: number;
+}
+
+async function play(project: Project, seed: string, night: Night = {}) {
+  const {
+    data = generatePuzzle(thirteenthDoor, seed),
+    replayBatch = null,
+    retention = thirteenthDoor.retention,
+  } = night;
   const expected = await expectedHashes(thirteenthDoor, data);
   const result = await runNight(
     await nativeConnection(),
@@ -21,7 +34,7 @@ async function play(project: Project, seed: string, replayBatch: number | null =
       pipeline: await compileProject(project, FEEDS),
       batches: data.batches,
       checkpoints: data.checkpoints,
-      retention: thirteenthDoor.retention,
+      retention,
       goldTables: thirteenthDoor.goldTables,
       replayBatch,
     },
@@ -31,7 +44,28 @@ async function play(project: Project, seed: string, replayBatch: number | null =
   return judgeNight(result.events, expected);
 }
 
+/*
+ * What a player who has met the possessed scale writes: the weight from whichever column
+ * holds it, with any unit stripped. Bronze keeps every column it has seen, so the regex
+ * always matches weight_g; the aliases join once the vendor renames it.
+ */
+const POSSESSED_WEIGHT =
+  "cast(regexp_extract(cast(coalesce(*columns('^(weight_g|weight_grams|grams)$')) as varchar), '^-?[0-9.]+') as double)";
+const BOWL_TAKINGS = REFERENCE["silver/bowl_takings.sql"] ?? "";
+const POSSESSION_PROOF: Project = {
+  ...REFERENCE,
+  "silver/bowl_takings.sql": BOWL_TAKINGS.replace(
+    "select b.device_id, b.seq, b.weight_g,",
+    // A function, so the regex's `$` is not read as a replacement pattern.
+    () => `select b.device_id, b.seq, ${POSSESSED_WEIGHT} as weight_g,`,
+  ),
+};
+
 describe("the thirteenth door's pipelines", () => {
+  it("adapts the reference's reading of the weight for possession", () => {
+    expect(POSSESSION_PROOF["silver/bowl_takings.sql"]).not.toBe(BOWL_TAKINGS);
+  });
+
   it("reads every feed of the hour", () => {
     expect([...FEEDS].sort()).toEqual([
       "bowl_stock",
@@ -45,7 +79,35 @@ describe("the thirteenth door's pipelines", () => {
   it.each(SEEDS)(
     "the reference survives the bell and the proclamation, and a replayed bell (%s)",
     async (seed) => {
-      expect(await play(REFERENCE, seed, BELL_BATCH)).toBeNull();
+      expect(await play(REFERENCE, seed, { replayBatch: BELL_BATCH })).toBeNull();
+    },
+    NIGHT_TIMEOUT_MS,
+  );
+
+  it.each(SEEDS)(
+    "the reference survives the Curse of Short Memory (%s)",
+    async (seed) => {
+      expect(await play(REFERENCE, seed, { retention: SHORT_MEMORY_RETENTION })).toBeNull();
+    },
+    NIGHT_TIMEOUT_MS,
+  );
+
+  it.each(SEEDS)(
+    "the reference, reading the weight however the scale spells it, survives possession (%s)",
+    async (seed) => {
+      const data = generatePuzzle(thirteenthDoor, seed);
+      const possession = drawPossession(
+        thirteenthDoor,
+        data,
+        generateContext(thirteenthDoor, seed),
+      );
+      if (!possession) throw new Error("The hour declares a possessable column.");
+      expect(
+        await play(POSSESSION_PROOF, seed, {
+          data: possess(data, possession),
+          replayBatch: BELL_BATCH,
+        }),
+      ).toBeNull();
     },
     NIGHT_TIMEOUT_MS,
   );
