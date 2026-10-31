@@ -117,3 +117,13 @@ export function SpinnerIcon({ className, ...props }: IconProps) {
     </Glyph>
   );
 }
+
+/** Copy: one page laid over another. */
+export function CopyIcon(props: IconProps) {
+  return (
+    <Glyph {...props}>
+      <path d="M9 9h10v11H9z" />
+      <path d="M15 9V4H5v11h4" />
+    </Glyph>
+  );
+}

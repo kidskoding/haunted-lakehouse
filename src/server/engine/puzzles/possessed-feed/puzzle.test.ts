@@ -122,18 +122,18 @@ describe("the possessed feed", () => {
     });
   });
 
-  it("lands nine uploads from 18:10 to 19:30, the first never empty", () => {
+  it("lands nine uploads from 19:35 to 20:15, the first never empty", () => {
     for (const { data } of allData) {
       expect(data.batches.map((b) => b.arrivesAt.slice(11, 16))).toEqual([
-        "18:10",
-        "18:20",
-        "18:30",
-        "18:40",
-        "18:50",
-        "19:00",
-        "19:10",
-        "19:20",
-        "19:30",
+        "19:35",
+        "19:40",
+        "19:45",
+        "19:50",
+        "19:55",
+        "20:00",
+        "20:05",
+        "20:10",
+        "20:15",
       ]);
       expect(data.batches[0]?.feeds[FEED]?.length).toBeGreaterThan(0);
     }
@@ -159,20 +159,20 @@ describe("the possessed feed", () => {
       expect([3, 4]).toContain(retyped);
       expect([5, 6]).toContain(reordered);
       expect(renamed).toBeLessThanOrEqual(checkpointBatch(data, "first-look"));
-      expect(retyped).toBeLessThanOrEqual(checkpointBatch(data, "seven-oclock"));
+      expect(retyped).toBeLessThanOrEqual(checkpointBatch(data, "eight-oclock"));
       expect(reordered).toBeLessThan(HIDDEN_FROM);
     }
   });
 
-  it("possesses values that can be read and values that can't, before seven and after dark", () => {
+  it("possesses values that can be read and values that can't, before eight and the hidden uploads", () => {
     for (const { data } of allData) {
       const quantities = (from: number, to: number) =>
         data.batches
           .slice(from, to + 1)
           .flatMap((b) => (b.feeds[FEED] ?? []).map((r) => placed(r).quantity));
-      const beforeSeven = quantities(0, checkpointBatch(data, "seven-oclock"));
-      expect(beforeSeven.some(isTricky)).toBe(true);
-      expect(beforeSeven.some((q) => readQuantity(q) === null)).toBe(true);
+      const beforeEight = quantities(0, checkpointBatch(data, "eight-oclock"));
+      expect(beforeEight.some(isTricky)).toBe(true);
+      expect(beforeEight.some((q) => readQuantity(q) === null)).toBe(true);
 
       const visible = new Set(quantities(0, HIDDEN_FROM - 1).map((q) => String(q).toLowerCase()));
       const hidden = quantities(HIDDEN_FROM, data.batches.length - 1);
@@ -192,10 +192,10 @@ describe("the possessed feed", () => {
 
   it("fails the pipelines that drop or null what a cast can't read, on every seed", () => {
     for (const { data } of allData) {
-      const seven = data.checkpoints.find((c) => c.id === "seven-oclock");
-      if (!seven) throw new Error("No seven o'clock checkpoint.");
-      const expected = sorted(data.expected[seven.id]?.[GOLD_TABLE] ?? []);
-      const rows = rowsThrough(data, seven.afterBatch);
+      const eight = data.checkpoints.find((c) => c.id === "eight-oclock");
+      if (!eight) throw new Error("No eight o'clock checkpoint.");
+      const expected = sorted(data.expected[eight.id]?.[GOLD_TABLE] ?? []);
+      const rows = rowsThrough(data, eight.afterBatch);
       expect(sorted(tally(rows, castQuantity, false))).not.toEqual(expected);
       expect(sorted(tally(rows, castQuantity, true))).not.toEqual(expected);
     }

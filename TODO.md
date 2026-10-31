@@ -87,11 +87,11 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 ## 5. Screens
 
 - [x] **5.1 Landing.** Hollow Creek at dusk (scene), title, tagline, and an "Enter the night" button. Interactive in under 2s. Includes the Open Graph image.
-- [ ] **5.2 Character select.** Locked and unlocked states, with candle counts and starting relics.
+- [x] **5.2 Character select.** Locked and unlocked states, with candle counts and starting relics.
 
 ### 5.3 Run screen
 - [x] **5.3.1 Layout.** Resizable panels as specified in the art direction, with the layout persisted.
-- [ ] **5.3.2 Top bar.** Candles, night clock with slot markers, seed, and act indicator.
+- [x] **5.3.2 Top bar.** Candles, night clock with slot markers, seed, and act indicator.
 - [x] **5.3.3 Story panel.** Narrative rendering with typographic polish and character portraits or monograms.
 - [x] **5.3.4 Table browser.** Bronze sources with schema, row counts, and the batches seen so far.
 - [x] **5.3.5 Pipeline DAG.** Live graph of models, with clickable nodes that open their editor tab.
