@@ -4,7 +4,7 @@ import { useState } from "react";
 import { cx } from "@/components/ui/cx";
 import { justSnuffed } from "./clock";
 
-type CandleState = "lit" | "guttering" | "out";
+export type CandleState = "lit" | "guttering" | "out";
 
 /*
  * A candle going out gutters over a scene beat: the flame leans, shrinks, and dies, then the
@@ -17,7 +17,8 @@ const smokeRise =
   "animate-[candle-smoke_var(--transition-duration-scene)_var(--ease-out)_both] " +
   "motion-calm:animate-[candle-fade-in_var(--transition-duration-base)_var(--ease-out)_both]";
 
-function Candle({ state }: { readonly state: CandleState }) {
+/** One candle, drawn in a 10 by 32 box; a guttering one goes out as it mounts. */
+export function Candle({ state }: { readonly state: CandleState }) {
   return (
     <span className="relative block h-8 w-2.5" data-candle={state}>
       {state === "out" ? null : (
