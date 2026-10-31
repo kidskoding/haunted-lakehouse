@@ -19,6 +19,7 @@ export const porchLights: Puzzle = {
   // The last two landings stay hidden so running the night still has something to reveal.
   visibleBatchCount: BATCH_COUNT - 2,
   goldTables: [GOLD_TABLE],
+  symptoms: ["house_count"],
   generate({ runSeed, rng }): PuzzleData {
     const night = generateNight(runSeed);
     const events = hourEvents(night.porchLights.events);

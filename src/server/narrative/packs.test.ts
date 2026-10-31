@@ -50,8 +50,11 @@ function expectPuzzleRenders(puzzle: Puzzle, pack: NarrativePack): void {
       expect(text).not.toMatch(UNFILLED);
     }
     const withheld = packSymptoms(pack);
-    // A symptom the story marks but the puzzle doesn't declare would show through the fog.
-    if (puzzle.symptoms) expect(withheld).toEqual([...puzzle.symptoms].sort());
+    // A symptom the story marks but the puzzle doesn't declare would show through the fog,
+    // and a puzzle that declares none would let the fog take every number instead.
+    expect(withheld, `${puzzle.id} declares its story's symptoms`).toEqual(
+      [...(puzzle.symptoms ?? [])].sort(),
+    );
     const fogged = Object.fromEntries(
       Object.entries(bindings).filter(([key]) => !withheld.includes(key)),
     );
@@ -265,18 +268,23 @@ describe("every registered puzzle", () => {
       },
       epitaphs: ["a", "b"],
     };
+    const puzzle = fakePuzzle({ symptoms: ["finalTotal"] });
+    expect(() => {
+      expectPuzzleRenders(puzzle, pack);
+    }).not.toThrow();
+
     expect(() => {
       expectPuzzleRenders(fakePuzzle(), pack);
-    }).not.toThrow();
+    }).toThrow(/declares its story's symptoms/);
 
     const misbound = { ...pack, bindings: { ...bindings, missing: "count" as const } };
     expect(() => {
-      expectPuzzleRenders(fakePuzzle(), misbound);
+      expectPuzzleRenders(puzzle, misbound);
     }).toThrow(/missing/);
 
     const holey = { ...pack, hook: [mayor("Ask {nobody}.")] };
     expect(() => {
-      expectPuzzleRenders(fakePuzzle(), holey);
+      expectPuzzleRenders(puzzle, holey);
     }).toThrow(/nobody/);
   });
 });
