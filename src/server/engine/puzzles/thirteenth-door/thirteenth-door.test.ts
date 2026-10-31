@@ -3,7 +3,7 @@ import { validatePuzzleData, type PuzzleData, type Row } from "../../puzzle";
 import { drawPossession, possess } from "../../curses/possession";
 import { generateContext, generatePuzzle } from "../../registry";
 import { generateNight } from "../../world/night";
-import { CURSED_PIECES, piecesBeforeBell } from "./cursed";
+import { CURSED_PIECES, cursedHouses, piecesBeforeBell } from "./cursed";
 import { BELL_BATCH, LAST_BATCH } from "./delivery";
 import { GOLD_TABLE, thirteenthDoor } from "./puzzle";
 
@@ -234,7 +234,12 @@ describe("the thirteenth door", () => {
       const { narrative } = data;
       expect(narrative.cursed_on_street).toBe(bell[0]?.cursed_houses);
       expect(narrative.cursed_street).toBe(bell.map((r) => r.street).join(" and "));
-      expect(narrative.cursed_household).not.toBe("");
+      const night = generateNight(seed);
+      const cursed = new Set(cursedHouses(night.candyBowls));
+      const [lowest] = night.houses
+        .filter((h) => cursed.has(h.houseId) && h.street === bell[0]?.street)
+        .sort((a, b) => a.number - b.number);
+      expect(narrative.cursed_household).toBe(lowest?.household);
       expect(narrative.cursed_count).toBeGreaterThanOrEqual(Number(narrative.cursed_on_street));
       expect(narrative.bags_sold).toBeGreaterThanOrEqual(Number(narrative.bowl_count));
     });

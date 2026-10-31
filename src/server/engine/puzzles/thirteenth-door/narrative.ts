@@ -1,6 +1,7 @@
 import "server-only";
 import { CANDY_CATALOG } from "../../world/candy";
 import { CURSE_BELL } from "../../world/candy-bowls";
+import type { House } from "../../world/houses";
 import type { Night } from "../../world/night";
 import type { CursedStreetRow } from "./cursed";
 
@@ -28,7 +29,10 @@ export function narrativeBindings(
   );
   const streets = answer.map((row) => row.street);
   // The family Marisol has to tell first: the lowest-numbered cursed house on the top street.
-  const first = night.houses.find((h) => cursed.includes(h.houseId) && h.street === streets[0]);
+  // Houses come one side of the street at a time, so roster order is not house-number order.
+  const first = night.houses
+    .filter((h) => cursed.includes(h.houseId) && h.street === streets[0])
+    .reduce<House | undefined>((low, h) => (low && low.number <= h.number ? low : h), undefined);
   return {
     street_count: new Set(night.houses.map((h) => h.street)).size,
     bowl_count: bowls.length,
