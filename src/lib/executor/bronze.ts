@@ -71,7 +71,11 @@ export class BronzeFeed {
   land(batch: number, rows: readonly RawRow[]): void {
     for (const row of rows) {
       for (const [name, value] of Object.entries(row)) this.observe(name, value);
-      this.retained.push({ batch, seq: this.nextSeq, row });
+      // Columns fold case, so a row is held by folded name: a later batch may spell it anew.
+      const folded = Object.fromEntries(
+        Object.entries(row).map(([name, value]) => [name.toLowerCase(), value]),
+      );
+      this.retained.push({ batch, seq: this.nextSeq, row: folded });
       this.nextSeq++;
     }
   }
@@ -95,7 +99,7 @@ export class BronzeFeed {
     for (let start = 0; start < this.retained.length; start += ROWS_PER_INSERT) {
       const tuples = this.retained.slice(start, start + ROWS_PER_INSERT).map((arrival) => {
         const cells = columns.map((column) =>
-          literal(arrival.row[column.name] ?? null, column.type),
+          literal(arrival.row[column.key] ?? null, column.type),
         );
         return `(${[...cells, String(arrival.batch), String(arrival.seq)].join(", ")})`;
       });

@@ -121,6 +121,15 @@ export async function* execute(
   const delivered: number[] = [];
   const state = new Map<string, readonly DescribedColumn[]>();
 
+  const checkExecutionTime = (at: number): void => {
+    if (at - started > EXECUTION_TIME_LIMIT_MS) {
+      throw new StepFailure(
+        "execution_time_limit",
+        `The night ran longer than ${String(EXECUTION_TIME_LIMIT_MS / 1000)} s.`,
+      );
+    }
+  };
+
   const runStep = async (batch: number, phase: ExecutionPhase): Promise<void> => {
     for (const model of active) {
       const stepStarted = now();
@@ -135,12 +144,7 @@ export async function* execute(
               `This model's step ran longer than ${String(STEP_TIME_LIMIT_MS / 1000)} s.`,
             );
           }
-          if (at - started > EXECUTION_TIME_LIMIT_MS) {
-            throw new StepFailure(
-              "execution_time_limit",
-              `The night ran longer than ${String(EXECUTION_TIME_LIMIT_MS / 1000)} s.`,
-            );
-          }
+          checkExecutionTime(at);
         },
       };
       try {
@@ -156,6 +160,8 @@ export async function* execute(
     for (const model of observe?.goldTables ?? []) {
       try {
         hashes[model.id] = await hashRelation(connection, relationName(model.schema, model.name));
+        // Reading a gold view runs its query, so the night's clock keeps counting here too.
+        checkExecutionTime(now());
       } catch (error) {
         throw new Failed(report(asStepFailure(error), batch, model.id, phase));
       }

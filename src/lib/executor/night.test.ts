@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { SqlConnection } from "./connection";
+import { EXECUTION_TIME_LIMIT_MS } from "./execute";
 import { judgeNight, runNight, runPreview, type NightInput } from "./night";
 import { compileProject, nativeConnection } from "./test-connection";
 import type { ExpectedHashes, NightBatch, NightEvent } from "./types";
@@ -219,6 +221,48 @@ describe("Run the night", () => {
       }),
     );
     expect(events).toMatchObject([{ kind: "error", error: { model: "silver.leftover" } }]);
+  });
+
+  it("counts the time a checkpoint spends reading gold towards the night's limit", async () => {
+    // Only gold reads query here, so the clock jumps exactly when a checkpoint hashes.
+    const native = await nativeConnection();
+    let clock = 0;
+    const connection: SqlConnection = {
+      run: (sql) => native.run(sql),
+      query: (sql) => {
+        clock += EXECUTION_TIME_LIMIT_MS + 1;
+        return native.query(sql);
+      },
+    };
+    const pipeline = await compileProject(
+      {
+        "gold/lit_houses.sql":
+          "{{ config(materialized='view') }} select house_id from bronze.porch_events",
+      },
+      FEEDS,
+    );
+    const result = await runNight(
+      connection,
+      {
+        pipeline,
+        batches: BATCHES,
+        checkpoints: [{ id: "c1", afterBatch: 2, label: "8:00pm" }],
+        retention: 2,
+        goldTables: ["gold.lit_houses"],
+      },
+      { now: () => clock },
+    );
+    expect(eventsOf(result)).toEqual([
+      {
+        kind: "error",
+        error: expect.objectContaining({
+          code: "execution_time_limit",
+          phase: "checkpoint",
+          model: "gold.lit_houses",
+          batch: 2,
+        }) as unknown,
+      },
+    ]);
   });
 });
 
