@@ -106,6 +106,26 @@ export function CandleSnuffedIcon(props: IconProps) {
   );
 }
 
+/** A checkpoint that failed: the town's dial, split by a crack. */
+export function CrackIcon(props: IconProps) {
+  return (
+    <Glyph {...props}>
+      <circle cx="12" cy="12" r="8.25" />
+      <path d="m12.75 3.75-2.25 5 3 2.5-2.75 3.5 1.5 5.5" />
+    </Glyph>
+  );
+}
+
+/** A batch delivered a second time, as the night's idempotency check does. */
+export function ReplayIcon(props: IconProps) {
+  return (
+    <Glyph {...props}>
+      <path d="M4.75 12A7.25 7.25 0 1 0 7 6.75" />
+      <path d="M7.25 3v3.75H3.5" />
+    </Glyph>
+  );
+}
+
 /** An open arc that turns while work is in flight; it holds still under reduced motion. */
 export function SpinnerIcon({ className, ...props }: IconProps) {
   return (

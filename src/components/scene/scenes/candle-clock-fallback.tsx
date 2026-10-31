@@ -5,10 +5,13 @@ import { DESIGN_HEIGHT, DESIGN_WIDTH, START_HOUR, palette } from "./candle-clock
 
 const TICKS = Array.from({ length: 12 }, (_, hour) => hour);
 
-/** The candle-clock scene as a static drawing, for before the scene loads and for no-WebGL browsers. */
-export function CandleClockFallback() {
+/**
+ * The candle-clock scene as a static drawing, for before the scene loads and for no-WebGL
+ * browsers. With an `hour`, the hand points at it; the scene's own sweep stays in the canvas.
+ */
+export function CandleClockFallback({ hour = START_HOUR }: { readonly hour?: number }) {
   const haloId = useId();
-  const handDegrees = (START_HOUR / 12) * 360;
+  const handDegrees = (hour / 12) * 360;
   return (
     <svg
       viewBox={`0 0 ${String(DESIGN_WIDTH)} ${String(DESIGN_HEIGHT)}`}

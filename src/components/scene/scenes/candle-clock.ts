@@ -1,5 +1,5 @@
 import { Container, Graphics, type Application } from "pixi.js";
-import { createFlicker } from "../motion";
+import { createFlicker, easeInOut } from "../motion";
 import type { SceneModule, SceneSize } from "../types";
 import {
   clockHandHour,
@@ -8,6 +8,9 @@ import {
   FLICKER_AMPLITUDE,
   GUTTER_LEAN,
   palette,
+  START_HOUR,
+  SWEEP_MS,
+  sweepTarget,
   type CandleClockProps,
 } from "./candle-clock-art";
 
@@ -88,10 +91,30 @@ function drawHalo(): Graphics {
   return halo;
 }
 
-/** The scene shell's demo: a flickering candle beside a night clock whose hand sweeps hour to hour. */
+/**
+ * A flickering candle beside a night clock. The hand sweeps hour to hour on its own, or
+ * follows the `hour` prop when one is given.
+ */
 export const candleClockScene: SceneModule<Application, CandleClockProps> = {
   mount(app, ctx) {
     let props = ctx.props;
+    let shownHour = props.hour ?? START_HOUR;
+    // The sweep starts on the first frame drawn after the hour changes.
+    let sweep: { from: number; to: number; startMs: number | null } = {
+      from: shownHour,
+      to: shownHour,
+      startMs: null,
+    };
+    const handHour = (timeMs: number, reducedMotion: boolean): number => {
+      if (props.hour === undefined) {
+        const hour = clockHandHour(timeMs);
+        return reducedMotion ? Math.round(hour) : hour;
+      }
+      sweep.startMs ??= timeMs;
+      const progress = reducedMotion ? 1 : Math.min(1, (timeMs - sweep.startMs) / SWEEP_MS);
+      shownHour = sweep.from + (sweep.to - sweep.from) * easeInOut(progress);
+      return shownHour;
+    };
     const shapeNoise = createFlicker(SHAPE_SEED);
     const leanNoise = createFlicker(LEAN_SEED, 6);
 
@@ -132,14 +155,14 @@ export const candleClockScene: SceneModule<Application, CandleClockProps> = {
         const lean = gutter ? GUTTER_LEAN : 0;
         if (reducedMotion) {
           // The calm equivalent: the hand settles on its hour and the flame holds still.
-          hand.rotation = (Math.round(clockHandHour(timeMs)) / 12) * Math.PI * 2;
+          hand.rotation = (handHour(timeMs, true) / 12) * Math.PI * 2;
           flame.scale.set(1, gutter ? 0.85 : 1);
           flame.skew.x = lean;
           halo.alpha = 0.8;
           halo.scale.set(1);
           return;
         }
-        hand.rotation = (clockHandHour(timeMs) / 12) * Math.PI * 2;
+        hand.rotation = (handHour(timeMs, false) / 12) * Math.PI * 2;
         const amplitude = FLICKER_AMPLITUDE[props.flame];
         const n = shapeNoise(timeMs) * amplitude;
         flame.scale.set(1 - n * 0.3, (gutter ? 0.85 : 1) + n);
@@ -149,6 +172,9 @@ export const candleClockScene: SceneModule<Application, CandleClockProps> = {
       },
       resize: layout,
       update(next) {
+        if (next.hour !== undefined && next.hour !== props.hour) {
+          sweep = { from: shownHour, to: sweepTarget(shownHour, next.hour), startMs: null };
+        }
         props = next;
       },
       destroy() {
