@@ -51,9 +51,11 @@ export function Tabs(props: TabsProps) {
     if ("defaultValue" in props) setOwnValue(next);
     props.onValueChange?.(next);
   };
-  // IDs are references, which whitespace would split.
+  // ID references split on whitespace, and two values must never share an id. Letters and
+  // digits pass through; every other UTF-16 unit, `_` included, becomes `_<hex>_`, which
+  // reads back unambiguously.
   const idFor = (part: "tab" | "panel", tab: string) =>
-    `${baseId}-${part}-${tab.replace(/\s/g, "_")}`;
+    `${baseId}-${part}-${tab.replace(/[^A-Za-z0-9]/g, (unit) => `_${unit.charCodeAt(0).toString(16)}_`)}`;
 
   return (
     <TabsContext value={{ value, select, idFor }}>
