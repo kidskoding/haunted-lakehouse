@@ -120,7 +120,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 
 ## 6. Story framework
 
-- [ ] **6.1 Story bible.** `docs/story.md` covers cast voices with sample lines, the full mystery, every ending, the fragment locations, and Wren's dialogue progression. **Stop and ask the repo owner to review.**
+- [x] **6.1 Story bible.** `docs/story.md` covers cast voices with sample lines, the full mystery, every ending, the fragment locations, and Wren's dialogue progression. **Stop and ask the repo owner to review.**
 - [ ] **6.2 Narrative engine.** Story intros, beats, autopsies, and character reactions are templated from the run's actual data, with a test that every puzzle renders with no unfilled placeholders.
 
 ---
