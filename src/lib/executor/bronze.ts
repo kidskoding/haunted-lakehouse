@@ -99,7 +99,11 @@ export class BronzeFeed {
     for (let start = 0; start < this.retained.length; start += ROWS_PER_INSERT) {
       const tuples = this.retained.slice(start, start + ROWS_PER_INSERT).map((arrival) => {
         const cells = columns.map((column) =>
-          literal(arrival.row[column.key] ?? null, column.type),
+          // Own properties only: a column named like an Object method must not read the prototype.
+          literal(
+            Object.hasOwn(arrival.row, column.key) ? (arrival.row[column.key] ?? null) : null,
+            column.type,
+          ),
         );
         return `(${[...cells, String(arrival.batch), String(arrival.seq)].join(", ")})`;
       });

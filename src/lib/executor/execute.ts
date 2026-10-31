@@ -89,6 +89,13 @@ function checkBatches(batches: readonly NightBatch[], retention: number): void {
   const feeds = Object.keys(batches[0]?.feeds ?? {})
     .sort()
     .join(",");
+  // Bronze takes its columns from the rows that land, so a feed silent in the first batch would
+  // reach the first model step with no columns (runtime contract 4.4 forbids it).
+  for (const [feed, rows] of Object.entries(batches[0]?.feeds ?? {})) {
+    if (rows.length === 0) {
+      throw new RangeError(`Feed ${feed} delivers no rows in the first batch.`);
+    }
+  }
   batches.forEach((batch, i) => {
     const previous = batches[i - 1];
     if (previous && batch.index <= previous.index) {
