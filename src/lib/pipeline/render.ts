@@ -1,3 +1,4 @@
+import { indexOfLineColumn, lineColumn, type LineColumn } from "./position";
 import type { Piece, Template } from "./template";
 
 /** What the executor substitutes for a model's template tags in one step. */
@@ -75,4 +76,18 @@ export function sourceIndex(rendered: RenderedSql, index: number): number {
   if (!found) return 0;
   if (!found.verbatim) return found.sourceStart;
   return found.sourceStart + Math.min(index - found.renderedStart, found.length);
+}
+
+/**
+ * Maps a place in rendered SQL, such as where DuckDB points at an error, back to the model file
+ * `source` it was rendered from. A place inside a tag's substitution maps to the start of the
+ * tag. Null when the place is not in the rendered SQL.
+ */
+export function sourcePosition(
+  rendered: RenderedSql,
+  source: string,
+  place: LineColumn,
+): LineColumn | null {
+  const index = indexOfLineColumn(rendered.sql, place);
+  return index === null ? null : lineColumn(source, sourceIndex(rendered, index));
 }

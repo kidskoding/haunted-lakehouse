@@ -1,6 +1,6 @@
 import { quoteIdentifier, type DescribedColumn } from "../canonical/sql";
 import type { CompiledModel } from "../pipeline/compile";
-import { render } from "../pipeline/render";
+import { render, type RenderContext } from "../pipeline/render";
 import { countRows, describe, relationName, type SqlConnection } from "./connection";
 import { StepFailure, asStepFailure, sqlFailure } from "./failure";
 
@@ -16,6 +16,14 @@ const STAGED = relationName(SCRATCH, "staged");
 /** The relation `{{ new_batch('feed') }}` reads: the feed's rows of the current batch. */
 export function newBatchRelation(feed: string): string {
   return relationName(SCRATCH, `new_batch_${feed.toLowerCase()}`);
+}
+
+/**
+ * What a model's template tags render to in one step. `isIncremental` is whether the model
+ * has state, which only an incremental model ever has.
+ */
+export function stepContext(model: CompiledModel, isIncremental: boolean): RenderContext {
+  return { isIncremental, thisRelation: relationName(model.schema, model.name), newBatchRelation };
 }
 
 export interface StepScope {
@@ -53,11 +61,7 @@ async function materialize(
 ): Promise<readonly DescribedColumn[] | null> {
   const { connection } = scope;
   const relation = relationName(model.schema, model.name);
-  const sql = render(model, {
-    isIncremental: scope.state.has(model.id),
-    thisRelation: relation,
-    newBatchRelation,
-  });
+  const sql = render(model, stepContext(model, scope.state.has(model.id)));
   switch (model.materialization) {
     case "view":
       await runModelSql(connection, `CREATE OR REPLACE VIEW ${relation} AS`, sql);
