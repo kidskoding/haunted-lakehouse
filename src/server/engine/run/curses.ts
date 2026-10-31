@@ -22,7 +22,8 @@ function cursesFor(puzzle: Puzzle): CurseId[] {
 
 /**
  * The curse an hour opens with, if any. The first hour teaches the game and is never cursed.
- * Keyed by seed and slot alone, so retries and relic choices can never reroll it.
+ * Keyed by seed and slot, with the curses on offer narrowed to those `puzzle` can feel, so
+ * retries and relic choices can never reroll it.
  */
 export function drawCurse(seed: string, slot: Slot, puzzle: Puzzle): CurseId | null {
   if (slot === 1) return null;
