@@ -38,13 +38,20 @@ export function CharacterSelect({ view, action = "/run" }: CharacterSelectProps)
           aria-labelledby={TITLE_ID}
           className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
         >
-          {view.cards.map((card) => (
-            <CharacterOption
-              key={card.id}
-              card={card}
-              checked={card.id === view.defaultCharacter}
-            />
-          ))}
+          {view.cards.map((card, index) => {
+            // A secret stays secret in the page too, keys included, since they ride in the RSC
+            // payload; its radio is disabled, so the stand-in value is never sent.
+            const value =
+              card.locked && card.preview === null ? `locked-${String(index)}` : card.id;
+            return (
+              <CharacterOption
+                key={value}
+                card={card}
+                value={value}
+                checked={card.id === view.defaultCharacter}
+              />
+            );
+          })}
         </fieldset>
 
         {/* On a phone the cards run long, so the confirm rides along at the bottom. */}
@@ -58,8 +65,16 @@ export function CharacterSelect({ view, action = "/run" }: CharacterSelectProps)
   );
 }
 
-function CharacterOption({ card, checked }: { card: CharacterCard; checked: boolean }) {
-  const detailsId = `character-${card.id}-details`;
+function CharacterOption({
+  card,
+  value,
+  checked,
+}: {
+  card: CharacterCard;
+  value: string;
+  checked: boolean;
+}) {
+  const detailsId = `character-${value}-details`;
   const shown = card.locked ? card.preview : card;
 
   return (
@@ -77,7 +92,7 @@ function CharacterOption({ card, checked }: { card: CharacterCard; checked: bool
       <input
         type="radio"
         name="character"
-        value={card.id}
+        value={value}
         defaultChecked={checked}
         disabled={card.locked}
         aria-describedby={detailsId}

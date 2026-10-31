@@ -22,6 +22,14 @@ test("a new player sees only the Intern open, and no console errors", async ({ p
   expect(errors).toEqual([]);
 });
 
+test("the locked secret character never reaches the page, payload included", async ({ page }) => {
+  const response = await page.goto("/run/new");
+  const body = (await response?.text()) ?? "";
+  expect(body).toContain("Who takes the night?");
+  expect(body).not.toContain("old_wren");
+  expect(body).not.toContain("Old Wren");
+});
+
 test("locked radios describe how to unlock them", async ({ page }) => {
   await page.goto("/run/new");
   await expect(page.getByRole("radio", { name: /The Night Clerk/ })).toHaveAccessibleDescription(
