@@ -140,7 +140,7 @@ describe("judgeNightAttempt", () => {
 
   it("clears the hour when every hash matches and records hour_cleared", async () => {
     const { player, run, attemptToken } = await openPorchRun(database);
-    const expected = await expectedHashes(data);
+    const expected = await expectedHashes(porchLights, data);
 
     const result = await judgeNightAttempt(database, {
       runId: run.id,
@@ -177,7 +177,7 @@ describe("judgeNightAttempt", () => {
       ],
     ])("after %s", async (_, night, checkpointId) => {
       const { player, run, attemptToken } = await openPorchRun(database);
-      const expected = await expectedHashes(data);
+      const expected = await expectedHashes(porchLights, data);
       const events = night(expected);
       const shown = clientSees(events, expected);
 
@@ -256,7 +256,7 @@ describe("judgeNightAttempt", () => {
 
   it("keeps earlier reveals visible after a later failure", async () => {
     const { player, run, attemptToken } = await openPorchRun(database, 1);
-    const expected = await expectedHashes(data);
+    const expected = await expectedHashes(porchLights, data);
 
     const result = await judgeNightAttempt(database, {
       runId: run.id,
@@ -303,7 +303,7 @@ describe("judgeNightAttempt", () => {
     });
     expect(hidden).toEqual({ ok: false, error: "hidden" });
 
-    const expected = await expectedHashes(data);
+    const expected = await expectedHashes(porchLights, data);
     const result = await judgeNightAttempt(database, {
       runId: run.id,
       playerId: player.id,
@@ -318,7 +318,7 @@ describe("judgeNightAttempt", () => {
   it("kills the run when the last candles go out", async () => {
     // Intern starts with 4; three prior failures leave one candle for this miss.
     const { player, run, attemptToken } = await openPorchRun(database, 3);
-    const expected = await expectedHashes(data);
+    const expected = await expectedHashes(porchLights, data);
 
     const result = await judgeNightAttempt(database, {
       runId: run.id,

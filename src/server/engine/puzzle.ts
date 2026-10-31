@@ -76,6 +76,11 @@ export interface Puzzle {
   readonly replayBatch?: number;
   /** The gold tables the player must build, which checkpoints compare. */
   readonly goldTables: readonly string[];
+  /**
+   * Each gold table's columns, keyed by table. Expected hashes take their header from here,
+   * so an empty expected table still hashes as the player's empty table with these columns.
+   */
+  readonly goldColumns: Readonly<Record<string, readonly string[]>>;
   /** Where the Curse of Possession may strike. Without any, the curse passes this hour by. */
   readonly possessable?: readonly PossessableColumn[];
   /**
@@ -125,6 +130,16 @@ export function validatePuzzleData(puzzle: Puzzle, data: PuzzleData): string[] {
     }
   }
 
+  for (const table of puzzle.goldTables) {
+    if (!puzzle.goldColumns[table]?.length)
+      problems.push(`Gold table ${table} declares no columns.`);
+  }
+  for (const table of Object.keys(puzzle.goldColumns)) {
+    if (!puzzle.goldTables.includes(table)) {
+      problems.push(`Columns are declared for ${table}, which is not a gold table.`);
+    }
+  }
+
   if (checkpoints.length === 0) problems.push("There are no checkpoints.");
   const seen = new Set<string>();
   let previous = -1;
@@ -149,10 +164,19 @@ export function validatePuzzleData(puzzle: Puzzle, data: PuzzleData): string[] {
       if (!(table in tables))
         problems.push(`Checkpoint ${checkpoint.id} has no expected ${table}.`);
     }
-    for (const table of Object.keys(tables)) {
+    for (const [table, rows] of Object.entries(tables)) {
       if (!puzzle.goldTables.includes(table)) {
         problems.push(`Checkpoint ${checkpoint.id} expects ${table}, which is not a gold table.`);
       }
+      const columns = puzzle.goldColumns[table] ?? [];
+      rows.forEach((row, r) => {
+        const keys = Object.keys(row);
+        if (keys.length !== columns.length || keys.some((key) => !columns.includes(key))) {
+          problems.push(
+            `Checkpoint ${checkpoint.id} row ${String(r)} of ${table} has columns ${keys.join(", ")}, not ${columns.join(", ")}.`,
+          );
+        }
+      });
     }
   }
   for (const id of Object.keys(expected)) {

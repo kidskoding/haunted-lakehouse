@@ -16,7 +16,9 @@ import "server-only";
  * Parsing is all it does: no expressions, no lookups, nothing that could run.
  */
 
-export type Style = "plain" | "em" | "strong" | "code";
+import type { Style } from "../../lib/story/types";
+
+export type { Style };
 
 export type Format =
   | { readonly kind: "number" }

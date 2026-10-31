@@ -51,3 +51,33 @@ test("a saved unmuted preference stays locked until the first gesture", async ({
   await expect(control).toHaveAttribute("data-sound-status", "on");
   await expect(page.getByRole("button", { name: "Death" })).toBeEnabled();
 });
+
+test("the controls wait for saved settings, so an early change is never lost", async ({ page }) => {
+  // Holding the scripts back keeps the server HTML on screen with React not yet running, the
+  // window a busy dev server opens when the whole suite runs at once.
+  let release = () => {};
+  const scripts = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(/\/_next\/static\/chunks\/.+\.js/, async (route) => {
+    await scripts;
+    await route.continue();
+  });
+
+  await page.goto("/dev/sound", { waitUntil: "commit" });
+  const control = page.getByRole("group", { name: "Sound" });
+  await expect(control).toHaveAttribute("data-sound-status", "loading");
+  const volume = control.getByRole("slider", { name: "Volume" });
+  const toggle = control.getByRole("button", { name: "Sound" });
+  await expect(volume).toBeDisabled();
+  await expect(toggle).toBeDisabled();
+
+  release();
+  await expect(control).toHaveAttribute("data-sound-status", "off");
+  await volume.fill("40");
+  await toggle.click();
+  await expect(control).toHaveAttribute("data-sound-status", "on");
+  await expect(volume).toHaveValue("40");
+  const stored = await page.evaluate((key) => localStorage.getItem(key), SETTINGS_KEY);
+  expect(JSON.parse(stored ?? "")).toEqual({ muted: false, volume: 0.4 });
+});

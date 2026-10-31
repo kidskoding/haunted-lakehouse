@@ -60,7 +60,7 @@ function error(batch: number, phase: RuntimeError["phase"]): NightEvent {
 }
 
 async function expected(): Promise<ExpectedHashes> {
-  return expectedHashes(data);
+  return expectedHashes(puzzle, data);
 }
 
 /** What the player's screen shows after this night: the client's report and reveal. */
@@ -157,7 +157,7 @@ describe("validateNight", () => {
   it("reports the last checkpoint when an error comes after every checkpoint passed", async () => {
     const lateFirst = fakePuzzle({ visibleBatchCount: 1 });
     const lateData = generatePuzzle(lateFirst, "raven-pumpkin-13");
-    const hashes = await expectedHashes(lateData);
+    const hashes = await expectedHashes(lateFirst, lateData);
     const early = lateData.checkpoints[0];
     if (!early) throw new Error("fake puzzle has no checkpoint");
     // Move late to batch 1, so an error at batch 2 follows every checkpoint.

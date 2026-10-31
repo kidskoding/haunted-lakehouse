@@ -31,6 +31,7 @@ export const thirteenthDoor: Puzzle = {
   // Preview stops before the post-bell uploads; the proclamation still has to earn them.
   visibleBatchCount: BELL_BATCH + 1,
   goldTables: [GOLD_TABLE],
+  goldColumns: { [GOLD_TABLE]: ["street", "cursed_houses"] },
   // A scale that starts reporting "412 g", or renames its column, still says how much is left.
   possessable: [
     { feed: "candy_bowls", column: "weight_g", aliases: ["weight_grams", "grams"], unit: "g" },
