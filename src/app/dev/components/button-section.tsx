@@ -175,7 +175,6 @@ export function ButtonSection() {
   return (
     <Section
       id="buttons"
-      eyebrow="Button"
       title="Buttons"
       intro="One lit action per screen. Disabled buttons stay in the tab order so their tooltip can say why."
     >

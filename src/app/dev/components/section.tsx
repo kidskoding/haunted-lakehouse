@@ -3,19 +3,17 @@ import { cx } from "@/components/ui/cx";
 
 interface SectionProps {
   readonly id: string;
-  readonly eyebrow: string;
   readonly title: string;
   readonly children: ReactNode;
   readonly intro?: ReactNode;
 }
 
-/** One component's chapter in the gallery. */
-export function Section({ id, eyebrow, title, intro, children }: SectionProps) {
+/** One component's chapter in the gallery; `id` is also its anchor in the contents. */
+export function Section({ id, title, intro, children }: SectionProps) {
   return (
-    <section aria-labelledby={id} className="flex flex-col gap-6 border-t border-line-faint pt-10">
+    <section id={id} aria-labelledby={`${id}-title`} className="flex scroll-mt-12 flex-col gap-6">
       <header className="flex max-w-reading flex-col gap-2">
-        <p className="text-smoke type-label-caps">{eyebrow}</p>
-        <h2 id={id} className="text-balance text-parchment type-display-m">
+        <h2 id={`${id}-title`} className="text-balance text-parchment type-heading">
           {title}
         </h2>
         {intro ? <p className="text-pretty text-ash type-prose-s">{intro}</p> : null}
@@ -36,7 +34,7 @@ export function Specimen({
   readonly className?: string;
 }) {
   return (
-    <figure className={cx("flex flex-col gap-3", className)}>
+    <figure className={cx("flex min-w-0 flex-col gap-3", className)}>
       <figcaption className="text-smoke type-ui-s">{label}</figcaption>
       {children}
     </figure>

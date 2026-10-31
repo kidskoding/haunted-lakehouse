@@ -12,9 +12,8 @@ import { SpinnerIcon } from "./icons";
 const variants = {
   /** The one lit action on a screen: "Run the night", "Enter the night". */
   primary:
-    "bg-flame text-night shadow-glow-primary ui-hover:bg-ember ui-active:bg-ember " +
-    "ui-active:translate-y-px ui-active:shadow-none [--kbd-ink:var(--color-night)] " +
-    "[--kbd-line:var(--color-night)]",
+    "bg-flame text-night ui-hover:bg-ember ui-active:bg-ember ui-active:translate-y-px " +
+    "[--kbd-ink:var(--color-night)] [--kbd-line:var(--color-night)]",
   /** A strong action that is not the night's: "Preview". */
   secondary:
     "bg-parchment text-night ui-hover:bg-glow ui-active:bg-ash ui-active:translate-y-px " +
@@ -37,7 +36,7 @@ const variants = {
 
 /* Every disabled variant reads the same: present, legible, plainly unavailable. */
 const disabledFilled =
-  "aria-disabled:bg-fog aria-disabled:text-ash aria-disabled:shadow-none " +
+  "aria-disabled:bg-fog aria-disabled:text-ash " +
   "aria-disabled:[--kbd-ink:var(--color-ash)] aria-disabled:[--kbd-line:var(--color-line-control)]";
 const disabledOutlined = "aria-disabled:border-line-strong aria-disabled:text-smoke";
 const disabledQuiet = "aria-disabled:text-smoke";

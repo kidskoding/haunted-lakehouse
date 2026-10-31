@@ -69,7 +69,6 @@ export function PanelSection() {
   return (
     <Section
       id="panels"
-      eyebrow="Panel"
       title="Panels"
       intro="Flat regions told apart by fill. The panel holding focus lights its header with a flame bar."
     >

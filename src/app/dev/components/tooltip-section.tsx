@@ -40,7 +40,6 @@ export function TooltipSection() {
   return (
     <Section
       id="tooltips"
-      eyebrow="Tooltip"
       title="Tooltips"
       intro="Shown on hover and on keyboard focus, dismissed with Escape, and kept open while the pointer rests on them."
     >
@@ -76,7 +75,7 @@ export function TooltipSection() {
               side="bottom"
               content={
                 <span className="flex flex-col gap-0.5">
-                  <span className="text-parchment type-label-caps">Wren&rsquo;s Lantern</span>
+                  <span className="text-parchment type-ui font-semibold">Wren&rsquo;s Lantern</span>
                   <span className="text-ash">Reveals the schema history of one feed.</span>
                 </span>
               }
@@ -124,7 +123,6 @@ export function KbdSection() {
   return (
     <Section
       id="kbd"
-      eyebrow="Kbd hint"
       title="Keyboard hints"
       intro={
         <>

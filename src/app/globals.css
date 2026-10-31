@@ -28,7 +28,7 @@
     --tw-ring-offset-shadow: 0 0 0 4px var(--color-night);
     outline: 2px solid var(--color-glow);
     outline-offset: 2px;
-    box-shadow: var(--tw-ring-offset-shadow);
+    box-shadow: var(--tw-ring-offset-shadow); /* taste-skill-ignore: focus, never at rest */
   }
 }
 

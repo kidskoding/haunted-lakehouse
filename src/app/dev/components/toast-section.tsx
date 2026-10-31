@@ -36,7 +36,6 @@ export function ToastSection() {
   return (
     <Section
       id="toasts"
-      eyebrow="Toast"
       title="Toasts"
       intro="Bottom right, two at a time. Notices and successes fade after five seconds unless hovered or focused; warnings and errors wait for the player."
     >

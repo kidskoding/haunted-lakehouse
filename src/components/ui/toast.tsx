@@ -35,20 +35,17 @@ interface ToneStyle {
   readonly word: string;
   readonly Icon: ComponentType<Omit<SVGProps<SVGSVGElement>, "children">>;
   readonly ink: string;
-  readonly bar: string;
 }
 
-/* Every tone carries a word and an icon as well as its color (art direction §2.5). */
+/*
+ * Every tone has its own icon shape as well as its color, and its word for screen readers
+ * (art direction §2.5), so no tone is told apart by color alone.
+ */
 const tones: Readonly<Record<ToastTone, ToneStyle>> = {
-  info: { word: "Notice", Icon: MoonIcon, ink: "text-moon", bar: "before:bg-moon" },
-  success: { word: "Done", Icon: CandleLitIcon, ink: "text-flame", bar: "before:bg-flame" },
-  warning: {
-    word: "Warning",
-    Icon: CandleGutteringIcon,
-    ink: "text-tallow",
-    bar: "before:bg-tallow",
-  },
-  error: { word: "Error", Icon: CandleSnuffedIcon, ink: "text-snuffed", bar: "before:bg-snuffed" },
+  info: { word: "Notice", Icon: MoonIcon, ink: "text-moon" },
+  success: { word: "Done", Icon: CandleLitIcon, ink: "text-flame" },
+  warning: { word: "Warning", Icon: CandleGutteringIcon, ink: "text-tallow" },
+  error: { word: "Error", Icon: CandleSnuffedIcon, ink: "text-snuffed" },
 };
 
 export interface ToastCardProps {
@@ -61,17 +58,16 @@ export interface ToastCardProps {
 }
 
 /**
- * One toast as drawn: `raised` card, a 3px bar and icon in the tone's color, and the tone
- * named in small caps. Escape dismisses it while focus is inside.
+ * One toast as drawn: a `raised` card with the tone's icon in its color beside the title.
+ * Flat on its own; the viewport adds the shadow when it floats. Escape dismisses it while
+ * focus is inside.
  */
 export function ToastCard({ tone, title, description, onDismiss, className }: ToastCardProps) {
-  const { word, Icon, ink, bar } = tones[tone];
+  const { word, Icon, ink } = tones[tone];
   return (
     <div
       className={cx(
-        "relative flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-s bg-raised py-3",
-        "pr-2 pl-4 shadow-float before:absolute before:inset-y-0 before:left-0 before:w-0.75",
-        bar,
+        "flex w-full items-start gap-3 rounded-s bg-raised py-3 pr-2 pl-3.5",
         className,
       )}
       onKeyDown={(event) => {
@@ -81,10 +77,12 @@ export function ToastCard({ tone, title, description, onDismiss, className }: To
         }
       }}
     >
-      <Icon className={cx("mt-0.5 size-5 shrink-0", ink)} />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-px">
-        <p className={cx("type-label-caps", ink)}>{word}</p>
-        <p className="text-parchment type-ui font-semibold">{title}</p>
+      <Icon className={cx("size-5 shrink-0", ink)} />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <p className="text-parchment type-ui font-semibold">
+          <span className="sr-only">{word}: </span>
+          <span>{title}</span>
+        </p>
         {description ? <p className="text-pretty text-ash type-ui">{description}</p> : null}
       </div>
       {onDismiss ? (
@@ -182,6 +180,7 @@ function TimedToast({
         title={toast.title}
         description={toast.description}
         onDismiss={onDismiss}
+        className="shadow-float"
       />
     </div>
   );

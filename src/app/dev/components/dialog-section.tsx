@@ -134,7 +134,6 @@ export function DialogSection() {
   return (
     <Section
       id="dialogs"
-      eyebrow="Dialog"
       title="Dialogs"
       intro="Modal, on the native dialog element. Focus stays inside until it closes, Escape closes it, and focus goes back to the button that opened it."
     >

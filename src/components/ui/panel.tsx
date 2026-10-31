@@ -85,8 +85,8 @@ export interface PanelSkeletonProps {
 }
 
 /**
- * Placeholder lines while content loads: `fog` bars with a slow shimmer, held still under
- * reduced motion. Announced once through `role="status"`.
+ * Placeholder lines while content loads: still `fog` bars where the text will land, so
+ * nothing shifts when it does. Announced once through `role="status"`.
  */
 export function PanelSkeleton({ label, lines = [0.92, 0.84, 0.58] }: PanelSkeletonProps) {
   return (
@@ -98,10 +98,7 @@ export function PanelSkeleton({ label, lines = [0.92, 0.84, 0.58] }: PanelSkelet
           key={index}
           aria-hidden="true"
           style={{ width: `${String(width * 100)}%` }}
-          className={cx(
-            "h-3 rounded-xs bg-fog/60 animate-pulse [animation-duration:2.4s]",
-            "motion-calm:animate-none",
-          )}
+          className="h-3 rounded-xs bg-fog/60"
         />
       ))}
     </div>
@@ -121,10 +118,7 @@ export function PanelError({ message, className, children, ...props }: PanelErro
   return (
     <div
       role="alert"
-      className={cx(
-        "flex flex-col gap-3 rounded-xs border-l-3 border-snuffed bg-tint-snuffed px-4 py-3",
-        className,
-      )}
+      className={cx("flex flex-col gap-3 rounded-xs bg-tint-snuffed px-4 py-3", className)}
       {...props}
     >
       <p className="flex items-start gap-2 text-parchment type-ui">

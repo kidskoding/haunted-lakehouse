@@ -82,7 +82,6 @@ export function TabsSection() {
   return (
     <Section
       id="tabs"
-      eyebrow="Tabs"
       title="Tabs"
       intro="Arrow keys move and select, Home and End jump to the ends, and Tab drops into the open panel. Disabled tabs are skipped."
     >
