@@ -107,25 +107,25 @@ describe("porch lights puzzle", () => {
 
   it("keeps the trap's number above the truth on screen in every night", () => {
     for (const { data } of runs) {
-      expect(narrative(data, "switchedOff")).toBeGreaterThan(0);
-      expect(narrative(data, "everLitQuarterTo")).toBe(
-        expectedHouses(data, "quarter-to") + narrative(data, "switchedOff"),
+      expect(narrative(data, "switched_off")).toBeGreaterThan(0);
+      expect(narrative(data, "ever_lit")).toBe(
+        expectedHouses(data, "quarter-to") + narrative(data, "switched_off"),
       );
     }
   });
 
   it("has dead sensors still claiming a dark porch is lit on some nights", () => {
-    const stuck = runs.filter(({ data }) => narrative(data, "silentStuckOn") > 0);
+    const stuck = runs.filter(({ data }) => narrative(data, "dark_but_counted") > 0);
     expect(stuck.length).toBeGreaterThanOrEqual(4);
     for (const { data } of runs) {
-      expect(narrative(data, "silentStuckOn")).toBeLessThanOrEqual(
+      expect(narrative(data, "dark_but_counted")).toBeLessThanOrEqual(
         expectedHouses(data, "quarter-to"),
       );
     }
   });
 
   describe.each(runs)("seed $seed", ({ data }) => {
-    const houseCount = narrative(data, "houseCount");
+    const houseCount = narrative(data, "house_count");
 
     it("passes the puzzle data checks", () => {
       expect(validatePuzzleData(porchLights, data)).toEqual([]);
@@ -191,10 +191,13 @@ describe("porch lights puzzle", () => {
       for (const value of Object.values(data.narrative)) {
         expect(Number.isInteger(value)).toBe(true);
       }
-      expect(narrative(data, "welcomingQuarterPast")).toBe(expectedHouses(data, "quarter-past"));
-      expect(narrative(data, "welcomingHalfPast")).toBe(expectedHouses(data, "half-past"));
-      expect(narrative(data, "welcomingQuarterTo")).toBe(expectedHouses(data, "quarter-to"));
-      expect(narrative(data, "retentionBatches")).toBe(porchLights.retention);
+      expect(narrative(data, "lit_at_quarter_past")).toBe(expectedHouses(data, "quarter-past"));
+      expect(narrative(data, "lit_at_half_past")).toBe(expectedHouses(data, "half-past"));
+      expect(narrative(data, "lit_at_last_checkpoint")).toBe(expectedHouses(data, "quarter-to"));
+      expect(narrative(data, "dark_but_counted")).toBeLessThanOrEqual(
+        narrative(data, "silent_sensors"),
+      );
+      expect(narrative(data, "truly_lit")).toBeLessThanOrEqual(houseCount);
     });
 
     it("stays small", () => {
