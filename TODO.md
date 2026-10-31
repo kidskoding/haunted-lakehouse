@@ -69,7 +69,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **3.2 Runtime contract doc.** `docs/pipeline-runtime.md` precisely specifies `view`, `table`, and `incremental` (`{{ this }}`, `{{ new_batch }}`, `unique_key`), bronze retention, checkpoints, and idempotency replays.
 - [x] **3.3 Model compiler.** Parses model files, resolves references into a DAG, detects cycles with clear errors, and renders templated SQL.
 - [x] **3.4 Night executor.** Replays batches in order, applies retention, runs models in DAG order per batch, and hashes gold at checkpoints. Supports preview mode and run-the-night mode.
-- [ ] **3.5 Failure reporting.** Identifies the first failing checkpoint and the batch that preceded it, and reveals that batch's data to the player.
+- [x] **3.5 Failure reporting.** Identifies the first failing checkpoint and the batch that preceded it, and reveals that batch's data to the player.
 - [ ] **3.6 Shared semantics tests.** The executor runs under Vitest on DuckDB Node with the same results as in the browser. Include tests for every materialization and for retention.
 
 ---
