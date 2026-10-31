@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { EngineProvider } from "@/lib/engine/react";
+import { SoundProvider } from "@/lib/sound/react";
 import { site } from "@/lib/site";
 import { fontVariables } from "./fonts";
 import "./globals.css";
@@ -14,7 +15,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang="en" className={fontVariables}>
       <body className="type-ui min-h-dvh antialiased">
-        <EngineProvider>{children}</EngineProvider>
+        <EngineProvider>
+          <SoundProvider>{children}</SoundProvider>
+        </EngineProvider>
       </body>
     </html>
   );

@@ -80,7 +80,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **4.2 Design tokens.** Colors, type scale, spacing, radii, shadows, and motion durations and easings as Tailwind theme tokens.
 - [x] **4.3 Core components.** Button, panel, tabs, tooltip, dialog, toast, and kbd hint. Accessible, keyboard-complete, every state designed. A `/dev/components` gallery page covers them (excluded from production).
 - [x] **4.4 Scene shell.** The chosen scene library mounted behind a React component, with a reduced-motion fallback and a lazy-loaded bundle.
-- [ ] **4.5 Sound system.** Ambient loop and stings. Muted by default, one-click enable, volume persisted.
+- [x] **4.5 Sound system.** Ambient loop and stings. Muted by default, one-click enable, volume persisted.
 
 ---
 
