@@ -79,3 +79,9 @@
     @slot;
   }
 }
+
+/*
+ * Screens with room for copy to sit in an open sky above a scene: tablet width and a laptop's
+ * height. Shorter screens stack the copy above the scene instead.
+ */
+@custom-variant open-sky (@media (min-width: 48rem) and (min-height: 42.5rem));
