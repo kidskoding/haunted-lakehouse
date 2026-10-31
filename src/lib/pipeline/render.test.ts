@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, renderWithMap, sourceIndex } from "./render";
+import { render, renderWithMap, sourceIndex, sourcePosition } from "./render";
 import { parseTemplate, type Template } from "./template";
 
 function template(source: string): Template {
@@ -61,5 +61,58 @@ describe("sourceIndex", () => {
     expect(sourceIndex(rendered, rendered.sql.indexOf("_f"))).toBe(source.indexOf("{{ new"));
     expect(sourceIndex(rendered, rendered.sql.indexOf(" as n"))).toBe(source.indexOf(" as n"));
     expect(sourceIndex(rendered, rendered.sql.length)).toBe(source.length);
+  });
+});
+
+describe("sourcePosition", () => {
+  const source =
+    "{{ config(materialized='incremental', unique_key='id') }} select n.id,\n" +
+    "  n.v from {{ new_batch('feed') }} n\n" +
+    "{% if is_incremental() %}\n" +
+    "join {{ this }} t using (id) where t.v < n.v\n" +
+    "{% endif %}\n" +
+    "where n.v > 0";
+  const model = template(source);
+  const at = (text: string) => {
+    const index = source.indexOf(text);
+    const before = source.slice(0, index).split("\n");
+    return { line: before.length, column: (before.at(-1) ?? "").length + 1 };
+  };
+  const renderedAt = (sql: string, text: string) => {
+    const before = sql.slice(0, sql.indexOf(text)).split("\n");
+    return { line: before.length, column: (before.at(-1) ?? "").length + 1 };
+  };
+
+  it("maps past a removed config call on the same line", () => {
+    const rendered = renderWithMap(model, { ...CONTEXT, isIncremental: false });
+    expect(renderedAt(rendered.sql, "n.id")).toEqual({ line: 1, column: 9 });
+    expect(sourcePosition(rendered, source, { line: 1, column: 9 })).toEqual(at("n.id"));
+  });
+
+  it("maps past tags whose substitutions are longer or shorter than the tag", () => {
+    const rendered = renderWithMap(model, { ...CONTEXT, isIncremental: true });
+    for (const text of [" n\n", "using (id)", "t.v < n.v", "n.v > 0"]) {
+      expect(sourcePosition(rendered, source, renderedAt(rendered.sql, text))).toEqual(at(text));
+    }
+  });
+
+  it("maps a place inside a substitution to the start of its tag", () => {
+    const rendered = renderWithMap(model, { ...CONTEXT, isIncremental: true });
+    const inThis = renderedAt(rendered.sql, "porch_state");
+    expect(sourcePosition(rendered, source, inThis)).toEqual(at("{{ this }}"));
+    const inNewBatch = renderedAt(rendered.sql, "new_batch_feed");
+    expect(sourcePosition(rendered, source, inNewBatch)).toEqual(at("{{ new_batch"));
+  });
+
+  it("maps the lines after an unrendered branch", () => {
+    const rendered = renderWithMap(model, { ...CONTEXT, isIncremental: false });
+    expect(sourcePosition(rendered, source, renderedAt(rendered.sql, "n.v > 0"))).toEqual(
+      at("n.v > 0"),
+    );
+  });
+
+  it("returns null for a place the rendered SQL does not have", () => {
+    const rendered = renderWithMap(model, { ...CONTEXT, isIncremental: false });
+    expect(sourcePosition(rendered, source, { line: 99, column: 1 })).toBeNull();
   });
 });

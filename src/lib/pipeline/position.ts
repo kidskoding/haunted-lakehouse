@@ -16,6 +16,25 @@ export function lineColumn(text: string, index: number): LineColumn {
   return { line, column: index - lineStart + 1 };
 }
 
+/**
+ * The string index of a 1-based place in `text`, the inverse of `lineColumn`, or null when the
+ * place is not in the text. A column may sit one past the end of its line, where a caret
+ * points at a missing token.
+ */
+export function indexOfLineColumn(text: string, place: LineColumn): number | null {
+  if (!Number.isInteger(place.line) || !Number.isInteger(place.column)) return null;
+  if (place.line < 1 || place.column < 1) return null;
+  let lineStart = 0;
+  for (let line = 1; line < place.line; line++) {
+    const end = text.indexOf("\n", lineStart);
+    if (end < 0) return null;
+    lineStart = end + 1;
+  }
+  const lineEnd = text.indexOf("\n", lineStart);
+  const length = (lineEnd < 0 ? text.length : lineEnd) - lineStart;
+  return place.column - 1 <= length ? lineStart + place.column - 1 : null;
+}
+
 function utf8Length(codePoint: number): number {
   if (codePoint < 0x80) return 1;
   if (codePoint < 0x800) return 2;

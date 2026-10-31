@@ -2,14 +2,19 @@ import { describe, expect, it } from "vitest";
 import type { Puzzle } from "../engine/puzzle";
 import { ALL_PUZZLES } from "../engine/puzzles";
 import { generatePuzzle } from "../engine/registry";
+import { slotDefinition } from "../engine/slots";
 import { fakePuzzle } from "../engine/testing/fake-puzzle";
 import { SHARED_BINDINGS, type Bindings } from "./bindings";
+import { ending } from "./endings";
 import { mayor, wren } from "./lines";
 import { NARRATIVE_PACKS, narrativePack } from "./packs";
+import { renderCallouts } from "./hour";
 import { LOST_CANDLE_BINDINGS } from "./reactions";
+import { plainText } from "./render";
 import { placeholdersOf } from "./template";
 import {
   autopsyTemplates,
+  calloutTemplates,
   fixturePackBindings,
   fixtureRunBindings,
   packScenes,
@@ -123,6 +128,7 @@ describe("narrative packs", () => {
       );
       const later = [
         ...outside.map((line) => line.text),
+        ...calloutTemplates(pack),
         ...autopsyTemplates(pack),
         ...pack.epitaphs,
       ];
@@ -138,6 +144,10 @@ describe("narrative packs", () => {
       expect(pack.intro.length).toBeGreaterThan(0);
       expect(pack.hook.length === 0).toBe(pack.puzzleId === "porch-lights");
       expect(pack.cleared.length === 0).toBe(pack.puzzleId === "seance");
+    });
+
+    it("teaches the controls only if it opens the night", () => {
+      expect(pack.tutorial !== undefined).toBe(pack.puzzleId === "porch-lights");
     });
 
     it.each([0, 1, 7])(
@@ -164,9 +174,66 @@ describe("narrative packs", () => {
   });
 });
 
+describe("the tutorial", () => {
+  const tutorial = narrativePack("porch-lights").tutorial ?? [];
+
+  it("tours the run screen once, in order, and saves one callout for the first lost candle", () => {
+    expect(new Set(tutorial.map((callout) => callout.id)).size).toBe(tutorial.length);
+    expect(tutorial.filter((c) => c.when === "tour").map((c) => c.target)).toEqual([
+      "story",
+      "tables",
+      "editor",
+      "new-model",
+      "preview",
+      "run-the-night",
+      "candles",
+    ]);
+    expect(tutorial.filter((c) => c.when === "first-break").map((c) => c.target)).toEqual([
+      "timeline",
+    ]);
+  });
+
+  it("speaks the run's own times and candles", () => {
+    const context = { bindings: fixtureRunBindings(), withheld: [] };
+    const text = Object.fromEntries(
+      [
+        ...renderCallouts(narrativePack("porch-lights"), context, "tour"),
+        ...renderCallouts(narrativePack("porch-lights"), context, "first-break"),
+      ].map((c) => [c.id, plainText(c.segments)]),
+    );
+    expect(text["run-the-night"]).toContain("7:00pm, 7:15pm and 7:30pm");
+    expect(text.candles).toContain("two candles");
+    expect(text["first-break"]).toContain("7:30pm");
+  });
+
+  it("renders the tour before any checkpoint has failed", () => {
+    const bindings = Object.fromEntries(
+      Object.entries(fixtureRunBindings()).filter(([name]) => name !== "failed_checkpoint"),
+    );
+    const tour = renderCallouts(narrativePack("porch-lights"), { bindings, withheld: [] }, "tour");
+    expect(tour.map((c) => c.when)).not.toContain("first-break");
+    expect(tour.length).toBeGreaterThan(0);
+  });
+});
+
 describe("every registered puzzle", () => {
   it("has a story that renders with no unfilled placeholders across 20 seeds", () => {
     for (const puzzle of ALL_PUZZLES) expectPuzzleRenders(puzzle, narrativePack(puzzle.id));
+  });
+
+  it("binds its act's ending from its own data, if it closes Act I or II", () => {
+    for (const puzzle of ALL_PUZZLES) {
+      const { boss, act } = slotDefinition(puzzle.slot);
+      // The Seance's endings read the player's pages as well as the hour, so they bind elsewhere.
+      if (!boss || act === 3) continue;
+      const { bindings } = ending(act === 1 ? "act-1" : "act-2");
+      for (const seed of SEEDS) {
+        const data = generatePuzzle(puzzle, seed);
+        for (const name of bindings) {
+          expect(data.narrative[name], `${puzzle.id} binds ${name} for seed ${seed}`).toBeDefined();
+        }
+      }
+    }
   });
 
   it("is checked the same way a real puzzle would be", () => {

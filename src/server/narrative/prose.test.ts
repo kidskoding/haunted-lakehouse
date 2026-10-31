@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Voice } from "./bindings";
 import { ending } from "./endings";
-import { clearedScene, introScene } from "./hour";
+import { clearedScene, introScene, renderCallouts } from "./hour";
 import { NARRATIVE_PACKS } from "./packs";
 import { plainText, renderScene, renderTemplate, type RenderContext } from "./render";
 import {
@@ -92,8 +92,8 @@ describe("the writing bar", () => {
     }
   });
 
-  it("never names a technique in a beat, hook, or reaction", () => {
-    for (const s of STRINGS.filter((s) => s.kind === "beat")) {
+  it("never names a technique in a beat, hook, reaction, or callout", () => {
+    for (const s of STRINGS.filter((s) => s.kind === "beat" || s.kind === "callout")) {
       expect(s.source, describeString(s)).not.toMatch(TECHNIQUE_NAMES);
       expect(s.source, describeString(s)).not.toMatch(VAGUE_NOUNS);
     }
@@ -128,6 +128,15 @@ describe("length budgets", () => {
       }
     });
 
+    it("keeps each tutorial callout to 40 words", () => {
+      for (const callout of [
+        ...renderCallouts(pack, context, "tour"),
+        ...renderCallouts(pack, context, "first-break"),
+      ]) {
+        expect(words(plainText(callout.segments)), callout.id).toBeLessThanOrEqual(40);
+      }
+    });
+
     it("keeps the autopsy readable in a minute: 180 to 280 words", () => {
       const total = autopsyTemplates(pack)
         .map((source) => words(plainText(renderTemplate(source, context))))
@@ -145,6 +154,7 @@ describe("length budgets", () => {
       const bindings = {
         ...fixtureRunBindings(),
         unknown_rows: 3,
+        example_vague: "see slip",
         flameouts_total: 41,
         restored_version: 212,
         restored_rows: 4096,

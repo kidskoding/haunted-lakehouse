@@ -7,7 +7,7 @@ import type { DoorScan } from "./door-scans";
 import type { House } from "./houses";
 import { clockAt, NIGHT_SECONDS, type UtcOffset } from "./night-clock";
 import type { PorchLight } from "./porch-lights";
-import { townRng, weighted } from "./town";
+import { townRng, weighted, type Street } from "./town";
 
 /** The pieces one kid took at one door, tied to the scan that recorded the visit. */
 export interface CandyHandout {
@@ -73,6 +73,9 @@ const NOISE_G = 2;
 
 // A household tops the bowl up once it looks low: below what a couple of groups would take.
 const LOW_PIECES = 15;
+// Some households keep the bowl brimming instead, tipping in a bag once a few kids have been by.
+const BRIMMING_SHARE = 0.25;
+const BRIM_GAP = 8;
 
 /** How freely a household hands out candy, as weights for one, two, or three pieces. */
 const GENEROSITY: readonly (readonly [readonly [number, number, number], number])[] = [
@@ -82,40 +85,32 @@ const GENEROSITY: readonly (readonly [readonly [number, number, number], number]
 ];
 
 /*
- * The Hollow marks a few houses each night: a marked house gives out exactly 13 pieces all
- * night. It can only mark a house that sees 5 to 13 kids, since every kid takes 1 to 3.
+ * The Hollow counts at the seven o'clock bell. Each house it marks has had exactly 13 pieces
+ * taken from its bowl by the scale's last reading before the bell; visits after that follow
+ * the household's habits like anyone else's.
  */
+export const CURSE_BELL = HOUR;
 const CURSED = 13;
-const MARK_CHANCE = 0.5;
-const MAX_MARKS = 4;
+const HAUNTED_MARKS = 3;
+const STRAY_MARK_CHANCE = 0.3;
 
-function markedHouses(runSeed: string, visitsAt: ReadonlyMap<string, readonly DoorScan[]>) {
-  const rng = townRng(runSeed, "candy-bowls:curse");
-  const marked = new Set<string>();
-  const houseIds = [...visitsAt.keys()].sort(byText);
-  for (const houseId of houseIds) {
-    const visits = visitsAt.get(houseId)?.length ?? 0;
-    const eligible = visits * 3 >= CURSED && visits <= CURSED;
-    if (eligible && rng.float() < MARK_CHANCE && marked.size < MAX_MARKS) marked.add(houseId);
-  }
-  return marked;
-}
-
-/** Pieces per visit: drawn from the household's habits, or dealt out to total exactly 13. */
-function piecesPerVisit(rng: Rng, visits: number, marked: boolean): number[] {
-  if (!marked) {
-    const [one, two, three] = weighted(rng, GENEROSITY);
-    return Array.from({ length: visits }, () =>
-      weighted(rng, [
-        [1, one],
-        [2, two],
-        [3, three],
-      ]),
-    );
-  }
-  const pieces = Array.from({ length: visits }, () => 1);
-  for (let extra = CURSED - visits; extra > 0; extra--) {
-    const open = pieces.flatMap((p, i) => (p < 3 ? [i] : []));
+/**
+ * Pieces per visit from the household's habits, except that a marked house's visits before
+ * the bell are dealt out to total exactly 13.
+ */
+function piecesPerVisit(rng: Rng, visits: readonly DoorScan[], marked: boolean): number[] {
+  const [one, two, three] = weighted(rng, GENEROSITY);
+  const habit = () =>
+    weighted(rng, [
+      [1, one],
+      [2, two],
+      [3, three],
+    ]);
+  if (!marked) return visits.map(() => habit());
+  const early = visits.map((v) => v.nightSecond < CURSE_BELL);
+  const pieces = early.map((isEarly) => (isEarly ? 1 : habit()));
+  for (let extra = CURSED - early.filter(Boolean).length; extra > 0; extra--) {
+    const open = pieces.flatMap((p, i) => (early[i] === true && p < 3 ? [i] : []));
     const i = rng.pick(open);
     pieces[i] = (pieces[i] ?? 0) + 1;
   }
@@ -148,6 +143,7 @@ function simulate(
   porch: Porch,
   visits: readonly DoorScan[],
   pieces: readonly number[],
+  brimming: boolean,
 ): Simulation {
   const first = visits[0]?.nightSecond;
   const last = visits.at(-1)?.nightSecond;
@@ -165,6 +161,7 @@ function simulate(
       : last + rng.int(5 * MINUTE, 45 * MINUTE),
   );
   const initialPieces = candy.piecesPerBag * rng.int(1, 3);
+  const topUpBelow = brimming ? Math.max(LOW_PIECES, initialPieces - BRIM_GAP) : LOW_PIECES;
 
   let stock = initialPieces;
   let previous = setOutAt;
@@ -203,7 +200,7 @@ function simulate(
       candyType: candy.candyType,
       pieces: take,
     });
-    if (pending === null && stock < LOW_PIECES)
+    if (pending === null && stock < topUpBelow)
       pending = scan.nightSecond + rng.int(20, 5 * MINUTE);
   }
   if (pending !== null && pending + SETTLE < takenInAt) refill(pending);
@@ -255,6 +252,133 @@ function weightAt(bowl: CandyBowl, changes: readonly Change[], second: number, g
   return pieces * grams;
 }
 
+type UnstampedReading = Omit<BowlReading, "readAtLocal" | "utcOffset">;
+
+interface BowlRun extends Simulation {
+  readonly readings: readonly UnstampedReading[];
+}
+
+const CANDY_ODDS = CANDY_CATALOG.map((c) => [c, c.popularity] as const);
+
+function runBowl(
+  runSeed: string,
+  house: House,
+  deviceId: string,
+  porch: Porch,
+  visits: readonly DoorScan[],
+  marked: boolean,
+): BowlRun {
+  // A stream per house, so one bowl's draws never shift another's, and a trial run while
+  // marking repeats the real one exactly.
+  const rng = townRng(runSeed, `candy-bowls/${house.houseId}`);
+  const candy = weighted(rng, CANDY_ODDS);
+  const pieces = piecesPerVisit(rng, visits, marked);
+  // Its own stream, so the habit leaves every other draw of the bowl where it was.
+  const brimming =
+    townRng(runSeed, `candy-bowls/${house.houseId}:brimming`).float() < BRIMMING_SHARE;
+  const run = simulate(rng, house, deviceId, candy, porch, visits, pieces, brimming);
+  const readings = readingTimes(rng, run.bowl, run.changes).map((nightSecond, i) => {
+    const truth = weightAt(run.bowl, run.changes, nightSecond, candy.gramsPerPiece);
+    const noise = rng.int(-NOISE_G, NOISE_G + 1);
+    return {
+      deviceId,
+      seq: i + 1,
+      houseId: house.houseId,
+      nightSecond,
+      weightG: Math.max(0, truth + noise),
+    };
+  });
+  return { ...run, readings };
+}
+
+/** The night second of a bowl's last reading before `second`, if it had one. */
+function lastReadingBefore(readings: readonly { nightSecond: number }[], second: number) {
+  let last: number | undefined;
+  for (const { nightSecond } of readings) {
+    if (nightSecond < second && (last === undefined || nightSecond > last)) last = nightSecond;
+  }
+  return last;
+}
+
+/**
+ * The pieces one bowl's scale had seen taken by its last reading before `second`. A reading
+ * weighs every change up to its own moment, so a handout counts once such a reading follows it.
+ */
+export function piecesRecordedBefore(
+  handouts: readonly CandyHandout[],
+  readings: readonly { nightSecond: number }[],
+  second: number,
+): number {
+  const last = lastReadingBefore(readings, second);
+  if (last === undefined) return 0;
+  return handouts.filter((h) => h.nightSecond <= last).reduce((sum, h) => sum + h.pieces, 0);
+}
+
+interface Candidate {
+  readonly house: House;
+  /** The household refilled the bowl before the scale's last reading before the bell. */
+  readonly refilledBeforeBell: boolean;
+}
+
+/**
+ * Which houses the Hollow marks. A house qualifies when 5 to 12 kids came before the bell
+ * (each takes 1 to 3; with 13 the door scanner's count would match by accident) and, dealt
+ * 13 pieces, its scale records all 13 before the bell. The street it haunts takes up to three
+ * marks, one of them a bowl refilled before the bell where it can, so the weight a street's
+ * bowls lost by the bell never tells their tally alone. Other streets take at most one stray
+ * mark each, and only when the haunted street has two, so it always has the most marks.
+ */
+function markHouses(
+  runSeed: string,
+  giving: readonly House[],
+  visitsAt: ReadonlyMap<string, readonly DoorScan[]>,
+  trial: (house: House) => BowlRun,
+): Set<string> {
+  const candidates: Candidate[] = [];
+  for (const house of giving) {
+    const early = (visitsAt.get(house.houseId) ?? []).filter((v) => v.nightSecond < CURSE_BELL);
+    if (early.length * 3 < CURSED || early.length >= CURSED) continue;
+    const run = trial(house);
+    if (piecesRecordedBefore(run.handouts, run.readings, CURSE_BELL) !== CURSED) continue;
+    const last = lastReadingBefore(run.readings, CURSE_BELL) ?? -1;
+    candidates.push({
+      house,
+      refilledBeforeBell: run.bowl.refills.some((r) => r.nightSecond <= last),
+    });
+  }
+
+  const byStreet = Map.groupBy(candidates, (c) => c.house.street);
+  const streets = [...byStreet.keys()].sort(byText);
+  const ofStreet = (street: Street) => byStreet.get(street) ?? [];
+  const twoOrMore = streets.filter((s) => ofStreet(s).length >= 2);
+  const choices = [
+    twoOrMore.filter((s) => ofStreet(s).some((c) => c.refilledBeforeBell)),
+    twoOrMore,
+    streets,
+  ].find((list) => list.length > 0);
+  const marked = new Set<string>();
+  if (!choices) return marked;
+
+  const rng = townRng(runSeed, "candy-bowls:curse");
+  const haunted = rng.pick(choices);
+  const pool = [...ofStreet(haunted)];
+  const take = (from: readonly Candidate[]) => {
+    const picked = rng.pick(from);
+    pool.splice(pool.indexOf(picked), 1);
+    marked.add(picked.house.houseId);
+  };
+  const refilled = pool.filter((c) => c.refilledBeforeBell);
+  if (refilled.length > 0) take(refilled);
+  while (marked.size < HAUNTED_MARKS && pool.length > 0) take(pool);
+
+  if (marked.size < 2) return marked;
+  for (const street of streets) {
+    if (street === haunted || rng.float() >= STRAY_MARK_CHANCE) continue;
+    marked.add(rng.pick(ofStreet(street)).house.houseId);
+  }
+  return marked;
+}
+
 /**
  * Every candy-giving house's bowl, out on the porch only between lighting up and switching
  * off for the night: what each kid took, when the household refilled, and what the scale
@@ -275,13 +399,7 @@ export function generateCandyBowls(
   );
   const porches = new Map(lights.map((l) => [l.houseId, l.lit]));
   const visitsAt = Map.groupBy(scans, (s) => s.houseId);
-  const marked = markedHouses(runSeed, visitsAt);
-  const candies = CANDY_CATALOG.map((c) => [c, c.popularity] as const);
-
-  const bowls: CandyBowl[] = [];
-  const handouts: CandyHandout[] = [];
-  const unsorted: Omit<BowlReading, "readAtLocal" | "utcOffset">[] = [];
-  for (const house of giving) {
+  const run = (house: House, marked: boolean) => {
     const deviceId = ids.get(house.houseId);
     if (!deviceId) throw new RangeError(`House ${house.houseId} has no bowl scale.`);
     const lit = porches.get(house.houseId) ?? [];
@@ -289,25 +407,25 @@ export function generateCandyBowls(
     if (on === undefined || off === undefined) {
       throw new RangeError(`House ${house.houseId} gives candy but never lights its porch.`);
     }
-    // A stream per house, so one bowl's draws never shift another's.
-    const rng = townRng(runSeed, `candy-bowls/${house.houseId}`);
-    const candy = weighted(rng, candies);
-    const visits = visitsAt.get(house.houseId) ?? [];
-    const pieces = piecesPerVisit(rng, visits.length, marked.has(house.houseId));
-    const run = simulate(rng, house, deviceId, candy, { on, off }, visits, pieces);
-    bowls.push(run.bowl);
-    handouts.push(...run.handouts);
-    readingTimes(rng, run.bowl, run.changes).forEach((nightSecond, i) => {
-      const truth = weightAt(run.bowl, run.changes, nightSecond, candy.gramsPerPiece);
-      const noise = rng.int(-NOISE_G, NOISE_G + 1);
-      unsorted.push({
-        deviceId,
-        seq: i + 1,
-        houseId: house.houseId,
-        nightSecond,
-        weightG: Math.max(0, truth + noise),
-      });
-    });
+    return runBowl(
+      runSeed,
+      house,
+      deviceId,
+      { on, off },
+      visitsAt.get(house.houseId) ?? [],
+      marked,
+    );
+  };
+  const marked = markHouses(runSeed, giving, visitsAt, (house) => run(house, true));
+
+  const bowls: CandyBowl[] = [];
+  const handouts: CandyHandout[] = [];
+  const unsorted: UnstampedReading[] = [];
+  for (const house of giving) {
+    const bowl = run(house, marked.has(house.houseId));
+    bowls.push(bowl.bowl);
+    handouts.push(...bowl.handouts);
+    unsorted.push(...bowl.readings);
   }
 
   handouts.sort(
