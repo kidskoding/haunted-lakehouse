@@ -32,6 +32,17 @@ describe("validatePuzzleData", () => {
       }),
       /late follows a batch that does not exist/,
     ],
+    ...[1.5, Number.NaN, -1].map(
+      (afterBatch): [string, (data: PuzzleData) => PuzzleData, RegExp] => [
+        `a checkpoint after batch ${String(afterBatch)}`,
+        (d) => ({
+          ...d,
+          checkpoints: [{ id: "late", afterBatch, label: "x" }],
+          expected: { late: d.expected.late ?? {} },
+        }),
+        /late follows a batch that does not exist/,
+      ],
+    ),
     [
       "checkpoints out of order",
       (d) => ({ ...d, checkpoints: [...d.checkpoints].reverse() }),

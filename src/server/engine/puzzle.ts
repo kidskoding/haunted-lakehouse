@@ -77,13 +77,14 @@ export function validatePuzzleData(puzzle: Puzzle, data: PuzzleData): string[] {
   for (const checkpoint of checkpoints) {
     if (seen.has(checkpoint.id)) problems.push(`Checkpoint ${checkpoint.id} appears twice.`);
     seen.add(checkpoint.id);
-    if (checkpoint.afterBatch < 0 || checkpoint.afterBatch >= batches.length) {
+    const { afterBatch } = checkpoint;
+    if (!Number.isInteger(afterBatch) || afterBatch < 0 || afterBatch >= batches.length) {
       problems.push(`Checkpoint ${checkpoint.id} follows a batch that does not exist.`);
     }
-    if (checkpoint.afterBatch < previous) {
+    if (afterBatch < previous) {
       problems.push(`Checkpoint ${checkpoint.id} comes before the checkpoint listed ahead of it.`);
     }
-    previous = checkpoint.afterBatch;
+    previous = afterBatch;
 
     const tables = expected[checkpoint.id];
     if (!tables) {
