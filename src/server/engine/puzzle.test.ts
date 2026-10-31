@@ -81,7 +81,23 @@ describe("validatePuzzleData", () => {
       (d) => ({ ...d, expected: { ...d.expected, midnight: {} } }),
       /midnight matches no checkpoint/,
     ],
+    [
+      "an expected row with the wrong columns",
+      (d) => ({ ...d, expected: { ...d.expected, late: { "gold.totals": [{ sum: 1 }] } } }),
+      /late row 0 of gold.totals has columns sum, not total/,
+    ],
   ])("reports %s", (_, change, message) => {
     expect(problemsWith(change).join("\n")).toMatch(message);
+  });
+
+  it.each<[string, Partial<Parameters<typeof fakePuzzle>[0]>, RegExp]>([
+    ["a gold table without columns", { goldColumns: {} }, /gold.totals declares no columns/],
+    [
+      "columns for a table that is not gold",
+      { goldColumns: { "gold.totals": ["total"], "gold.extra": ["x"] } },
+      /declared for gold.extra, which is not a gold table/,
+    ],
+  ])("reports %s", (_, overrides, message) => {
+    expect(validatePuzzleData(fakePuzzle(overrides), valid).join("\n")).toMatch(message);
   });
 });

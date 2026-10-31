@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { hashTable, tableFromRows } from "../../../../lib/canonical/hash";
 import { judgeNight, runNight } from "../../../../lib/executor/night";
 import { compileProject, nativeConnection } from "../../../../lib/executor/test-connection";
-import type { ExpectedHashes, NightFailure } from "../../../../lib/executor/types";
+import type { NightFailure } from "../../../../lib/executor/types";
 import type { PuzzleData } from "../../puzzle";
+import { expectedHashes } from "../../../batches/expected";
 import { generatePuzzle } from "../../registry";
 import { porchLights } from "./index";
 import {
@@ -21,25 +21,13 @@ const FEEDS = ["porch_lights"];
 
 const runs = SEEDS.map((seed) => ({ seed, data: generatePuzzle(porchLights, seed) }));
 
-async function expectedHashes(data: PuzzleData): Promise<ExpectedHashes> {
-  const hashes: Record<string, Record<string, string>> = {};
-  for (const [checkpoint, tables] of Object.entries(data.expected)) {
-    const byTable: Record<string, string> = {};
-    for (const [table, rows] of Object.entries(tables)) {
-      byTable[table] = await hashTable(tableFromRows(["houses"], rows));
-    }
-    hashes[checkpoint] = byTable;
-  }
-  return hashes;
-}
-
 /** Runs the whole hour, hidden batches included, and returns the night's first failure. */
 async function play(
   files: PipelineFiles,
   data: PuzzleData,
   retention = porchLights.retention,
 ): Promise<NightFailure | null> {
-  const expected = await expectedHashes(data);
+  const expected = await expectedHashes(porchLights, data);
   const result = await runNight(
     await nativeConnection(),
     {

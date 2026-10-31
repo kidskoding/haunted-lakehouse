@@ -7,13 +7,13 @@ import { validateNight } from "./validate";
 describe("validateNight", () => {
   it("survives when every checkpoint hash matches", async () => {
     const data = generatePuzzle(porchLights, "raven-pumpkin-13");
-    const expected = await expectedHashes(data);
+    const expected = await expectedHashes(porchLights, data);
     expect(validateNight(data.checkpoints, expected, expected)).toEqual({ survived: true });
   });
 
   it("returns only the first failing checkpoint", async () => {
     const data = generatePuzzle(porchLights, "raven-pumpkin-13");
-    const expected = await expectedHashes(data);
+    const expected = await expectedHashes(porchLights, data);
     const first = data.checkpoints[0];
     const second = data.checkpoints[1];
     if (!first || !second) throw new Error("porch lights needs checkpoints");
@@ -36,7 +36,7 @@ describe("validateNight", () => {
 
   it("treats a missing checkpoint submission as a failure at that checkpoint", async () => {
     const data = generatePuzzle(porchLights, "raven-pumpkin-13");
-    const expected = await expectedHashes(data);
+    const expected = await expectedHashes(porchLights, data);
     const first = data.checkpoints[0];
     if (!first) throw new Error("porch lights needs a checkpoint");
     const rest = Object.fromEntries(Object.entries(expected).filter(([id]) => id !== first.id));
