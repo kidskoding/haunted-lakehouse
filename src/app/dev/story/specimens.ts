@@ -11,7 +11,7 @@ import { narrativePack } from "@/server/narrative/packs";
 import { renderScene, type RenderContext } from "@/server/narrative/render";
 
 const SEED = "raven-pumpkin-13";
-const INTERN: Voice = { character: "intern", stage: "W0" };
+export const INTERN: Voice = { character: "intern", stage: "W0" };
 
 export interface Specimen extends StoryPanelProps {
   readonly id: string;
@@ -25,7 +25,7 @@ function puzzle(id: string): Puzzle {
 }
 
 /** The story context for one seed of a puzzle, as a run would build it, fogged on request. */
-function contextFor(puzzleId: string, fogged: boolean): RenderContext {
+export function contextFor(puzzleId: string, fogged: boolean, voice = INTERN): RenderContext {
   const source = puzzle(puzzleId);
   const data = generatePuzzle(source, SEED);
   const { narrative, withheld } = fogged
@@ -33,7 +33,7 @@ function contextFor(puzzleId: string, fogged: boolean): RenderContext {
     : { narrative: data.narrative, withheld: [] };
   const run = runBindings({
     seed: SEED,
-    character: INTERN.character,
+    character: voice.character,
     candles: 4,
     retention: source.retention,
     checkpoints: data.checkpoints,

@@ -1,4 +1,5 @@
 import "server-only";
+import type { RenderedAutopsy } from "../../lib/story/types";
 import type { Bindings, Voice } from "./bindings";
 import { renderTemplate, type RenderContext, type Segment } from "./render";
 import type { Callout, NarrativePack, Scene } from "./types";
@@ -35,15 +36,6 @@ export function renderCallouts(
   return (pack.tutorial ?? [])
     .filter((callout) => callout.when === when)
     .map(({ text, ...callout }) => ({ ...callout, segments: renderTemplate(text, context) }));
-}
-
-export interface RenderedAutopsy {
-  readonly title: readonly Segment[];
-  readonly town: readonly Segment[];
-  readonly tempting: readonly Segment[];
-  readonly idea: readonly Segment[];
-  readonly production: readonly Segment[];
-  readonly search: readonly string[];
 }
 
 /** The "What really happened" card, with the run's numbers in it. */

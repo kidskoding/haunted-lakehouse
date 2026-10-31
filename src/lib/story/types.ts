@@ -26,3 +26,20 @@ export interface RenderedLine {
   readonly thought: boolean;
   readonly segments: readonly Segment[];
 }
+
+/** The "What really happened" card, with the run's numbers in it. */
+export interface RenderedAutopsy {
+  readonly title: readonly Segment[];
+  readonly town: readonly Segment[];
+  readonly tempting: readonly Segment[];
+  readonly idea: readonly Segment[];
+  readonly production: readonly Segment[];
+  readonly search: readonly string[];
+}
+
+/** A ledger page as the player finds it: its fixed lore, rendered. */
+export interface RenderedPage {
+  readonly numeral: string;
+  readonly year: number;
+  readonly segments: readonly Segment[];
+}

@@ -1,1 +1,1 @@
-export { StoryPanel, type StoryAside, type StoryPanelProps } from "./story-panel";
+export { StoryPanel, StoryScene, type StoryAside, type StoryPanelProps } from "./story-panel";

@@ -93,6 +93,22 @@ function StoryTurn({ turn, index }: { readonly turn: Turn; readonly index: numbe
   );
 }
 
+/** A rendered scene's turns, each under its speaker's monogram, arriving one after another. */
+export function StoryScene({ lines }: { readonly lines: readonly RenderedLine[] }) {
+  return (
+    <ol className="flex flex-col gap-6">
+      {turnsOf(lines).map((turn, index) => (
+        <StoryTurn
+          // Turns are a fixed rendering of the scene and never reorder.
+          key={index}
+          turn={turn}
+          index={index}
+        />
+      ))}
+    </ol>
+  );
+}
+
 /**
  * The hour's story: each character's lines under their monogram, the run's numbers set in
  * candlelight, and anything the Curse of the Fog took left in the fog. It renders segments the
@@ -114,16 +130,7 @@ export function StoryPanel({ title, lines, asides = [], className }: StoryPanelP
           </PanelEmpty>
         ) : (
           <div className="flex flex-col gap-8">
-            <ol className="flex flex-col gap-6">
-              {turns.map((turn, index) => (
-                <StoryTurn
-                  // Turns are a fixed rendering of the scene and never reorder.
-                  key={index}
-                  turn={turn}
-                  index={index}
-                />
-              ))}
-            </ol>
+            <StoryScene lines={lines} />
             {asides.length > 0 ? (
               <aside
                 aria-label="First-night tips"
