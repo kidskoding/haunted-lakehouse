@@ -112,6 +112,21 @@ describe("BronzeFeed", () => {
     ]);
   });
 
+  it("shows a column named like an Object method as NULL where a row leaves it out", async () => {
+    const feed = new BronzeFeed("f");
+    feed.land(0, [{ constructor: "a", toString: "b" }, {}]);
+    const connection = await load(feed);
+    expect(
+      await rowsOf(
+        connection,
+        `SELECT "constructor", "toString" FROM ${feed.relation} ORDER BY _seq`,
+      ),
+    ).toEqual([
+      ["a", "b"],
+      [null, null],
+    ]);
+  });
+
   it("counts _seq over every delivered row, retained or not", async () => {
     const feed = new BronzeFeed("f");
     feed.land(0, [{ a: 1 }, { a: 2 }]);
