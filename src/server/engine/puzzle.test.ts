@@ -22,6 +22,19 @@ describe("validatePuzzleData", () => {
     ]);
   });
 
+  it("requires gold table names in lowercase, as the pipeline names its models", () => {
+    const mixed = fakePuzzle({ goldTables: ["gold.Totals"] });
+    const expected = Object.fromEntries(
+      Object.entries(valid.expected).map(([id, tables]) => [
+        id,
+        { "gold.Totals": tables["gold.totals"] ?? [] },
+      ]),
+    );
+    expect(validatePuzzleData(mixed, { ...valid, expected })).toEqual([
+      "Gold table gold.Totals must be lowercase, as the pipeline names it gold.totals.",
+    ]);
+  });
+
   it.each<[string, (data: PuzzleData) => PuzzleData, RegExp]>([
     ["no batches", (d) => ({ ...d, batches: [], checkpoints: [] }), /no batches/],
     [

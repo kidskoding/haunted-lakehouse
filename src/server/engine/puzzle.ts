@@ -116,6 +116,15 @@ export function validatePuzzleData(puzzle: Puzzle, data: PuzzleData): string[] {
     problems.push(`The replay batch ${String(replayBatch)} does not exist.`);
   }
 
+  // Pipeline model ids are lowercase, so hashes for a mixed-case name could never match.
+  for (const table of puzzle.goldTables) {
+    if (table !== table.toLowerCase()) {
+      problems.push(
+        `Gold table ${table} must be lowercase, as the pipeline names it ${table.toLowerCase()}.`,
+      );
+    }
+  }
+
   if (checkpoints.length === 0) problems.push("There are no checkpoints.");
   const seen = new Set<string>();
   let previous = -1;

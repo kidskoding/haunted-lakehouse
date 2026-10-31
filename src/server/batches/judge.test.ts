@@ -271,6 +271,50 @@ describe("judgeNightAttempt", () => {
     expect(result).toMatchObject({ revealedBatch: 7, visible: [0, 1, 2, 3, 4, 5, 6, 7, 8] });
   });
 
+  it("reads a failure stored before reveals were recorded as revealing nothing", async () => {
+    const { player, run, attemptToken } = await openPorchRun(database);
+    // Rows written before attempt_failed carried revealedBatch: the old server served no reveal.
+    await database.insert(runEvents).values({
+      runId: run.id,
+      seq: 2,
+      kind: "attempt_failed",
+      payload: { slot: 1, checkpointId: "quarter-to" },
+    });
+
+    const listed = await listPreviewBatches(database, run.id, player.id);
+    if (!listed.ok) throw new Error(listed.error);
+    expect(listed.batches.map((batch) => batch.index)).toEqual(initiallyVisible);
+    const served = await getBatch(database, {
+      runId: run.id,
+      playerId: player.id,
+      index: 0,
+      attemptToken: null,
+      now,
+      secret,
+    });
+    expect(served.ok).toBe(true);
+    const hidden = await getBatch(database, {
+      runId: run.id,
+      playerId: player.id,
+      index: 8,
+      attemptToken: null,
+      now,
+      secret,
+    });
+    expect(hidden).toEqual({ ok: false, error: "hidden" });
+
+    const expected = await expectedHashes(data);
+    const result = await judgeNightAttempt(database, {
+      runId: run.id,
+      playerId: player.id,
+      attemptToken,
+      events: [...checkpointEvents((id) => expected[id] ?? {}, 7), stepError(7)],
+      now,
+      secret,
+    });
+    expect(result).toMatchObject({ revealedBatch: 7, visible: [...initiallyVisible, 7] });
+  });
+
   it("kills the run when the last candles go out", async () => {
     // Intern starts with 4; three prior failures leave one candle for this miss.
     const { player, run, attemptToken } = await openPorchRun(database, 3);

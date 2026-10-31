@@ -3,6 +3,7 @@ import { reportNight } from "../../lib/executor/report";
 import { revealBatch } from "../../lib/executor/reveal";
 import type { ExpectedHashes, NightEvent, RuntimeError } from "../../lib/executor/types";
 import type { CompiledPipeline } from "../../lib/pipeline/compile";
+import type { PuzzleData } from "../engine/puzzle";
 import { generatePuzzle } from "../engine/registry";
 import { fakePuzzle } from "../engine/testing/fake-puzzle";
 import { expectedHashes } from "./expected";
@@ -17,16 +18,26 @@ const pipeline: CompiledPipeline = { models: [], order: [] };
 const steady = { "gold.totals": "a".repeat(64) };
 const wrong = { "gold.totals": "f".repeat(64) };
 
-function hourWith(revealed: readonly number[] = []): OpenHourData {
+// Both checkpoints read gold after batch 2, early first, so they share the batch.
+const shared: PuzzleData = {
+  ...data,
+  checkpoints: data.checkpoints.map((found) => ({ ...found, afterBatch: 2 })),
+};
+
+function hourWith(revealed: readonly number[] = [], hourData = data): OpenHourData {
   return {
     hour: { slot: 1, puzzleId: puzzle.id, curse: null, failures: [], revealed },
     puzzle,
-    data,
+    data: hourData,
   };
 }
 
-function checkpoint(id: "early" | "late", hashes: Record<string, string>): NightEvent {
-  const found = data.checkpoints.find((candidate) => candidate.id === id);
+function checkpoint(
+  id: "early" | "late",
+  hashes: Record<string, string>,
+  from: PuzzleData = data,
+): NightEvent {
+  const found = from.checkpoints.find((candidate) => candidate.id === id);
   if (!found) throw new Error(`fake puzzle has no ${id}`);
   return {
     kind: "checkpoint",
@@ -74,7 +85,7 @@ describe("validateNight", () => {
   });
 
   describe("reveals the batch the client reveals", () => {
-    it.each<[string, (hashes: ExpectedHashes) => NightEvent[], string]>([
+    it.each<[string, (hashes: ExpectedHashes) => NightEvent[], string, PuzzleData?]>([
       [
         "a wrong answer",
         (hashes) => [checkpoint("early", hashes.early ?? {}), replay(), checkpoint("late", wrong)],
@@ -92,6 +103,31 @@ describe("validateNight", () => {
       ],
       ["a runtime error before the first checkpoint", () => [error(0, "step")], "early"],
       [
+        "a runtime error while replaying the replay batch",
+        (hashes) => [checkpoint("early", hashes.early ?? {}), error(1, "replay")],
+        "late",
+      ],
+      [
+        "a wrong answer at the second of two checkpoints on one batch",
+        (hashes) => [
+          replay(),
+          checkpoint("early", hashes.early ?? {}, shared),
+          checkpoint("late", wrong, shared),
+        ],
+        "late",
+        shared,
+      ],
+      [
+        "a runtime error reading gold for the second of two checkpoints on one batch",
+        (hashes) => [
+          replay(),
+          checkpoint("early", hashes.early ?? {}, shared),
+          error(2, "checkpoint"),
+        ],
+        "late",
+        shared,
+      ],
+      [
         "a replay that flinches",
         (hashes) => [
           checkpoint("early", hashes.early ?? {}),
@@ -100,11 +136,11 @@ describe("validateNight", () => {
         ],
         "late",
       ],
-    ])("after %s", async (_, night, checkpointId) => {
+    ])("after %s", async (_, night, checkpointId, hourData = data) => {
       const hashes = await expected();
       const events = night(hashes);
       for (const revealed of [[], [2]]) {
-        const server = validateNight(hourWith(revealed), hashes, events);
+        const server = validateNight(hourWith(revealed, hourData), hashes, events);
         const shown = revealed.reduce(
           (visible, revealedBatch) => [...revealBatch(data.batches, visible, { revealedBatch })],
           [0],
@@ -151,6 +187,49 @@ describe("validateNight", () => {
       survived: false,
       checkpointId: "late",
       revealedBatch: 2,
+    });
+  });
+
+  it("survives a night that passes two checkpoints on one batch", async () => {
+    const hashes = await expected();
+    const events = [
+      replay(),
+      checkpoint("early", hashes.early ?? {}, shared),
+      checkpoint("late", hashes.late ?? {}, shared),
+    ];
+    expect(validateNight(hourWith([], shared), hashes, events)).toEqual({ survived: true });
+  });
+
+  describe("refuses a night that misreads two checkpoints on one batch", () => {
+    it.each<[string, (hashes: ExpectedHashes) => NightEvent[]]>([
+      [
+        "the second checkpoint missing",
+        (hashes) => [replay(), checkpoint("early", hashes.early ?? {}, shared)],
+      ],
+      [
+        "the first checkpoint missing",
+        (hashes) => [replay(), checkpoint("late", hashes.late ?? {}, shared)],
+      ],
+      [
+        "the checkpoints out of order",
+        (hashes) => [
+          replay(),
+          checkpoint("late", hashes.late ?? {}, shared),
+          checkpoint("early", hashes.early ?? {}, shared),
+        ],
+      ],
+      [
+        "a checkpoint error after both checkpoints were read",
+        (hashes) => [
+          replay(),
+          checkpoint("early", hashes.early ?? {}, shared),
+          checkpoint("late", hashes.late ?? {}, shared),
+          error(2, "checkpoint"),
+        ],
+      ],
+    ])("with %s", async (_, night) => {
+      const hashes = await expected();
+      expect(validateNight(hourWith([], shared), hashes, night(hashes))).toBeNull();
     });
   });
 

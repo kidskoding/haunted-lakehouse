@@ -88,12 +88,15 @@ export type RunEvent =
     }
   /** The next hour's pool had nothing this run could play, so the night can't go on. */
   | { readonly kind: "pool_exhausted"; readonly slot: Slot }
-  /** `checkpointId` is the first checkpoint not passed; `revealedBatch` is where it broke. */
+  /**
+   * `checkpointId` is the first checkpoint not passed; `revealedBatch` is where it broke. Null
+   * on failures stored before reveals were recorded, which revealed nothing.
+   */
   | {
       readonly kind: "attempt_failed";
       readonly slot: Slot;
       readonly checkpointId: string;
-      readonly revealedBatch: number;
+      readonly revealedBatch: number | null;
     }
   | { readonly kind: "hour_cleared"; readonly slot: Slot }
   | { readonly kind: "hour_skipped"; readonly slot: Slot }

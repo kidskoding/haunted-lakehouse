@@ -146,7 +146,8 @@ function applyEvent(registry: PuzzleRegistry, state: RunState, event: RunEvent):
         hour: {
           ...hour,
           failures: [...hour.failures, event.checkpointId],
-          revealed: [...hour.revealed, event.revealedBatch],
+          revealed:
+            event.revealedBatch === null ? hour.revealed : [...hour.revealed, event.revealedBatch],
         },
       };
       return candles === 0 ? { ...failed, status: "dead", phase: "ended" } : failed;
