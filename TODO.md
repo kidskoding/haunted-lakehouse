@@ -38,7 +38,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 ### 2.1 Core
 - [x] **2.1.1 Seeding.** A stable hash maps `(puzzle_id, run_seed, slot)` to a seeded PRNG, plus a human-friendly seed generator (`raven-pumpkin-13`). Tests cover stability, isolation, and the fact that no global randomness is used.
 - [ ] **2.1.2 Puzzle contract.** A `Puzzle` interface: id, slot, tier, title, prerequisites, retention, checkpoints, `generate(seed)` returning batches plus expected gold state per checkpoint, and narrative bindings. Pool registry keyed by slot.
-- [ ] **2.1.3 Canonical result hashing.** Sorts rows, applies defined numeric rounding and null encoding, and hashes. Identical results on DuckDB Node and DuckDB-WASM, tested with tricky values (floats, nulls, unicode, timestamps).
+- [x] **2.1.3 Canonical result hashing.** Sorts rows, applies defined numeric rounding and null encoding, and hashes. Identical results on DuckDB Node and DuckDB-WASM, tested with tricky values (floats, nulls, unicode, timestamps).
 
 ### 2.2 The Hollow Creek world
 - [ ] **2.2.1 Houses and kids.** Seeded `houses` and `trick_or_treaters` with realistic distributions. Include tests for determinism and distribution sanity.
