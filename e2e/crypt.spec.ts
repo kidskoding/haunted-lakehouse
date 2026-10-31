@@ -4,7 +4,7 @@ import { collectConsoleErrors } from "./console-errors";
 const ROOMS = [
   { name: "The Codex", path: "/crypt/codex" },
   { name: "The Graveyard", path: "/crypt/graveyard", title: "The Graveyard gate is chained." },
-  { name: "The Ledger", path: "/crypt/ledger", title: "The Ledger stays shut tonight." },
+  { name: "The Ledger", path: "/crypt/ledger" },
   { name: "Characters", path: "/crypt/characters" },
   { name: "The Daily Haunt", path: "/crypt/daily", title: "Today’s haunt isn’t posted." },
 ] as const;
@@ -131,7 +131,7 @@ test("screenshots the Crypt at the review widths and on a phone", async ({ page 
       path: testInfo.outputPath(`crypt-${String(width)}.png`),
       fullPage: true,
     });
-    await page.goto("/crypt/ledger");
+    await page.goto("/crypt/daily");
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: testInfo.outputPath(`crypt-room-${String(width)}.png`) });
   }
