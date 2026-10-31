@@ -18,6 +18,9 @@ const hideDelayMs = 120;
 
 const sides = {
   top: "bottom-full left-1/2 mb-2 -translate-x-1/2",
+  /* Edge-aligned, for triggers near the viewport's sides that would clip a centred tooltip. */
+  "top-start": "bottom-full left-0 mb-2",
+  "top-end": "bottom-full right-0 mb-2",
   bottom: "top-full left-1/2 mt-2 -translate-x-1/2",
   left: "right-full top-1/2 mr-2 -translate-y-1/2",
   right: "left-full top-1/2 ml-2 -translate-y-1/2",
