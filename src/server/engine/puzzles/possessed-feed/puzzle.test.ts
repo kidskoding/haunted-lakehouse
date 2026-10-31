@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validatePuzzleData, type Cell, type PuzzleData, type Row } from "../../puzzle";
+import { fogNarrative } from "../../curses/fog";
 import { generatePuzzle } from "../../registry";
 import { generateHouses } from "../../world/houses";
 import { generatePumpkinSensors } from "../../world/pumpkin-sensors";
@@ -93,6 +94,13 @@ function checkpointBatch(data: PuzzleData, id: string): number {
 }
 
 describe("the possessed feed", () => {
+  it("lets the Fog withhold only the vague spelling the Mayor quotes", () => {
+    const { narrative } = generatePuzzle(possessedFeed, "seed-0");
+    const fogged = fogNarrative(possessedFeed, narrative);
+    expect(fogged.withheld).toEqual(["example_vague"]);
+    expect(fogged.narrative).not.toHaveProperty("example_vague");
+  });
+
   it("produces data the puzzle validator accepts", () => {
     for (const { data } of allData) expect(validatePuzzleData(possessedFeed, data)).toEqual([]);
   });
@@ -202,7 +210,7 @@ describe("the possessed feed", () => {
         expect(houses.has(String(row.house_id))).toBe(true);
         if (placed(row).item === "candle") expect(pumpkins.has(String(row.house_id))).toBe(true);
       }
-      expect(data.narrative.dropCount).toBe(rows.length);
+      expect(data.narrative.drop_count).toBe(rows.length);
     }
   });
 
@@ -216,16 +224,38 @@ describe("the possessed feed", () => {
   it("quotes Hobb's note from spellings the player can see", () => {
     for (const { data } of allData) {
       const visible = new Set(rowsThrough(data, HIDDEN_FROM - 1).map((r) => placed(r).quantity));
-      for (const key of ["exampleUnit", "exampleWord", "exampleDozen", "exampleVague"]) {
+      for (const key of ["example_unit", "example_word", "example_dozen", "example_vague"]) {
         expect(visible.has(data.narrative[key] ?? null)).toBe(true);
       }
-      expect(data.narrative.exampleVague).not.toBe("");
+      expect(data.narrative.example_vague).not.toBe("");
       const pieces = (data.expected.invoice?.[GOLD_TABLE] ?? []).reduce(
         (sum, row) => sum + Number(row.pieces),
         0,
       );
       // The invoice bills what the vague drops really held, so it always beats the tally.
-      expect(data.narrative.invoicedPieces).toBeGreaterThan(pieces);
+      expect(data.narrative.invoiced_pieces).toBeGreaterThan(pieces);
+    }
+  });
+
+  it("counts what the story says was read, lost to a strict cast, and disputed", () => {
+    for (const { data } of allData) {
+      const rows = rowsThrough(data, data.batches.length - 1);
+      const raw = (row: Row): Cell => ("qty" in row ? (row.qty ?? null) : (row.quantity ?? null));
+      const readable = rows.filter((row) => readQuantity(placed(row).quantity) !== null);
+      const pieces = (data.expected.invoice?.[GOLD_TABLE] ?? []).reduce(
+        (sum, row) => sum + Number(row.pieces),
+        0,
+      );
+      expect(data.narrative.paid_pieces).toBe(pieces);
+      expect(data.narrative.unknown_rows).toBe(rows.length - readable.length);
+      expect(data.narrative.recovered_rows).toBe(
+        readable.filter((row) => castQuantity(raw(row)) === null).length,
+      );
+      expect(data.narrative.swapped_rows).toBe(
+        rows.filter((row) => shapeOf(row) === "reordered").length,
+      );
+      expect(data.narrative.unknown_rows).toBeGreaterThan(0);
+      expect(data.narrative.recovered_rows).toBeGreaterThan(0);
     }
   });
 
