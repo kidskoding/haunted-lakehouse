@@ -4,6 +4,7 @@ import { bowlReadingRows, bowlStockRows, generateCandyBowls } from "./candy-bowl
 import { generateDoorScans } from "./door-scans";
 import { generateHouses } from "./houses";
 import { NIGHT_SECONDS, secondsAt } from "./night-clock";
+import { generatePorchLights } from "./porch-lights";
 import { generateTrickOrTreaters } from "./trick-or-treaters";
 
 const SEEDS = Array.from({ length: 20 }, (_, i) => `seed-${String(i)}`);
@@ -17,7 +18,8 @@ function night(seed: string) {
   const houses = generateHouses(seed);
   const kids = generateTrickOrTreaters(seed, houses);
   const scans = generateDoorScans(seed, houses, kids);
-  return { houses, scans, ...generateCandyBowls(seed, houses, scans) };
+  const { lights } = generatePorchLights(seed, houses, scans);
+  return { houses, scans, ...generateCandyBowls(seed, houses, scans, lights) };
 }
 
 function piecesByHouse(handouts: readonly { houseId: string; pieces: number }[]) {
