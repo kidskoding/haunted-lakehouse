@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSlot, slotDefinition, SLOTS } from "./slots";
+import { failureCost, isSlot, slotDefinition, SLOTS } from "./slots";
 
 describe("slots", () => {
   it("numbers the ten hours of the night in order", () => {
@@ -23,5 +23,11 @@ describe("slots", () => {
   it("recognizes slots and looks them up", () => {
     expect([0, 1, 10, 11, 2.5].map(isSlot)).toEqual([false, true, true, false, false]);
     expect(slotDefinition(9).time).toBe("01:00");
+  });
+});
+
+describe("failureCost", () => {
+  it("takes two candles at a boss and one anywhere else", () => {
+    expect(SLOTS.map(({ slot }) => failureCost(slot))).toEqual([1, 1, 2, 1, 1, 1, 2, 1, 1, 2]);
   });
 });

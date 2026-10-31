@@ -1,7 +1,7 @@
 import "server-only";
 import { relicsUsable } from "../curses/limits";
 import type { PuzzleRegistry } from "../registry";
-import { isSlot, slotDefinition, type Act, type Slot } from "../slots";
+import { failureCost, isSlot, slotDefinition, type Act, type Slot } from "../slots";
 import { CHARACTERS, isCharacterId } from "./characters";
 import { eligiblePuzzles, nextGameEvent, playedPuzzles } from "./director";
 import { RunEventError } from "./errors";
@@ -138,8 +138,7 @@ function applyEvent(registry: PuzzleRegistry, state: RunState, event: RunEvent):
 
     case "attempt_failed": {
       const hour = expectHour(state, event.slot, event.kind);
-      const cost = slotDefinition(hour.slot).boss ? 2 : 1;
-      const candles = Math.max(0, state.candles - cost);
+      const candles = Math.max(0, state.candles - failureCost(hour.slot));
       const failed = {
         ...state,
         candles,

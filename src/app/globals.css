@@ -193,3 +193,42 @@
     animation: death-fade var(--transition-duration-base) var(--ease-out) both;
   }
 }
+
+/*
+ * A curse opening (art direction §6.4, §7.2): each fog bank creeps in from its own edge over a
+ * ceremony and stays. Calm motion shows the fog at once at its final opacity, with no drift.
+ */
+@keyframes fog-creep {
+  from {
+    opacity: 0;
+    translate: var(--fog-from, 0 0);
+  }
+}
+
+@utility fog-creep {
+  animation: fog-creep var(--transition-duration-ceremony) var(--ease-out) both;
+
+  @variant motion-calm {
+    animation: none;
+  }
+}
+
+/*
+ * A boss opening (§6.4): the frame dims (`death-fade`), then the title rises out of the dark
+ * once the dim has begun to settle. Calm motion turns the rise into a crossfade in place.
+ */
+@keyframes title-rise {
+  from {
+    opacity: 0;
+    translate: 0 1.5rem;
+  }
+}
+
+@utility title-rise {
+  animation: title-rise var(--transition-duration-ceremony) var(--ease-out)
+    var(--transition-duration-slow) both;
+
+  @variant motion-calm {
+    animation: death-fade var(--transition-duration-base) var(--ease-out) both;
+  }
+}

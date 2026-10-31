@@ -41,3 +41,8 @@ export function slotDefinition(slot: Slot): SlotDefinition {
   if (!definition) throw new RangeError(`No slot ${String(slot)}.`);
   return definition;
 }
+
+/** Candles a failed "Run the night" costs in `slot`: a boss takes two. */
+export function failureCost(slot: Slot): number {
+  return slotDefinition(slot).boss ? 2 : 1;
+}

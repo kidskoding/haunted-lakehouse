@@ -1,8 +1,9 @@
 import "server-only";
 import { rngFor } from "../random";
+import { slotDefinition } from "../slots";
 import { CHARACTERS } from "./characters";
 import { RUN_STREAM } from "./streams";
-import type { RelicId, RunState } from "./types";
+import type { CurseId, RelicId, RunState } from "./types";
 
 export const RELICS: readonly RelicId[] = [
   "wrens-lantern",
@@ -30,6 +31,21 @@ export function offerSize(state: RunState): number {
   const cleared = state.history.at(-1);
   const bonus = cleared?.outcome === "cleared" && cleared.curse !== null ? 1 : 0;
   return Math.min(base + bonus, offerableRelics(state.relics).length);
+}
+
+/**
+ * Whether clearing the open hour would put one more relic on the table for its curse. Never
+ * for a clear hour, a character who is never offered relics, a boss clear that ends the run,
+ * or when every relic not in hand is already on offer.
+ */
+export function curseAddsRelic(state: RunState): boolean {
+  const hour = state.hour;
+  if (!hour || hour.curse === null) return false;
+  const { act, boss } = slotDefinition(hour.slot);
+  if (boss && act >= state.unlockedActs) return false;
+  const offerAfter = (curse: CurseId | null) =>
+    offerSize({ ...state, history: [...state.history, { ...hour, curse, outcome: "cleared" }] });
+  return offerAfter(hour.curse) > offerAfter(null);
 }
 
 /**
