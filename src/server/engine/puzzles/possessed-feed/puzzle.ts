@@ -4,7 +4,7 @@ import type { Injection } from "../../batches/injections";
 import { scheduleBatches } from "../../batches/schedule";
 import type { Checkpoint, GenerateContext, Puzzle, PuzzleData, Row } from "../../puzzle";
 import { generateNight } from "../../world/night";
-import { dropRow, generateDrops, VAN_HOURS } from "./drops";
+import { dropRow, generateDrops, VAN_FROM, VAN_UNTIL } from "./drops";
 import { narrativeBindings } from "./narrative";
 import { assignSpellings, type Spelling } from "./spellings";
 import { decorationTally } from "./tally";
@@ -12,19 +12,19 @@ import { decorationTally } from "./tally";
 export const FEED = "decoration_drops";
 export const GOLD_TABLE = "gold.decoration_tally";
 
-// The van's handheld uploads every ten minutes, 18:10 through 19:30: nine batches.
-const CADENCE: Cadence = { every: 600, from: 600, until: VAN_HOURS };
+// The van's handheld uploads every five minutes, 19:35 through 20:15: nine batches.
+const CADENCE: Cadence = { every: 300, from: VAN_FROM + 300, until: VAN_UNTIL };
 
-/** The first batch the player never sees before running the night (19:20 and 19:30). */
+/** The first batch the player never sees before running the night (20:10 and 20:15). */
 export const HIDDEN_FROM = 7;
 
 const CHECKPOINTS: readonly Checkpoint[] = [
-  { id: "first-look", afterBatch: 3, label: "18:40" },
-  { id: "seven-oclock", afterBatch: 5, label: "19:00" },
-  { id: "invoice", afterBatch: 8, label: "19:30" },
+  { id: "first-look", afterBatch: 3, label: "19:50" },
+  { id: "eight-oclock", afterBatch: 5, label: "20:00" },
+  { id: "invoice", afterBatch: 8, label: "20:15" },
 ];
 
-/** Every spelling kind is visible by the seven o'clock check. */
+/** Every spelling kind is visible by the eight o'clock check. */
 const EVERY_KIND_BY = 5;
 
 /** The batches each possession starts at, one seeded pick each, always in this order. */

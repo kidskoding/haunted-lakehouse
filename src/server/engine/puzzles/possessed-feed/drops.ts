@@ -27,10 +27,11 @@ export interface Drop {
   readonly second: number;
 }
 
-/** The van works from dusk until the invoice goes out at 19:30. */
-export const VAN_HOURS = 90 * 60;
+/** The van works from 19:30, as the hour opens, until the invoice goes out at 20:15. */
+export const VAN_FROM = 90 * 60;
+export const VAN_UNTIL = 135 * 60;
 // The van starts at the depot end of town, so its first drop always lands in the first upload.
-const FIRST_DROP_BY = 10 * 60;
+const FIRST_DROP_BY = VAN_FROM + 5 * 60;
 
 const CANDLES = [2, 3, 4, 6, 6, 8, 10, 12, 12] as const;
 const OTHER_ITEMS = ["fog juice", "cobweb", "lantern", "skeleton", "glow stick"] as const;
@@ -61,7 +62,7 @@ export function generateDrops(night: Night, rng: (...labels: string[]) => Rng): 
   const unsorted: Omit<Drop, "dropId">[] = [];
   for (const house of night.houses) {
     const draw = rng("drops", house.houseId);
-    const at = () => draw.int(0, VAN_HOURS + 1);
+    const at = () => draw.int(VAN_FROM, VAN_UNTIL + 1);
     const { houseId } = house;
     if (pumpkins.has(houseId)) {
       unsorted.push({ houseId, item: "candle", quantity: draw.pick(CANDLES), second: at() });
@@ -84,7 +85,7 @@ export function generateDrops(night: Night, rng: (...labels: string[]) => Rng): 
   const first = sorted[0];
   if (first && first.second > FIRST_DROP_BY) {
     // Moving the earliest drop earlier keeps it first, so the order stays sorted.
-    sorted[0] = { ...first, second: rng("drops", "first").int(0, FIRST_DROP_BY + 1) };
+    sorted[0] = { ...first, second: rng("drops", "first").int(VAN_FROM, FIRST_DROP_BY + 1) };
   }
   return sorted.map((drop, i) => ({ dropId: `HB-${String(i + 1).padStart(4, "0")}`, ...drop }));
 }
