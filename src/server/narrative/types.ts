@@ -37,6 +37,28 @@ export interface Autopsy {
   readonly search: readonly string[];
 }
 
+/** What a tutorial callout points at, named by its job on the run screen, not by its markup. */
+export type CalloutTarget =
+  | "story"
+  | "tables"
+  | "editor"
+  | "new-model"
+  | "preview"
+  | "run-the-night"
+  | "candles"
+  | "timeline";
+
+/** A first-run tip. It teaches the game's controls, never the puzzle. */
+export interface Callout {
+  /** Stable, so the client can remember that a player dismissed it. */
+  readonly id: string;
+  readonly target: CalloutTarget;
+  /** `tour` callouts show in order as the hour opens; `first-break` waits for a lost candle. */
+  readonly when: "tour" | "first-break";
+  /** A template, like a line's, holding no symptoms. */
+  readonly text: string;
+}
+
 /** Everything the story says about one puzzle, keyed by the puzzle's id. */
 export interface NarrativePack {
   readonly puzzleId: string;
@@ -61,6 +83,8 @@ export interface NarrativePack {
   readonly clearedAfterHollow?: Scene;
   /** Leads into this hour from whichever hour came before; empty for the first hour. */
   readonly hook: Scene;
+  /** The controls tour on a player's first run; only the hour that opens the night has one. */
+  readonly tutorial?: readonly Callout[];
   readonly autopsy: Autopsy;
   readonly epitaphs: readonly [string, string];
 }

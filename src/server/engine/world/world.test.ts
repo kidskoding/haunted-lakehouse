@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateHouses } from "./houses";
+import { generateHouses, houseRows } from "./houses";
 import { STREETS } from "./town";
 import { generateTrickOrTreaters } from "./trick-or-treaters";
 
@@ -24,6 +24,20 @@ describe("the Hollow Creek world", () => {
     const b = town("raven-pumpkin-14");
     expect(a.houses).not.toEqual(b.houses);
     expect(a.kids).not.toEqual(b.kids);
+  });
+
+  it("lists every house in the town directory, dark or not", () => {
+    const { houses } = town("raven-pumpkin-13");
+    const rows = houseRows(houses);
+    expect(rows).toHaveLength(houses.length);
+    const [house] = houses;
+    if (!house) throw new Error("The town has no houses.");
+    expect(rows[0]).toEqual({
+      house_id: house.houseId,
+      street: house.street,
+      house_number: house.number,
+      household: house.household,
+    });
   });
 
   describe.each(SEEDS)("seed %s", (seed) => {
