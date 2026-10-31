@@ -4,8 +4,9 @@ import type { Injection } from "../../batches/injections";
 import { scheduleBatches } from "../../batches/schedule";
 import type { Checkpoint, GenerateContext, Puzzle, PuzzleData, Row } from "../../puzzle";
 import { generateNight } from "../../world/night";
-import { dropRow, generateDrops, VAN_HOURS, type Drop } from "./drops";
-import { assignSpellings, type Spelling, type SpellingKind } from "./spellings";
+import { dropRow, generateDrops, VAN_HOURS } from "./drops";
+import { narrativeBindings } from "./narrative";
+import { assignSpellings, type Spelling } from "./spellings";
 import { decorationTally } from "./tally";
 
 export const FEED = "decoration_drops";
@@ -78,21 +79,6 @@ function possessionInjections(
   ];
 }
 
-/** The first visible spelling of a kind, for Hobb's note to quote back at the player. */
-function example(
-  placed: readonly { drop: Drop; batch: number }[],
-  spellings: ReadonlyMap<string, Spelling>,
-  kind: SpellingKind,
-  fallback: string,
-): string {
-  for (const { drop, batch } of placed) {
-    if (batch >= HIDDEN_FROM) break;
-    const spelling = spellings.get(drop.dropId);
-    if (spelling?.kind === kind && spelling.text !== "") return spelling.text;
-  }
-  return fallback;
-}
-
 function generate(context: GenerateContext): PuzzleData {
   const night = generateNight(context.runSeed);
   const drops = generateDrops(night, (...labels) => context.rng(...labels));
@@ -135,14 +121,12 @@ function generate(context: GenerateContext): PuzzleData {
     batches: schedule.batches,
     checkpoints: CHECKPOINTS,
     expected,
-    narrative: {
-      dropCount: drops.length,
-      invoicedPieces: drops.reduce((sum, drop) => sum + drop.quantity, 0),
-      exampleUnit: example(placed, spellings, "unit", "6 pcs"),
-      exampleWord: example(placed, spellings, "word", "seven"),
-      exampleDozen: example(placed, spellings, "dozen", "a dozen"),
-      exampleVague: example(placed, spellings, "vague", "lots"),
-    },
+    narrative: narrativeBindings({
+      placed,
+      spellings,
+      reorderFrom: possessions.reorder,
+      hiddenFrom: HIDDEN_FROM,
+    }),
   };
 }
 
@@ -158,5 +142,7 @@ export const possessedFeed: Puzzle = {
   prerequisites: [],
   retention: 3,
   goldTables: [GOLD_TABLE],
+  // The Fog hides the vague spelling the Mayor quotes, the one clue that some drops can't count.
+  symptoms: ["example_vague"],
   generate,
 };
