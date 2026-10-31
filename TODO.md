@@ -139,7 +139,7 @@ Every puzzle follows the same five steps:
 - [x] **7.1.1** Design doc
 - [x] **7.1.2** Generator
 - [ ] **7.1.3** Reference and trap pipelines with tests
-- [ ] **7.1.4** Narrative, including tutorial callouts
+- [x] **7.1.4** Narrative, including tutorial callouts
 - [ ] **7.1.5** Playtest note
 
 ### 7.2 The Thirteenth Door (6:45pm, ★★)
