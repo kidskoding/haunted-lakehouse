@@ -5,6 +5,7 @@ import { generateContext, generatePuzzle } from "../../registry";
 import { generateNight } from "../../world/night";
 import { CURSED_PIECES, cursedHouses, piecesBeforeBell } from "./cursed";
 import { BELL_BATCH, LAST_BATCH } from "./delivery";
+import { streetList } from "./narrative";
 import { GOLD_TABLE, thirteenthDoor } from "./puzzle";
 
 const SEEDS = Array.from({ length: 20 }, (_, i) => `seed-${String(i)}`);
@@ -153,6 +154,16 @@ const runs = SEEDS.map((seed) => ({ seed, data: generatePuzzle(thirteenthDoor, s
 const expectedAt = (data: PuzzleData, checkpoint: string) =>
   data.expected[checkpoint]?.[GOLD_TABLE] ?? [];
 
+describe("the cursed street's name", () => {
+  it("names one, two, or three tied streets", () => {
+    expect(streetList(["Lantern Row"])).toBe("Lantern Row");
+    expect(streetList(["Lantern Row", "Wick Street"])).toBe("Lantern Row and Wick Street");
+    expect(streetList(["Bone Lane", "Lantern Row", "Wick Street"])).toBe(
+      "Bone Lane, Lantern Row, and Wick Street",
+    );
+  });
+});
+
 describe("the thirteenth door", () => {
   it("is the same for the same seed", () => {
     expect(generatePuzzle(thirteenthDoor, "raven-pumpkin-13")).toEqual(
@@ -233,7 +244,7 @@ describe("the thirteenth door", () => {
     it("binds every number and name its story quotes", () => {
       const { narrative } = data;
       expect(narrative.cursed_on_street).toBe(bell[0]?.cursed_houses);
-      expect(narrative.cursed_street).toBe(bell.map((r) => r.street).join(" and "));
+      expect(narrative.cursed_street).toBe(streetList(bell.map((r) => text(r, "street"))));
       const night = generateNight(seed);
       const cursed = new Set(cursedHouses(night.candyBowls));
       const [lowest] = night.houses
