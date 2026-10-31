@@ -6,7 +6,7 @@ const ROOMS = [
   { name: "The Graveyard", path: "/crypt/graveyard" },
   { name: "The Ledger", path: "/crypt/ledger" },
   { name: "Characters", path: "/crypt/characters" },
-  { name: "The Daily Haunt", path: "/crypt/daily", title: "Today’s haunt isn’t posted." },
+  { name: "The Daily Haunt", path: "/crypt/daily" },
 ] as const;
 
 const rooms = (page: import("@playwright/test").Page) =>
@@ -31,20 +31,6 @@ test("the Crypt lists its five rooms with a new player's counts", async ({ page 
     "/run/new",
   );
 
-  expect(errors).toEqual([]);
-});
-
-test("every closed room answers with its own page and a way back", async ({ page }) => {
-  const errors = collectConsoleErrors(page);
-  for (const room of ROOMS) {
-    if (!("title" in room)) continue;
-    await page.goto("/crypt");
-    await rooms(page).filter({ hasText: room.name }).click();
-    await expect(page).toHaveURL(room.path);
-    await expect(page.getByRole("heading", { level: 1, name: room.title })).toBeVisible();
-    await page.getByRole("link", { name: "Back to the Crypt" }).click();
-    await expect(page).toHaveURL("/crypt");
-  }
   expect(errors).toEqual([]);
 });
 

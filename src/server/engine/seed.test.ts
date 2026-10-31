@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rngFor } from "./random";
-import { humanSeed, isHumanSeed } from "./seed";
+import { dailySeed, humanSeed, isHumanSeed } from "./seed";
 
 function seedFor(i: number): string {
   return humanSeed(rngFor(["seed-test", "x", i]));
@@ -58,5 +58,21 @@ describe("isHumanSeed", () => {
     "raven-pumpkin-13 ",
   ])("rejects %j", (seed) => {
     expect(isHumanSeed(seed)).toBe(false);
+  });
+});
+
+describe("dailySeed", () => {
+  it("gives every player the same seed for a date, and a new one the next day", () => {
+    expect(dailySeed("2026-10-31")).toBe(dailySeed("2026-10-31"));
+    expect(dailySeed("2026-11-01")).not.toBe(dailySeed("2026-10-31"));
+    expect(isHumanSeed(dailySeed("2026-10-31"))).toBe(true);
+  });
+
+  it("is stable across releases", () => {
+    expect(dailySeed("2026-10-31")).toBe("phantom-gumdrop-79");
+  });
+
+  it.each(["", "2026-10-31T00:00:00Z", "10/31/2026", "2026-1-1"])("rejects %j", (date) => {
+    expect(() => dailySeed(date)).toThrow(RangeError);
   });
 });
