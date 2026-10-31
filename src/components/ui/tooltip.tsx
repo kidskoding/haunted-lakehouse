@@ -106,7 +106,11 @@ export function Tooltip({ content, children, side = "top", defaultOpen = false }
         if (event.pointerType === "mouse") schedule(true, showDelayMs);
       }}
       onPointerLeave={(event) => {
-        if (event.pointerType === "mouse") schedule(false, hideDelayMs);
+        // Focus still counts: a keyboard-opened tooltip must stay while the trigger is focused,
+        // even if the mouse enters and then leaves (WCAG 1.4.13).
+        if (event.pointerType === "mouse" && !anchorRef.current?.contains(document.activeElement)) {
+          schedule(false, hideDelayMs);
+        }
       }}
       onFocus={(event) => {
         // Keyboard focus only: a mouse click focuses a button too, and hover already covers it.

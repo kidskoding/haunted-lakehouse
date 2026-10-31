@@ -37,11 +37,23 @@ export function byTabOrder(a: { tabIndex: number }, b: { tabIndex: number }): nu
   return aRank - bRank;
 }
 
+/** True when the element, or a fieldset that owns it, is disabled and out of the Tab sequence. */
+export function isDisabledForTab(element: {
+  matches: (selectors: string) => boolean;
+  closest: (selectors: string) => Element | null;
+}): boolean {
+  return element.matches(":disabled") || Boolean(element.closest("fieldset[disabled]"));
+}
+
 /** The elements inside `root` that Tab can reach, in browser Tab order. */
 export function tabbableIn(root: Element): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR))
     .filter(
-      (element) => element.tabIndex >= 0 && !element.closest("[inert]") && isTabVisible(element),
+      (element) =>
+        element.tabIndex >= 0 &&
+        !element.closest("[inert]") &&
+        !isDisabledForTab(element) &&
+        isTabVisible(element),
     )
     .sort(byTabOrder);
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   byTabOrder,
+  isDisabledForTab,
   isTabVisible,
   TABBABLE_SELECTOR,
   wrappedTabIndex,
@@ -36,6 +37,21 @@ describe("byTabOrder", () => {
   it("puts positive tabIndex values ahead of ordinary controls, ascending", () => {
     const items = [{ tabIndex: 0 }, { tabIndex: 2 }, { tabIndex: 0 }, { tabIndex: 1 }];
     expect([...items].sort(byTabOrder).map((item) => item.tabIndex)).toEqual([1, 2, 0, 0]);
+  });
+});
+
+describe("isDisabledForTab", () => {
+  it("treats :disabled and fieldset[disabled] descendants as out of Tab order", () => {
+    expect(isDisabledForTab({ matches: (s: string) => s === ":disabled", closest: () => null })).toBe(
+      true,
+    );
+    expect(
+      isDisabledForTab({
+        matches: () => false,
+        closest: (s: string) => (s === "fieldset[disabled]" ? {} : null),
+      }),
+    ).toBe(true);
+    expect(isDisabledForTab({ matches: () => false, closest: () => null })).toBe(false);
   });
 });
 
