@@ -18,7 +18,7 @@ function drop(n: number, quantity: number): Drop {
 /*
  * One drop in the retype's batch, too big for a word or a dozen, and a crowd in the next
  * batch that shows every spelling by itself. Left to the weights, the lone drop is plain
- * digits on most seeds.
+ * digits on most seeds and a shrug on some, which a cast skips as surely as the story does.
  */
 const placed = [
   { drop: drop(0, 30), batch: RETYPE },
@@ -32,9 +32,7 @@ describe("spellings", () => {
         { placed, from: RETYPE, everyKindBy: 5, hiddenFrom: 7 },
         (...labels) => rngFor(["possessed-feed", `seed-${String(i)}`, 3, ...labels]),
       );
-      const kind = spellings.get("HB-0")?.kind;
-      // A shrug is the one spelling that can't be respelled without changing the truth.
-      expect(["unit", "word", "dozen", "vague"], `seed-${String(i)}`).toContain(kind);
+      expect(["unit", "word", "dozen"], `seed-${String(i)}`).toContain(spellings.get("HB-0")?.kind);
     }
   });
 });
