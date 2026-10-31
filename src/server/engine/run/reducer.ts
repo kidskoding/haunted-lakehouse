@@ -113,7 +113,13 @@ function applyEvent(registry: PuzzleRegistry, state: RunState, event: RunEvent):
       return {
         ...state,
         phase: "in-hour",
-        hour: { slot: event.slot, puzzleId: puzzle.id, curse: event.curse, failures: [] },
+        hour: {
+          slot: event.slot,
+          puzzleId: puzzle.id,
+          curse: event.curse,
+          failures: [],
+          revealed: [],
+        },
         actReached: maxAct(state.actReached, act),
       };
     }
@@ -137,7 +143,11 @@ function applyEvent(registry: PuzzleRegistry, state: RunState, event: RunEvent):
       const failed = {
         ...state,
         candles,
-        hour: { ...hour, failures: [...hour.failures, event.checkpointId] },
+        hour: {
+          ...hour,
+          failures: [...hour.failures, event.checkpointId],
+          revealed: [...hour.revealed, event.revealedBatch],
+        },
       };
       return candles === 0 ? { ...failed, status: "dead", phase: "ended" } : failed;
     }

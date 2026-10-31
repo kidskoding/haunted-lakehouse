@@ -15,6 +15,13 @@ describe("validatePuzzleData", () => {
     expect(validatePuzzleData(puzzle, valid)).toEqual([]);
   });
 
+  it("checks that the replay batch is one of the hour's batches", () => {
+    expect(validatePuzzleData(fakePuzzle({ replayBatch: 1 }), valid)).toEqual([]);
+    expect(validatePuzzleData(fakePuzzle({ replayBatch: 3 }), valid)).toEqual([
+      "The replay batch 3 does not exist.",
+    ]);
+  });
+
   it.each<[string, (data: PuzzleData) => PuzzleData, RegExp]>([
     ["no batches", (d) => ({ ...d, batches: [], checkpoints: [] }), /no batches/],
     [

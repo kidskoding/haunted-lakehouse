@@ -3,11 +3,17 @@ import { asc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
+import { judgeNight } from "../../lib/executor/night";
+import { reportFailure } from "../../lib/executor/report";
+import { revealBatch } from "../../lib/executor/reveal";
+import type { ExpectedHashes, GoldHashes, NightEvent } from "../../lib/executor/types";
+import type { CompiledPipeline } from "../../lib/pipeline/compile";
 import * as schema from "../db/schema";
 import { players, runEvents, runs } from "../db/schema";
 import { generatePuzzle } from "../engine/registry";
 import { porchLights } from "../engine/puzzles/porch-lights";
 import { rowFromEvent } from "../runs/events";
+import { getBatch, listPreviewBatches } from "./access";
 import { NIGHT_ATTEMPT_TTL_SECONDS, signNightAttempt } from "./attempt";
 import { expectedHashes } from "./expected";
 import { judgeNightAttempt } from "./judge";
@@ -46,7 +52,12 @@ async function openPorchRun(database: Db, candlesViaFailures = 0) {
       curse: null,
     }),
     ...Array.from({ length: candlesViaFailures }, () =>
-      rowFromEvent({ kind: "attempt_failed", slot: 1, checkpointId: "quarter-past" }),
+      rowFromEvent({
+        kind: "attempt_failed",
+        slot: 1,
+        checkpointId: "quarter-to",
+        revealedBatch: 8,
+      }),
     ),
   ];
 
@@ -72,6 +83,54 @@ async function openPorchRun(database: Db, candlesViaFailures = 0) {
   return { player, run, attemptToken };
 }
 
+const data = generatePuzzle(porchLights, "raven-pumpkin-13");
+const pipeline: CompiledPipeline = { models: [], order: [] };
+const initiallyVisible = Array.from({ length: porchLights.visibleBatchCount }, (_, i) => i);
+const GOLD = porchLights.goldTables[0] ?? "";
+const wrong: GoldHashes = { [GOLD]: "f".repeat(64) };
+
+/** The checkpoint events a full night yields, with `hashesAt` choosing each one's gold. */
+function checkpointEvents(
+  hashesAt: (id: string) => GoldHashes,
+  upTo = data.batches.length,
+): NightEvent[] {
+  return data.checkpoints
+    .filter((checkpoint) => checkpoint.afterBatch < upTo)
+    .map((checkpoint) => ({
+      kind: "checkpoint",
+      checkpointId: checkpoint.id,
+      label: checkpoint.label,
+      afterBatch: checkpoint.afterBatch,
+      hashes: hashesAt(checkpoint.id),
+    }));
+}
+
+function stepError(batch: number): NightEvent {
+  return {
+    kind: "error",
+    error: { code: "sql", batch, model: GOLD, phase: "step", message: "Binder Error" },
+  };
+}
+
+/** What the player's screen shows after the night: the client's report and reveal. */
+function clientSees(events: readonly NightEvent[], expected: ExpectedHashes) {
+  const failure = judgeNight(events, expected);
+  if (!failure) throw new Error("the client saw no failure");
+  const report = reportFailure(failure, pipeline);
+  return {
+    revealedBatch: report.revealedBatch,
+    visible: revealBatch(data.batches, initiallyVisible, report),
+  };
+}
+
+async function storedEvents(database: Db, runId: string) {
+  return database
+    .select({ kind: runEvents.kind, payload: runEvents.payload })
+    .from(runEvents)
+    .where(eq(runEvents.runId, runId))
+    .orderBy(asc(runEvents.seq));
+}
+
 describe("judgeNightAttempt", () => {
   let database: Db;
 
@@ -81,14 +140,13 @@ describe("judgeNightAttempt", () => {
 
   it("clears the hour when every hash matches and records hour_cleared", async () => {
     const { player, run, attemptToken } = await openPorchRun(database);
-    const data = generatePuzzle(porchLights, "raven-pumpkin-13");
-    const checkpoints = await expectedHashes(data);
+    const expected = await expectedHashes(data);
 
     const result = await judgeNightAttempt(database, {
       runId: run.id,
       playerId: player.id,
       attemptToken,
-      checkpoints,
+      events: checkpointEvents((id) => expected[id] ?? {}),
       now,
       secret,
     });
@@ -100,71 +158,131 @@ describe("judgeNightAttempt", () => {
       status: "playing",
       phase: "offering",
     });
-
-    const stored = await database
-      .select({ kind: runEvents.kind })
-      .from(runEvents)
-      .where(eq(runEvents.runId, run.id))
-      .orderBy(asc(runEvents.seq));
-    expect(stored.at(-1)).toEqual({ kind: "hour_cleared" });
+    expect((await storedEvents(database, run.id)).at(-1)?.kind).toBe("hour_cleared");
   });
 
-  it("returns only the first failing checkpoint, spends a candle, and keeps the run alive", async () => {
+  describe("records and serves the batch the client reveals", () => {
+    it.each<[string, (expected: ExpectedHashes) => NightEvent[], string]>([
+      [
+        "a wrong answer at the first checkpoint",
+        (expected) =>
+          checkpointEvents((id) => (id === data.checkpoints[0]?.id ? wrong : (expected[id] ?? {}))),
+        "quarter-past",
+      ],
+      [
+        // The first hidden batch, which no checkpoint reads: the next checkpoint is at 8.
+        "a runtime error at batch 7",
+        (expected) => [...checkpointEvents((id) => expected[id] ?? {}, 7), stepError(7)],
+        "quarter-to",
+      ],
+    ])("after %s", async (_, night, checkpointId) => {
+      const { player, run, attemptToken } = await openPorchRun(database);
+      const expected = await expectedHashes(data);
+      const events = night(expected);
+      const shown = clientSees(events, expected);
+
+      const result = await judgeNightAttempt(database, {
+        runId: run.id,
+        playerId: player.id,
+        attemptToken,
+        events,
+        now,
+        secret,
+      });
+
+      expect(result).toEqual({
+        ok: true,
+        survived: false,
+        checkpointId,
+        ...shown,
+        candles: 3,
+        status: "playing",
+        phase: "in-hour",
+        unlocks: [],
+      });
+      expect((await storedEvents(database, run.id)).at(-1)).toEqual({
+        kind: "attempt_failed",
+        payload: { slot: 1, checkpointId, revealedBatch: shown.revealedBatch },
+      });
+
+      const listed = await listPreviewBatches(database, run.id, player.id);
+      if (!listed.ok) throw new Error(listed.error);
+      expect(listed.batches.map((batch) => batch.index)).toEqual(shown.visible);
+      const revealed = await getBatch(database, {
+        runId: run.id,
+        playerId: player.id,
+        index: shown.revealedBatch,
+        attemptToken: null,
+        now,
+        secret,
+      });
+      expect(revealed.ok).toBe(true);
+    });
+  });
+
+  it.each<[string, () => NightEvent[]]>([
+    ["an error that claims to reveal batch 7 without passing a checkpoint", () => [stepError(7)]],
+    [
+      // Porch Lights replays no batch, so no replay can flinch.
+      "a replay this hour never runs",
+      () => [{ kind: "replay", batch: 7, before: wrong, after: { [GOLD]: "0".repeat(64) } }],
+    ],
+    ["a night with no events", () => []],
+  ])("refuses %s, spending nothing", async (_, night) => {
     const { player, run, attemptToken } = await openPorchRun(database);
-    const data = generatePuzzle(porchLights, "raven-pumpkin-13");
-    const expected = await expectedHashes(data);
-    const first = data.checkpoints[0];
-    if (!first) throw new Error("missing checkpoint");
-    const checkpoints = {
-      ...expected,
-      [first.id]: Object.fromEntries(
-        Object.keys(expected[first.id] ?? {}).map((table) => [table, "f".repeat(64)]),
-      ),
-    };
+    const before = await storedEvents(database, run.id);
 
     const result = await judgeNightAttempt(database, {
       runId: run.id,
       playerId: player.id,
       attemptToken,
-      checkpoints,
+      events: night(),
       now,
       secret,
     });
 
-    expect(result).toEqual({
-      ok: true,
-      survived: false,
-      checkpointId: first.id,
-      revealedBatch: first.afterBatch,
-      candles: 3,
-      status: "playing",
-      phase: "in-hour",
-      unlocks: [],
+    expect(result).toEqual({ ok: false, error: "invalid-night" });
+    expect(await storedEvents(database, run.id)).toEqual(before);
+    const hidden = await getBatch(database, {
+      runId: run.id,
+      playerId: player.id,
+      index: 7,
+      attemptToken: null,
+      now,
+      secret,
+    });
+    expect(hidden).toEqual({ ok: false, error: "hidden" });
+  });
+
+  it("keeps earlier reveals visible after a later failure", async () => {
+    const { player, run, attemptToken } = await openPorchRun(database, 1);
+    const expected = await expectedHashes(data);
+
+    const result = await judgeNightAttempt(database, {
+      runId: run.id,
+      playerId: player.id,
+      attemptToken,
+      events: [...checkpointEvents((id) => expected[id] ?? {}, 7), stepError(7)],
+      now,
+      secret,
     });
 
-    const [runRow] = await database.select().from(runs).where(eq(runs.id, run.id));
-    expect(runRow?.status).toBe("active");
+    // The earlier failure revealed batch 8; this one reveals 7.
+    expect(result).toMatchObject({ revealedBatch: 7, visible: [0, 1, 2, 3, 4, 5, 6, 7, 8] });
   });
 
   it("kills the run when the last candles go out", async () => {
     // Intern starts with 4; three prior failures leave one candle for this miss.
     const { player, run, attemptToken } = await openPorchRun(database, 3);
-    const data = generatePuzzle(porchLights, "raven-pumpkin-13");
     const expected = await expectedHashes(data);
-    const first = data.checkpoints[0];
-    if (!first) throw new Error("missing checkpoint");
-    const checkpoints = {
-      ...expected,
-      [first.id]: Object.fromEntries(
-        Object.keys(expected[first.id] ?? {}).map((table) => [table, "a".repeat(64)]),
-      ),
-    };
 
     const result = await judgeNightAttempt(database, {
       runId: run.id,
       playerId: player.id,
       attemptToken,
-      checkpoints,
+      events: checkpointEvents((id) =>
+        id === data.checkpoints[0]?.id ? wrong : (expected[id] ?? {}),
+      ),
       now,
       secret,
     });
@@ -188,7 +306,7 @@ describe("judgeNightAttempt", () => {
         runId: run.id,
         playerId: player.id,
         attemptToken: "not-a-token",
-        checkpoints: {},
+        events: [],
         now,
         secret,
       }),

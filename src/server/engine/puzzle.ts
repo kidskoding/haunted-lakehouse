@@ -72,6 +72,8 @@ export interface Puzzle {
    * one batch hidden so the night can surprise them.
    */
   readonly visibleBatchCount: number;
+  /** The batch the night runs twice to check that gold doesn't flinch (Act III). Absent: none. */
+  readonly replayBatch?: number;
   /** The gold tables the player must build, which checkpoints compare. */
   readonly goldTables: readonly string[];
   /** Where the Curse of Possession may strike. Without any, the curse passes this hour by. */
@@ -107,6 +109,11 @@ export function validatePuzzleData(puzzle: Puzzle, data: PuzzleData): string[] {
     problems.push(
       `Between 1 and ${String(batches.length - 1)} batches must be visible before the night, not ${String(visibleBatchCount)}.`,
     );
+  }
+
+  const { replayBatch } = puzzle;
+  if (replayBatch !== undefined && !batches.some((batch) => batch.index === replayBatch)) {
+    problems.push(`The replay batch ${String(replayBatch)} does not exist.`);
   }
 
   if (checkpoints.length === 0) problems.push("There are no checkpoints.");

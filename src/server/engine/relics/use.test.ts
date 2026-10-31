@@ -97,7 +97,12 @@ describe("spendRelic", () => {
       count: { table: "gold.totals", checkpointId: "early", label: "18:05", rowCount: 1 },
     });
 
-    const broke = machine.reduce(fresh, { kind: "attempt_failed", slot: 2, checkpointId: "late" });
+    const broke = machine.reduce(fresh, {
+      kind: "attempt_failed",
+      slot: 2,
+      checkpointId: "late",
+      revealedBatch: 2,
+    });
     const after = spendRelic(machine, broke, intelFor(broke), {
       relic: "hourglass",
       table: "gold.totals",

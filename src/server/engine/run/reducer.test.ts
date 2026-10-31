@@ -22,8 +22,8 @@ function rejects(state: RunState, event: RunEvent, code: RunErrorCode): void {
 
 const cleared = (state: RunState) =>
   machine.reduce(state, { kind: "hour_cleared", slot: state.slot });
-const failed = (state: RunState, checkpointId = "early") =>
-  machine.reduce(state, { kind: "attempt_failed", slot: state.slot, checkpointId });
+const failed = (state: RunState, checkpointId = "early", revealedBatch = 0) =>
+  machine.reduce(state, { kind: "attempt_failed", slot: state.slot, checkpointId, revealedBatch });
 const offered = (state: RunState, relics: RunState["relics"]) =>
   machine.reduce(state, { kind: "relic_offered", relics });
 
@@ -79,7 +79,7 @@ describe("replay", () => {
   it("rebuilds the state the events produced live", () => {
     const events: RunEvent[] = [
       { kind: "hour_opened", slot: 1, puzzleId: "hour-1", curse: null },
-      { kind: "attempt_failed", slot: 1, checkpointId: "late" },
+      { kind: "attempt_failed", slot: 1, checkpointId: "late", revealedBatch: 2 },
       { kind: "hour_cleared", slot: 1 },
       { kind: "relic_offered", relics: ["black-cat", "spare-candle"] },
       { kind: "relic_chosen", relic: "black-cat" },
@@ -94,7 +94,13 @@ describe("hour_opened", () => {
   it("opens the hour and tracks the furthest act", () => {
     const state = open(reach(4), "fog");
     expect(state.phase).toBe("in-hour");
-    expect(state.hour).toEqual({ slot: 4, puzzleId: "hour-4", curse: "fog", failures: [] });
+    expect(state.hour).toEqual({
+      slot: 4,
+      puzzleId: "hour-4",
+      curse: "fog",
+      failures: [],
+      revealed: [],
+    });
     expect(state.actReached).toBe(2);
   });
 
@@ -172,10 +178,11 @@ describe("pool_exhausted", () => {
 });
 
 describe("attempt_failed", () => {
-  it("costs one candle and records the checkpoint that broke", () => {
-    const state = failed(failed(open(start()), "early"), "late");
+  it("costs one candle and records the checkpoint that broke and the batch it revealed", () => {
+    const state = failed(failed(open(start()), "early", 0), "late", 2);
     expect(state.candles).toBe(2);
     expect(state.hour?.failures).toEqual(["early", "late"]);
+    expect(state.hour?.revealed).toEqual([0, 2]);
     expect(state.status).toBe("playing");
     expect(state.phase).toBe("in-hour");
   });
@@ -198,10 +205,14 @@ describe("attempt_failed", () => {
   });
 
   it("is refused outside the open hour", () => {
-    rejects(start(), { kind: "attempt_failed", slot: 1, checkpointId: "early" }, "wrong-phase");
+    rejects(
+      start(),
+      { kind: "attempt_failed", slot: 1, checkpointId: "early", revealedBatch: 0 },
+      "wrong-phase",
+    );
     rejects(
       open(start()),
-      { kind: "attempt_failed", slot: 2, checkpointId: "early" },
+      { kind: "attempt_failed", slot: 2, checkpointId: "early", revealedBatch: 0 },
       "wrong-slot",
     );
   });
@@ -212,7 +223,14 @@ describe("hour_cleared", () => {
     const state = cleared(failed(open(start())));
     expect(state).toMatchObject({ slot: 2, phase: "offering", hour: null, lastEnding: null });
     expect(state.history).toEqual([
-      { slot: 1, puzzleId: "hour-1", curse: null, failures: ["early"], outcome: "cleared" },
+      {
+        slot: 1,
+        puzzleId: "hour-1",
+        curse: null,
+        failures: ["early"],
+        revealed: [0],
+        outcome: "cleared",
+      },
     ]);
   });
 
