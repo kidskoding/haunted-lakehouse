@@ -118,7 +118,9 @@ export function renderPack(pack: NarrativePack, context: RenderContext): string[
       texts.push(...renderScene(scene, context, voice).map((line) => plainText(line.segments)));
     }
   }
-  texts.push(...renderCallouts(pack, context).map((callout) => plainText(callout.segments)));
+  for (const when of ["tour", "first-break"] as const) {
+    texts.push(...renderCallouts(pack, context, when).map((c) => plainText(c.segments)));
+  }
   const autopsy = renderAutopsy(pack, context);
   texts.push(
     ...[autopsy.title, autopsy.town, autopsy.tempting, autopsy.idea, autopsy.production].map(

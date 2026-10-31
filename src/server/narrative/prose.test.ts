@@ -129,7 +129,10 @@ describe("length budgets", () => {
     });
 
     it("keeps each tutorial callout to 40 words", () => {
-      for (const callout of renderCallouts(pack, context)) {
+      for (const callout of [
+        ...renderCallouts(pack, context, "tour"),
+        ...renderCallouts(pack, context, "first-break"),
+      ]) {
         expect(words(plainText(callout.segments)), callout.id).toBeLessThanOrEqual(40);
       }
     });

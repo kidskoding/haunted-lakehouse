@@ -194,14 +194,23 @@ describe("the tutorial", () => {
   it("speaks the run's own times and candles", () => {
     const context = { bindings: fixtureRunBindings(), withheld: [] };
     const text = Object.fromEntries(
-      renderCallouts(narrativePack("porch-lights"), context).map((c) => [
-        c.id,
-        plainText(c.segments),
-      ]),
+      [
+        ...renderCallouts(narrativePack("porch-lights"), context, "tour"),
+        ...renderCallouts(narrativePack("porch-lights"), context, "first-break"),
+      ].map((c) => [c.id, plainText(c.segments)]),
     );
     expect(text["run-the-night"]).toContain("7:00pm, 7:15pm and 7:30pm");
     expect(text.candles).toContain("two candles");
     expect(text["first-break"]).toContain("7:30pm");
+  });
+
+  it("renders the tour before any checkpoint has failed", () => {
+    const bindings = Object.fromEntries(
+      Object.entries(fixtureRunBindings()).filter(([name]) => name !== "failed_checkpoint"),
+    );
+    const tour = renderCallouts(narrativePack("porch-lights"), { bindings, withheld: [] }, "tour");
+    expect(tour.map((c) => c.when)).not.toContain("first-break");
+    expect(tour.length).toBeGreaterThan(0);
   });
 });
 

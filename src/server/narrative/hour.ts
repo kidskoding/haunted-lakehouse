@@ -22,12 +22,19 @@ export interface RenderedCallout extends Omit<Callout, "text"> {
   readonly segments: readonly Segment[];
 }
 
-/** The hour's controls tour, with the run's times and candles in it; empty for most hours. */
-export function renderCallouts(pack: NarrativePack, context: RenderContext): RenderedCallout[] {
-  return (pack.tutorial ?? []).map(({ text, ...callout }) => ({
-    ...callout,
-    segments: renderTemplate(text, context),
-  }));
+/**
+ * The hour's callouts for one moment, with the run's times and candles in them; empty for most
+ * hours. Only the moment's own are rendered, since a first-break callout names a checkpoint
+ * that has not failed during the tour.
+ */
+export function renderCallouts(
+  pack: NarrativePack,
+  context: RenderContext,
+  when: Callout["when"],
+): RenderedCallout[] {
+  return (pack.tutorial ?? [])
+    .filter((callout) => callout.when === when)
+    .map(({ text, ...callout }) => ({ ...callout, segments: renderTemplate(text, context) }));
 }
 
 export interface RenderedAutopsy {
