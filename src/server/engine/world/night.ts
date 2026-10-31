@@ -12,7 +12,7 @@ import { candyTradeRows, generateCandyTrades, type CandyTradeFeed } from "./cand
 import { costumeVoteRows, generateCostumeVotes, type CostumeVote } from "./costume-votes";
 import { doorScanRows, generateDoorScans, type DoorScan } from "./door-scans";
 import { generateHayrideTaps, hayrideTapRows, type HayrideTap } from "./hayride";
-import { generateHouses, type House } from "./houses";
+import { generateHouses, houseRows, type House } from "./houses";
 import { generatePorchLights, porchLightRows, type PorchLightFeed } from "./porch-lights";
 import {
   generatePumpkinSensors,
@@ -23,6 +23,7 @@ import { generateTrickOrTreaters, type TrickOrTreater } from "./trick-or-treater
 
 /** The raw feeds as the town's devices send them, keyed by bronze table name. */
 export interface NightFeeds {
+  readonly houses: readonly Row[];
   readonly door_scans: readonly Row[];
   readonly hayride_taps: readonly Row[];
   readonly costume_votes: readonly Row[];
@@ -76,6 +77,7 @@ export function generateNight(runSeed: string): Night {
     candyTrades,
     pumpkinSensors,
     feeds: {
+      houses: houseRows(houses),
       door_scans: doorScanRows(doorScans),
       hayride_taps: hayrideTapRows(hayrideTaps),
       costume_votes: costumeVoteRows(costumeVotes),
