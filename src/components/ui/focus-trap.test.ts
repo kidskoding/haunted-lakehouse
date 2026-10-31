@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { wrappedTabIndex, wrapTarget, type RadioState } from "./focus-trap";
+import { TABBABLE_SELECTOR, wrappedTabIndex, wrapTarget, type RadioState } from "./focus-trap";
+
+describe("TABBABLE_SELECTOR", () => {
+  it("includes contenteditable hosts so Tab does not skip controls after an editor", () => {
+    expect(TABBABLE_SELECTOR).toContain("[contenteditable]:not([contenteditable='false'])");
+  });
+});
 
 describe("wrappedTabIndex", () => {
   it("wraps Tab from the last element to the first", () => {

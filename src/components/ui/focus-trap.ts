@@ -4,18 +4,20 @@
  * wraps it back to the first control instead (and Shift+Tab from the first to the last).
  */
 
-const tabbableSelector = [
+/** Matches what browsers put in the Tab sequence inside a dialog, including editing hosts. */
+export const TABBABLE_SELECTOR = [
   "a[href]",
   "button:not([disabled])",
   "input:not([disabled]):not([type='hidden'])",
   "select:not([disabled])",
   "textarea:not([disabled])",
+  "[contenteditable]:not([contenteditable='false'])",
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
 /** The elements inside `root` that Tab can reach, in document order. */
 export function tabbableIn(root: Element): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(tabbableSelector)).filter(
+  return Array.from(root.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR)).filter(
     (element) => element.tabIndex >= 0 && !element.closest("[inert]") && element.checkVisibility(),
   );
 }
