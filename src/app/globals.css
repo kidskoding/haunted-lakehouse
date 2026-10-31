@@ -82,6 +82,8 @@
 
 /*
  * Screens with room for copy to sit in an open sky above a scene: tablet width and a laptop's
- * height. Shorter screens stack the copy above the scene instead.
+ * height. Shorter screens stack the copy above the scene instead. So do wider ones: past 96/49
+ * (MIN_HEIGHT_SHARE * DESIGN_WIDTH / FRAME_HEIGHT in hollow-creek-art) the drawing is scaled
+ * by width, and its town grows up into the copy.
  */
-@custom-variant open-sky (@media (min-width: 48rem) and (min-height: 42.5rem));
+@custom-variant open-sky (@media (min-width: 48rem) and (min-height: 42.5rem) and (max-aspect-ratio: 96 / 49));

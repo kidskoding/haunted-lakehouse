@@ -11,7 +11,7 @@ import { HollowCreekScene } from "./hollow-creek-scene";
 export default function Home() {
   return (
     <main className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-night">
-      <div className="relative z-10 mx-auto w-full max-w-page px-6 pt-16 sm:px-10 md:pt-24">
+      <div className="relative z-10 mx-auto w-full max-w-page px-4 pt-16 md:px-8 md:pt-24">
         <h1 className="type-display-l text-parchment md:type-display-xl">{site.name}</h1>
         <p className="mt-4 max-w-copy type-heading text-parchment">{site.tagline}</p>
         <p className="mt-5 max-w-copy type-prose text-ash">
@@ -24,19 +24,22 @@ export default function Home() {
           </Link>
           <p className="type-ui text-ash">
             {/* The run screen needs a laptop; phones can still read the story and the Crypt. */}
-            <span className="md:hidden">Best played on a laptop.</span>
-            <span className="hidden md:inline">Plays in your browser.</span> No install, no account.
+            <span className="xl:hidden">Best played on a laptop.</span>
+            <span className="hidden xl:inline">Plays in your browser.</span> No install, no account.
           </p>
         </div>
       </div>
       {/*
        * On phones and short screens the scene follows the copy, its empty sky tucked up behind
-       * the button; where there is room, it fills the page behind the copy.
+       * the button; where there is room, it fills the page behind the copy. Stacked, the scene
+       * is never shorter than its width-fitted frame (1600 by 490), so the moon is never cropped
+       * and the town's lights stay below the copy.
        */}
-      <div className="relative -mt-40 min-h-120 flex-1 open-sky:absolute open-sky:inset-0 open-sky:-z-10 open-sky:mt-0">
+      <div className="relative -mt-40 min-h-[max(30rem,30.625vw)] flex-1 open-sky:absolute open-sky:inset-0 open-sky:-z-10 open-sky:mt-0">
         <div className="absolute inset-0">
           <HollowCreekScene />
         </div>
+        <div aria-hidden="true" className="absolute inset-0 bg-(image:--vignette-room)" />
       </div>
     </main>
   );

@@ -123,3 +123,41 @@ for (const path of ["/opengraph-image", "/twitter-image"]) {
     expect(body.length).toBeGreaterThan(20_000);
   });
 }
+
+// Wide, short screens scale the town by width, which once lifted its lights into the copy.
+for (const viewport of [
+  { width: 1920, height: 700 },
+  { width: 2560, height: 720 },
+  { width: 1600, height: 680 },
+]) {
+  test(`the town's lights stay clear of the copy at ${String(viewport.width)}x${String(viewport.height)}`, async ({
+    browser,
+  }) => {
+    // The still drawing is placed by the same math as the canvas, and its lights are elements.
+    const context = await browser.newContext({ javaScriptEnabled: false, viewport });
+    const page = await context.newPage();
+    await page.goto("/");
+
+    const overlaps = await page.evaluate(() => {
+      const copy = [...document.querySelectorAll("main h1, main p, main a")].flatMap((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return [...range.getClientRects()];
+      });
+      const lights = [...document.querySelectorAll('[data-scene-state] svg rect[opacity="1"]')].map(
+        (light) => light.getBoundingClientRect(),
+      );
+      return lights.filter((light) =>
+        copy.some(
+          (text) =>
+            light.left < text.right &&
+            text.left < light.right &&
+            light.top < text.bottom &&
+            text.top < light.bottom,
+        ),
+      ).length;
+    });
+    expect(overlaps).toBe(0);
+    await context.close();
+  });
+}
