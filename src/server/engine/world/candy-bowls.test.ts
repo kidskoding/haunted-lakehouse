@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { CANDY_CATALOG, candyCatalogRows } from "./candy";
-import { bowlReadingRows, bowlStockRows, generateCandyBowls } from "./candy-bowls";
+import {
+  bowlReadingRows,
+  bowlStockRows,
+  CURSE_BELL,
+  generateCandyBowls,
+  piecesRecordedBefore,
+} from "./candy-bowls";
 import { generateDoorScans } from "./door-scans";
 import { generateHouses } from "./houses";
 import { NIGHT_SECONDS, secondsAt } from "./night-clock";
@@ -60,9 +66,53 @@ describe("candy bowls", () => {
     expect(a.readings).not.toEqual(b.readings);
   });
 
-  it("have a house that gave out exactly 13 pieces in most nights", () => {
-    const cursed = allNights.filter((n) => [...piecesByHouse(n.handouts).values()].includes(13));
-    expect(cursed.length).toBeGreaterThanOrEqual(14);
+  it("have houses whose scales recorded exactly 13 pieces before the bell, two on one street", () => {
+    for (const { houses, bowls, handouts, readings } of allNights) {
+      const streetOf = new Map(houses.map((h) => [h.houseId, h.street]));
+      const cursed = bowls.filter(
+        (b) =>
+          piecesRecordedBefore(
+            handouts.filter((h) => h.houseId === b.houseId),
+            readings.filter((r) => r.deviceId === b.deviceId),
+            CURSE_BELL,
+          ) === 13,
+      );
+      const perStreet = Map.groupBy(cursed, (b) => streetOf.get(b.houseId));
+      expect(Math.max(...[...perStreet.values()].map((on) => on.length))).toBeGreaterThanOrEqual(2);
+      // One of them was topped up before the bell, so its weight went up as well as down.
+      const refilledEarly = cursed.some((b) => {
+        const before = readings.filter(
+          (r) => r.deviceId === b.deviceId && r.nightSecond < CURSE_BELL,
+        );
+        const last = before.at(-1)?.nightSecond ?? -1;
+        return b.refills.some((r) => r.nightSecond <= last);
+      });
+      expect(refilledEarly).toBe(true);
+    }
+  });
+
+  it("count a handout once a reading before the cutoff has weighed it", () => {
+    const handouts = [
+      { nightSecond: 10, pieces: 2 },
+      { nightSecond: 50, pieces: 3 },
+      { nightSecond: 90, pieces: 1 },
+    ].map((h) => ({
+      ...h,
+      houseId: "H",
+      kidId: "K",
+      scanDeviceId: "S",
+      scanSeq: 1,
+      candyType: "c",
+    }));
+    const readings = [
+      { nightSecond: 0 },
+      { nightSecond: 30 },
+      { nightSecond: 70 },
+      { nightSecond: 120 },
+    ];
+    expect(piecesRecordedBefore(handouts, readings, 100)).toBe(5);
+    expect(piecesRecordedBefore(handouts, readings, 70)).toBe(2);
+    expect(piecesRecordedBefore(handouts, readings, 0)).toBe(0);
   });
 
   it("show most refills as a jump in weight, though a rush at the door can hide one", () => {

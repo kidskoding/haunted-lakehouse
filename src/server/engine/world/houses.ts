@@ -1,4 +1,5 @@
 import "server-only";
+import type { Row } from "../puzzle";
 import { STREETS, townRng, weighted, type Street } from "./town";
 
 export interface House {
@@ -59,4 +60,14 @@ export function generateHouses(runSeed: string): House[] {
     }
   }
   return houses;
+}
+
+/** The `houses` feed: the town directory, every house on the route, dark or not. */
+export function houseRows(houses: readonly House[]): Row[] {
+  return houses.map((h) => ({
+    house_id: h.houseId,
+    street: h.street,
+    house_number: h.number,
+    household: h.household,
+  }));
 }
