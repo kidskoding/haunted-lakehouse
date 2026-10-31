@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validatePuzzleData, type Cell, type PuzzleData, type Row } from "../../puzzle";
+import { fogNarrative } from "../../curses/fog";
 import { generatePuzzle } from "../../registry";
 import { generateHouses } from "../../world/houses";
 import { generatePumpkinSensors } from "../../world/pumpkin-sensors";
@@ -93,6 +94,13 @@ function checkpointBatch(data: PuzzleData, id: string): number {
 }
 
 describe("the possessed feed", () => {
+  it("lets the Fog withhold only the vague spelling the Mayor quotes", () => {
+    const { narrative } = generatePuzzle(possessedFeed, "seed-0");
+    const fogged = fogNarrative(possessedFeed, narrative);
+    expect(fogged.withheld).toEqual(["example_vague"]);
+    expect(fogged.narrative).not.toHaveProperty("example_vague");
+  });
+
   it("produces data the puzzle validator accepts", () => {
     for (const { data } of allData) expect(validatePuzzleData(possessedFeed, data)).toEqual([]);
   });

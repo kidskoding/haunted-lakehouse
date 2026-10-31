@@ -142,5 +142,7 @@ export const possessedFeed: Puzzle = {
   prerequisites: [],
   retention: 3,
   goldTables: [GOLD_TABLE],
+  // The Fog hides the vague spelling the Mayor quotes, the one clue that some drops can't count.
+  symptoms: ["example_vague"],
   generate,
 };
