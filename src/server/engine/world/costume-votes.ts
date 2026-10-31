@@ -34,6 +34,7 @@ const VOTING_CLOSES = 4 * 3600;
 // A kid needs a little time out on the streets to have seen anyone's costume.
 const MIN_LOOK_AROUND = 60;
 const MAX_LOOK_AROUND = 75 * 60;
+// The share of kids out in time to vote who do vote; kids who arrive after the close can't.
 const VOTER_SHARE_MIN = 0.6;
 const VOTER_SHARE_MAX = 0.85;
 // Friends vote for friends: a groupmate's costume is the one a kid saw all night.
@@ -132,10 +133,23 @@ export function generateCostumeVotes(
   };
 
   const casts: Omit<CostumeVote, "ballotId" | "castAtLocal" | "utcOffset">[] = [];
-  for (const voter of present) {
-    if (rng.float() >= voterShare) continue;
-    let at = arrival(voter) + rng.int(MIN_LOOK_AROUND, MAX_LOOK_AROUND);
-    if (at >= VOTING_CLOSES) continue;
+  // Exactly the drawn share of the kids out in time to vote cast a ballot, picked by a
+  // partial shuffle in roster order, so late arrivals can't drag turnout below it.
+  const lastChance = (kid: TrickOrTreater) =>
+    Math.min(MAX_LOOK_AROUND, VOTING_CLOSES - arrival(kid));
+  const canVote = present.filter((kid) => lastChance(kid) > MIN_LOOK_AROUND);
+  const pool = [...canVote];
+  const voterCount = Math.round(voterShare * pool.length);
+  for (let i = 0; i < voterCount; i++) {
+    const j = rng.int(i, pool.length);
+    [pool[i], pool[j]] = [pool[j] as TrickOrTreater, pool[i] as TrickOrTreater];
+  }
+  const voters = new Set(pool.slice(0, voterCount).map((kid) => kid.kidId));
+
+  for (const voter of canVote) {
+    if (!voters.has(voter.kidId)) continue;
+    // The vote always lands before the close.
+    let at = arrival(voter) + rng.int(MIN_LOOK_AROUND, lastChance(voter));
     let entrant = choose(voter, at);
     if (entrant === undefined) continue;
     casts.push({ revision: 1, voterKidId: voter.kidId, entrantKidId: entrant, nightSecond: at });

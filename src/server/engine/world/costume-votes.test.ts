@@ -10,7 +10,8 @@ import { generateHouses } from "./houses";
 import { FALL_BACK_SECOND, NIGHT_SECONDS, secondsAt } from "./night-clock";
 import { generateTrickOrTreaters } from "./trick-or-treaters";
 
-const SEEDS = Array.from({ length: 20 }, (_, i) => `seed-${String(i)}`);
+// seed-20 has enough late arrivals that dropping them once cut turnout below 60%.
+const SEEDS = Array.from({ length: 21 }, (_, i) => `seed-${String(i)}`);
 
 function night(seed: string) {
   const houses = generateHouses(seed);
@@ -86,10 +87,12 @@ describe("costume votes", () => {
     }
     const ballots = Map.groupBy(votes, (v) => v.ballotId);
 
-    it("come from most, but not all, of the kids who were out", () => {
-      const share = ballots.size / firstScan.size;
-      expect(share).toBeGreaterThan(0.5);
-      expect(share).toBeLessThan(0.9);
+    it("come from most, but not all, of the kids out in time to vote", () => {
+      const canVote = [...firstScan.values()].filter((at) => at + 60 < 4 * 3600).length;
+      const share = ballots.size / canVote;
+      // The drawn share is 60–85%; a voter only drops out if nobody else was out yet.
+      expect(share).toBeGreaterThan(0.58);
+      expect(share).toBeLessThan(0.86);
     });
 
     it("fall within the night, in true-time order", () => {
