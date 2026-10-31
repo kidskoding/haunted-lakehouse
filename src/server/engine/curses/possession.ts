@@ -1,7 +1,8 @@
 import "server-only";
-import type { Batch, GenerateContext, Puzzle, PuzzleData, Row } from "../puzzle";
+import { applyDriftChange } from "../batches/drift";
+import type { Batch, GenerateContext, Puzzle, PuzzleData } from "../puzzle";
 
-/** What the vendor does to the possessed column. */
+/** What the vendor does to the possessed column: one of the scheduler's drift changes. */
 export type PossessionChange =
   | { readonly kind: "rename"; readonly to: string }
   /** The value becomes text with a unit: 412 becomes "412 g". Nulls stay null. */
@@ -67,20 +68,6 @@ export function drawPossession(
   return { ...option, fromBatch: rng.int(min, max + 1) };
 }
 
-function twist(row: Row, column: string, change: PossessionChange): Row {
-  if (!(column in row)) return row;
-  switch (change.kind) {
-    case "rename":
-      return Object.fromEntries(
-        Object.entries(row).map(([name, value]) => [name === column ? change.to : name, value]),
-      );
-    case "stringify": {
-      const value = row[column] ?? null;
-      return value === null ? row : { ...row, [column]: `${String(value)} ${change.unit}` };
-    }
-  }
-}
-
 function checkFeed(data: PuzzleData, { feed, column, change }: Possession): void {
   const rows = data.batches.flatMap((batch) => batch.feeds[feed] ?? []);
   if (!data.batches.some((batch) => feed in batch.feeds)) {
@@ -104,7 +91,10 @@ export function possess(data: PuzzleData, possession: Possession): PuzzleData {
     if (batch.index < fromBatch || !rows) return batch;
     return {
       ...batch,
-      feeds: { ...batch.feeds, [feed]: rows.map((row) => twist(row, column, change)) },
+      feeds: {
+        ...batch.feeds,
+        [feed]: rows.map((row) => applyDriftChange(row, { ...change, column })),
+      },
     };
   });
   return { ...data, batches };
