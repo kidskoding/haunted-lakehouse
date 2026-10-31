@@ -60,6 +60,19 @@ describe("porch lights", () => {
     expect(breaks.length).toBeGreaterThan(flicks.length);
   });
 
+  it("light some dark porches on dusk timers, switched off soon after, in every night", () => {
+    for (const n of allNights) {
+      const dark = new Set(n.houses.filter((h) => !h.givesCandy).map((h) => h.houseId));
+      const timers = n.lights.filter(
+        (l) =>
+          dark.has(l.houseId) &&
+          l.lit.some((s) => s.from < 10 * 60 && s.to - s.from >= 3 * 60 && s.to <= 40 * 60),
+      );
+      expect(timers.length).toBeGreaterThan(0);
+      expect(timers.length).toBeLessThan(dark.size);
+    }
+  });
+
   it("become feed rows with only the sensor's view of time", () => {
     const [event] = night("raven-pumpkin-13").events;
     if (!event) throw new Error("The night has no porch-light events.");

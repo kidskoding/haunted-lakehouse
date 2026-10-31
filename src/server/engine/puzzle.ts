@@ -43,6 +43,20 @@ export interface GenerateContext {
   readonly rng: (...labels: (string | number)[]) => Rng;
 }
 
+/**
+ * A bronze column the Curse of Possession may twist mid-night. Declare only columns whose
+ * new shape leaves the right answer unchanged: never a key, and never a column the puzzle
+ * already drifts on purpose. A column offers each rename and, with a unit, a stringify.
+ */
+export interface PossessableColumn {
+  readonly feed: string;
+  readonly column: string;
+  /** Names the vendor might switch the column to. Each must be new to the feed. */
+  readonly aliases?: readonly string[];
+  /** A unit the vendor might start writing into the value as text: 412 becomes "412 g". */
+  readonly unit?: string;
+}
+
 export interface Puzzle {
   /** Stable forever: it keys every seed's data. */
   readonly id: string;
@@ -54,6 +68,13 @@ export interface Puzzle {
   readonly retention: number;
   /** The gold tables the player must build, which checkpoints compare. */
   readonly goldTables: readonly string[];
+  /** Where the Curse of Possession may strike. Without any, the curse passes this hour by. */
+  readonly possessable?: readonly PossessableColumn[];
+  /**
+   * Narrative keys holding the symptom numbers, which the Curse of the Fog withholds.
+   * Without a declaration, the fog takes every numeric binding.
+   */
+  readonly symptoms?: readonly string[];
   generate(context: GenerateContext): PuzzleData;
 }
 
