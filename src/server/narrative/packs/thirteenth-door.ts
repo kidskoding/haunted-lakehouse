@@ -17,7 +17,7 @@ export const thirteenthDoor: NarrativePack = {
   },
   intro: [
     marisol(
-      "There's an old rule. A house that gives out exactly thirteen pieces before 7:00pm is cursed for the year. There's a list. The Mayor wants the street with the most cursed houses. Nothing counts pieces. Each bowl sits on a scale that reports the weight of what's left, honest to within a couple of grams. Every household bought one kind of candy from the Co-op, in the standard bag. When a bowl runs low, they tip in a whole new bag. Tipping in a bag is not giving. Please don't count it as giving. I have had this argument.",
+      "There's an old rule. A house that gives out exactly thirteen pieces before 7:00pm is cursed for the year. The Mayor wants the street with the most cursed houses. Nothing counts pieces. Each bowl sits on a scale that reports the weight of what's left, honest to within a couple of grams. The rule goes by the scales: what a bowl's scale had weighed by its last report before seven is what that house gave. Every household bought one kind of candy from the Co-op, in the standard bag. When a bowl runs low, they tip in a whole new bag. Tipping in a bag is not giving. I have had this argument.",
     ),
   ],
   cleared: [
