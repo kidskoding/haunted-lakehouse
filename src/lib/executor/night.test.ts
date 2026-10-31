@@ -229,13 +229,13 @@ describe("Run the night", () => {
   });
 
   it("counts the time a checkpoint spends reading gold towards the night's limit", async () => {
-    // Only gold reads query here, so the clock jumps exactly when a checkpoint hashes.
+    // A view's step only creates it, so the clock jumps exactly when a checkpoint reads gold.
     const native = await nativeConnection();
     let clock = 0;
     const connection: SqlConnection = {
       run: (sql) => native.run(sql),
       query: (sql) => {
-        clock += EXECUTION_TIME_LIMIT_MS + 1;
+        if (sql.includes('"gold"')) clock += EXECUTION_TIME_LIMIT_MS + 1;
         return native.query(sql);
       },
     };
