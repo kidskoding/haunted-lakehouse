@@ -1,4 +1,5 @@
 import "server-only";
+import type { TombstoneView } from "../../lib/run/tombstone";
 import type { Checkpoint } from "../engine/puzzle";
 import { rngFor } from "../engine/random";
 import type { CharacterId } from "../engine/run/types";
@@ -20,21 +21,13 @@ export interface Death {
   readonly slot: Slot;
   readonly act: Act;
   readonly puzzleId: string;
-  readonly failedCheckpoint: Checkpoint;
+  /** Only its label is engraved, so a shared stone can carry just that. */
+  readonly failedCheckpoint: Pick<Checkpoint, "label">;
   readonly daily: boolean;
   readonly progress: StoryProgress;
 }
 
-export interface Tombstone {
-  readonly handle: string;
-  readonly characterTitle: string;
-  readonly epitaph: string;
-  /** "went out at 7:15pm, Halloween 2026" */
-  readonly wentOut: string;
-  readonly seed: string;
-  /** A faint green 1891 under the year, for Act III deaths once the Hollow has a name. */
-  readonly hollowYear: boolean;
-}
+export type Tombstone = TombstoneView;
 
 /**
  * The epitaph for a death: Old Wren's own, then the Daily Haunt's, then one of the hour's two,
@@ -54,6 +47,7 @@ export function tombstone(death: Death): Tombstone {
     handle: death.handle ?? ANONYMOUS_HANDLE,
     characterTitle: PERSONAS[death.character].title,
     epitaph: epitaph(death),
+    hour: narrativePack(death.puzzleId).title,
     wentOut: `went out at ${formatClock(death.failedCheckpoint.label)}, Halloween 2026`,
     seed: death.seed,
     hollowYear: death.act === 3 && death.progress.endingsSeen.includes("act-2"),
