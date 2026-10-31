@@ -108,7 +108,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [ ] **5.4.6 Endings.** Ending scenes and an act-unlock reveal.
 
 ### 5.5 The Crypt
-- [ ] **5.5.1 Hub.** Navigation to the Codex, Graveyard, Ledger, Characters, and Daily Haunt.
+- [x] **5.5.1 Hub.** Navigation to the Codex, Graveyard, Ledger, Characters, and Daily Haunt.
 - [ ] **5.5.2 Codex.** The player's earned autopsies.
 - [ ] **5.5.3 Graveyard.** Recent tombstones across players, filterable, each replayable by seed.
 - [ ] **5.5.4 Ledger.** Fragments collected and the torn pages filling in.
