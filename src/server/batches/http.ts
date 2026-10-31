@@ -1,9 +1,10 @@
 import "server-only";
+import type { NightEvent } from "../../lib/executor/types";
 import { db } from "../db/client";
 import { currentPlayerId } from "../session/session";
 import { getBatch, listPreviewBatches, startNightAttempt } from "./access";
 import { judgeNightAttempt } from "./judge";
-import type { SubmittedHashes } from "./validate";
+import { parseNightEvents } from "./validate";
 
 function sessionSecret(): string {
   const secret = process.env.SESSION_SECRET;
@@ -25,32 +26,21 @@ const ERROR_STATUS: Record<string, number> = {
   "unknown-batch": 404,
   "invalid-attempt": 403,
   "invalid-body": 400,
+  "invalid-night": 422,
 };
 
 function errorResponse(error: string): Response {
   return Response.json({ error }, { status: ERROR_STATUS[error] ?? 400 });
 }
 
-function isGoldHashes(value: unknown): value is Record<string, string> {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
-  return Object.values(value).every((hash) => typeof hash === "string");
-}
-
 function parseJudgeBody(
   body: unknown,
-): { attemptToken: string; checkpoints: SubmittedHashes } | null {
+): { attemptToken: string; events: readonly NightEvent[] } | null {
   if (body === null || typeof body !== "object" || Array.isArray(body)) return null;
-  const { attemptToken, checkpoints } = body as Record<string, unknown>;
+  const { attemptToken, events } = body as Record<string, unknown>;
   if (typeof attemptToken !== "string" || attemptToken.length === 0) return null;
-  if (checkpoints === null || typeof checkpoints !== "object" || Array.isArray(checkpoints)) {
-    return null;
-  }
-  const parsed: Record<string, Record<string, string>> = {};
-  for (const [checkpointId, tables] of Object.entries(checkpoints)) {
-    if (!isGoldHashes(tables)) return null;
-    parsed[checkpointId] = tables;
-  }
-  return { attemptToken, checkpoints: parsed };
+  const parsed = parseNightEvents(events);
+  return parsed ? { attemptToken, events: parsed } : null;
 }
 
 /** GET the visible batches for the caller's open hour on this run. */
@@ -106,8 +96,9 @@ export async function handleStartNightAttempt(runId: string): Promise<Response> 
 }
 
 /**
- * POST the gold hashes from a night attempt. On a miss, returns only the first failing
- * checkpoint (never expected rows or which tables differed).
+ * POST the events of a night attempt. On a miss, returns only the first checkpoint not
+ * passed, the revealed batch, and what is now visible (never expected rows or which tables
+ * differed).
  */
 export async function handleJudgeNight(runId: string, request: Request): Promise<Response> {
   const playerId = await currentPlayerId();
@@ -126,7 +117,7 @@ export async function handleJudgeNight(runId: string, request: Request): Promise
     runId,
     playerId,
     attemptToken: parsed.attemptToken,
-    checkpoints: parsed.checkpoints,
+    events: parsed.events,
     now: nowSeconds(),
     secret: sessionSecret(),
   });
@@ -145,6 +136,7 @@ export async function handleJudgeNight(runId: string, request: Request): Promise
     survived: false,
     checkpointId: result.checkpointId,
     revealedBatch: result.revealedBatch,
+    visible: result.visible,
     candles: result.candles,
     status: result.status,
     phase: result.phase,

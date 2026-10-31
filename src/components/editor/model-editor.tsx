@@ -18,7 +18,7 @@ const SqlView = dynamic(() => import("./sql-view").then((module) => module.SqlVi
   loading: () => (
     <div
       role="status"
-      className="flex h-full min-h-64 items-center justify-center bg-inset text-ash type-ui"
+      className="flex h-full min-h-24 items-center justify-center bg-inset text-ash type-ui"
     >
       Warming the editor…
     </div>
@@ -181,7 +181,7 @@ export function ModelEditor({
           {...(onPreview ? { onPreview } : {})}
           {...(onRunNight ? { onRunNight } : {})}
           onFormat={formatActive}
-          className="min-h-64 flex-1 overflow-hidden"
+          className="min-h-24 flex-1 overflow-hidden"
         />
       </div>
     </Panel>

@@ -58,17 +58,19 @@ export interface SoundEnvironment {
 }
 
 /**
+ * - `loading`: saved settings are not read yet (the server render, and the client until the
+ *   provider starts). The controls stay inert, since a change made now would be overwritten.
  * - `off`: muted. The default, and no audio context exists until the player asks for sound.
  * - `locked`: unmuted, but the browser has seen no gesture yet, so nothing may play.
  * - `on`: unmuted and unlocked; the night is audible whenever the tab is visible.
  */
-export type SoundStatus = "off" | "locked" | "on";
+export type SoundStatus = "loading" | "off" | "locked" | "on";
 
 export interface SoundSnapshot extends SoundSettings {
   readonly status: SoundStatus;
 }
 
-export const INITIAL_SNAPSHOT: SoundSnapshot = { ...DEFAULT_SETTINGS, status: "off" };
+export const INITIAL_SNAPSHOT: SoundSnapshot = { ...DEFAULT_SETTINGS, status: "loading" };
 
 /** Ambient sits well under the stings: it is the room, not the event. */
 export const AMBIENT_LEVEL = 0.35;
@@ -111,6 +113,7 @@ function toBuffer(context: AudioContextLike, samples: Float32Array<ArrayBuffer>)
 export function createSoundManager(env: SoundEnvironment): SoundManager {
   let settings: SoundSettings = DEFAULT_SETTINGS;
   let snapshot: SoundSnapshot = INITIAL_SNAPSHOT;
+  let loaded = false;
   let unlocked = false;
   let visible = true;
   let graph: Graph | null = null;
@@ -119,7 +122,13 @@ export function createSoundManager(env: SoundEnvironment): SoundManager {
   const listeners = new Set<() => void>();
 
   function publish() {
-    const status: SoundStatus = settings.muted ? "off" : unlocked ? "on" : "locked";
+    const status: SoundStatus = !loaded
+      ? "loading"
+      : settings.muted
+        ? "off"
+        : unlocked
+          ? "on"
+          : "locked";
     if (
       status === snapshot.status &&
       settings.muted === snapshot.muted &&
@@ -206,6 +215,7 @@ export function createSoundManager(env: SoundEnvironment): SoundManager {
     },
     start() {
       settings = loadSettings(env.storage());
+      loaded = true;
       const visibility = env.watchVisibility((next) => {
         visible = next;
         apply(FADE_IN_SECONDS);

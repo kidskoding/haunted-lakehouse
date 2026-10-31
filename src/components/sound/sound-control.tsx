@@ -34,6 +34,8 @@ export function SoundControl({ className }: Readonly<{ className?: string }>) {
   const { status, muted, volume, setMuted, setVolume } = useSound();
   const sliderId = useId();
   const percent = Math.round(volume * 100);
+  // Until saved settings load, a change would be lost, so the controls wait for them.
+  const loading = status === "loading";
 
   return (
     <div
@@ -46,6 +48,7 @@ export function SoundControl({ className }: Readonly<{ className?: string }>) {
         type="button"
         variant="ghost"
         size="md"
+        disabled={loading}
         aria-pressed={!muted}
         onClick={() => {
           setMuted(!muted);
@@ -67,11 +70,12 @@ export function SoundControl({ className }: Readonly<{ className?: string }>) {
         max={100}
         step={5}
         value={percent}
+        disabled={loading}
         aria-valuetext={`${String(percent)}%`}
         onChange={(event) => {
           setVolume(event.currentTarget.valueAsNumber / 100);
         }}
-        className="h-8 w-28 cursor-pointer accent-flame"
+        className="h-8 w-28 cursor-pointer accent-flame disabled:cursor-not-allowed"
       />
       <output
         htmlFor={sliderId}

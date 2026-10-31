@@ -87,3 +87,22 @@
  * by width, and its town grows up into the copy.
  */
 @custom-variant open-sky (@media (min-width: 48rem) and (min-height: 42.5rem) and (max-aspect-ratio: 96 / 49));
+
+/*
+ * A story turn arriving (art direction §7.2, `slow`): it rises a little into place. Calm motion
+ * drops the travel and the fade, so the text is simply there (§7.3).
+ */
+@keyframes story-reveal {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+
+@utility story-reveal {
+  animation: story-reveal var(--transition-duration-slow) var(--ease-out) both;
+
+  @variant motion-calm {
+    animation: none;
+  }
+}

@@ -1,9 +1,5 @@
 import "server-only";
-import {
-  assertVisibleBatchCount,
-  isBatchVisible,
-  visibleBatches,
-} from "../engine/batches/visibility";
+import { visibleIndices } from "../engine/batches/visibility";
 import type { Batch, Puzzle, PuzzleData } from "../engine/puzzle";
 
 export type ServeDenial = "unknown-batch" | "hidden";
@@ -21,26 +17,33 @@ function publicBatch(batch: Batch): Batch {
 }
 
 /**
- * The batches a preview may load for this puzzle. Never includes expected gold state.
+ * The batches a preview may load for this puzzle: the visible ones plus every batch a failed
+ * night has `revealed`. Never includes expected gold state.
  */
-export function previewBatches(puzzle: Puzzle, data: PuzzleData): readonly Batch[] {
-  return visibleBatches(data, puzzle.visibleBatchCount).map(publicBatch);
+export function previewBatches(
+  puzzle: Puzzle,
+  data: PuzzleData,
+  revealed: readonly number[],
+): readonly Batch[] {
+  const visible = new Set(visibleIndices(data, puzzle.visibleBatchCount, revealed));
+  return data.batches.filter((batch) => visible.has(batch.index)).map(publicBatch);
 }
 
 /**
- * Serves one batch. Visible batches are always allowed; a hidden batch requires an active
- * run-the-night attempt for this hour. Expected gold state is never included.
+ * Serves one batch. Visible and `revealed` batches are always allowed; any other requires an
+ * active run-the-night attempt for this hour. Expected gold state is never included.
  */
 export function serveBatch(
   puzzle: Puzzle,
   data: PuzzleData,
+  revealed: readonly number[],
   index: number,
   nightAttempt: boolean,
 ): ServeBatchResult {
-  assertVisibleBatchCount(data, puzzle.visibleBatchCount);
+  const visible = visibleIndices(data, puzzle.visibleBatchCount, revealed);
   const found = Number.isInteger(index) ? data.batches[index] : undefined;
   if (!found) return { ok: false, reason: "unknown-batch" };
-  if (!nightAttempt && !isBatchVisible(index, puzzle.visibleBatchCount)) {
+  if (!nightAttempt && !visible.includes(index)) {
     return { ok: false, reason: "hidden" };
   }
   return { ok: true, batch: publicBatch(found) };
