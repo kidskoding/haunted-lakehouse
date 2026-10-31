@@ -5,6 +5,7 @@ import {
   previewBlockedReason,
   relicBlockedReason,
   runBlockedReason,
+  selectedOption,
   targetPicker,
   type RelicBarHour,
   type RelicKind,
@@ -69,6 +70,32 @@ describe("targetPicker", () => {
       const values = targetPicker(kind, hour)?.options.map((o) => o.value) ?? [];
       expect(new Set(values).size).toBe(values.length);
     }
+  });
+});
+
+describe("selectedOption", () => {
+  const picker = (feeds: readonly string[]) => {
+    const found = targetPicker("wrens-lantern", { ...hour, feeds });
+    if (!found) throw new Error("the lantern always asks for a feed");
+    return found;
+  };
+
+  it("keeps the player's choice while the hour still offers it", () => {
+    expect(selectedOption(picker(hour.feeds), "bronze.sensors")?.target).toEqual({
+      kind: "feed",
+      feed: "bronze.sensors",
+    });
+  });
+
+  it("falls back to the first option still offered when the choice is gone", () => {
+    expect(selectedOption(picker(["bronze.candy"]), "bronze.sensors")?.target).toEqual({
+      kind: "feed",
+      feed: "bronze.candy",
+    });
+  });
+
+  it("selects nothing once the hour offers nothing to point at", () => {
+    expect(selectedOption(picker([]), "bronze.sensors")).toBeUndefined();
   });
 });
 

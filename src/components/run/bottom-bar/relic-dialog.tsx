@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import {
+  selectedOption,
   targetPicker,
   type RelicBarHour,
   type RelicKind,
@@ -36,14 +37,14 @@ export interface RelicDialogProps {
 
 /**
  * Asks before a relic is spent. Relics that reveal something ask what to point them at, with
- * the first option chosen so the confirm always has a valid target; the Black Cat and the
- * Spare Candle ask only for a yes.
+ * the first option chosen, and the confirm stays off while the hour offers nothing to point at;
+ * the Black Cat and the Spare Candle ask only for a yes.
  */
 export function RelicDialog({ relic, hour, onCancel, onConfirm }: RelicDialogProps) {
   const picker = targetPicker(relic.kind, hour);
   const legendId = useId();
-  const [chosen, setChosen] = useState(picker?.options[0]?.value ?? null);
-  const option = picker?.options.find((candidate) => candidate.value === chosen);
+  const [chosen, setChosen] = useState<string | null>(null);
+  const option = picker ? selectedOption(picker, chosen) : undefined;
 
   return (
     <Dialog
@@ -87,7 +88,7 @@ export function RelicDialog({ relic, hour, onCancel, onConfirm }: RelicDialogPro
                   type="radio"
                   name={legendId}
                   value={candidate.value}
-                  checked={candidate.value === chosen}
+                  checked={candidate.value === option?.value}
                   onChange={() => {
                     setChosen(candidate.value);
                   }}
@@ -110,6 +111,7 @@ export function RelicDialog({ relic, hour, onCancel, onConfirm }: RelicDialogPro
         <Button
           variant="secondary"
           size="lg"
+          disabled={picker !== null && option === undefined}
           onClick={() => {
             onConfirm(option?.target ?? null);
           }}

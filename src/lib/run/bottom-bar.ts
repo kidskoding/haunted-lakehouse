@@ -107,6 +107,18 @@ export function targetPicker(kind: RelicKind, hour: RelicBarHour): TargetPicker 
   }
 }
 
+/**
+ * The option a picker has selected, given the value the player last chose. The hour can change
+ * while the picker is open, so a choice that is no longer offered falls back to the first option
+ * still on offer; `undefined` means there is nothing left to point at.
+ */
+export function selectedOption(
+  picker: TargetPicker,
+  chosen: string | null,
+): TargetOption | undefined {
+  return picker.options.find((option) => option.value === chosen) ?? picker.options[0];
+}
+
 const NOTHING_TO_POINT_AT: Readonly<
   Record<"wrens-lantern" | "ravens-feather" | "hourglass", string>
 > = {
