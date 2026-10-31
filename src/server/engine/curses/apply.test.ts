@@ -4,7 +4,7 @@ import { CURSES } from "../run/curses";
 import { RunEventError } from "../run/errors";
 import type { CurseId, RunState } from "../run/types";
 import { fakePuzzle } from "../testing/fake-puzzle";
-import { machine, open, reach, settle, start } from "../testing/night-run";
+import { machine, open, reach, settle, start, used } from "../testing/night-run";
 import { generateHour } from "./apply";
 import { effectiveRetention, relicsUsable, SHORT_MEMORY_RETENTION } from "./limits";
 
@@ -45,7 +45,7 @@ describe("the Curse of Short Memory", () => {
 /** Whether the reducer lets the player spend an Hourglass right now. */
 function acceptsRelic(state: RunState): boolean {
   try {
-    machine.reduce(state, { kind: "relic_used", relic: "hourglass" });
+    machine.reduce(state, used("hourglass"));
     return true;
   } catch (error) {
     if (error instanceof RunEventError) return false;

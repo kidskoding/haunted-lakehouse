@@ -217,7 +217,8 @@ function applyEvent(registry: PuzzleRegistry, state: RunState, event: RunEvent):
 
     case "relic_used": {
       expectPhase(state, "in-hour", event.kind);
-      if (event.relic === "black-cat") {
+      // Stored events are parsed JSON, so a relic the event type rules out can still arrive.
+      if ((event.relic as RelicId) === "black-cat") {
         throw new RunEventError("relic-needs-skip", "The Black Cat is used by skipping the hour.");
       }
       expectUsable(state, event.relic);

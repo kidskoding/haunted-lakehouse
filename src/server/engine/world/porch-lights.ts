@@ -57,6 +57,9 @@ const LULL = 45 * MINUTE;
 const BREAK_CHANCE = 0.25;
 // A dark house's light still gets flicked on now and then: someone taking out the trash.
 const FLICK_CHANCE = 0.2;
+// Some porch lights are on dusk timers. At a dark house the timer lights the porch anyway,
+// until someone remembers what night it is and switches it off.
+const TIMER_CHANCE = 0.35;
 // A minority of cheap battery sensors die partway through the night.
 const SILENT_CHANCE = 0.1;
 
@@ -98,10 +101,17 @@ function givingSpans(rng: Rng, visits: readonly number[]): LitSpan[] {
   return spans;
 }
 
-/** A dark house usually stays dark; sometimes the light comes on for a few minutes. */
+/**
+ * A dark house usually stays dark. A dusk timer may light it for a while at the start of the
+ * night, and now and then someone flicks the light on for a few minutes.
+ */
 function darkSpans(rng: Rng): LitSpan[] {
-  if (rng.float() >= FLICK_CHANCE) return [];
   const spans: LitSpan[] = [];
+  if (rng.float() < TIMER_CHANCE) {
+    const from = rng.int(0, 10 * MINUTE);
+    spans.push({ from, to: from + rng.int(3 * MINUTE, 30 * MINUTE) });
+  }
+  if (rng.float() >= FLICK_CHANCE) return spans;
   const flicks = rng.int(1, 3);
   for (let i = 0; i < flicks; i++) {
     const from = rng.int(0, NIGHT_SECONDS - 20 * MINUTE);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { EngineProvider } from "@/lib/engine/react";
 import { site } from "@/lib/site";
+import { fontVariables } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,8 +12,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
-      <body className="min-h-dvh bg-neutral-950 text-neutral-100 antialiased">
+    <html lang="en" className={fontVariables}>
+      <body className="type-ui min-h-dvh antialiased">
         <EngineProvider>{children}</EngineProvider>
       </body>
     </html>
