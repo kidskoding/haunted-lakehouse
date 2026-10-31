@@ -138,6 +138,7 @@ export async function handleJudgeNight(runId: string, request: Request): Promise
       candles: result.candles,
       status: result.status,
       phase: result.phase,
+      unlocks: result.unlocks,
     });
   }
   return Response.json({
@@ -147,5 +148,6 @@ export async function handleJudgeNight(runId: string, request: Request): Promise
     candles: result.candles,
     status: result.status,
     phase: result.phase,
+    unlocks: result.unlocks,
   });
 }

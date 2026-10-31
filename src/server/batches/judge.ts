@@ -3,6 +3,8 @@ import type { RunEvent, RunState } from "../engine/run/types";
 import { appendRunEvent } from "../runs/append";
 import type { RunDatabase } from "../runs/load";
 import { loadOwnedRunWith, runMachine } from "../runs/load";
+import { applyUnlocksAfterReduce } from "../unlocks/apply";
+import type { UnlockAward } from "../unlocks/catalog";
 import { verifyNightAttempt } from "./attempt";
 import { expectedHashes } from "./expected";
 import { openHourData } from "./hour";
@@ -17,6 +19,7 @@ export type JudgeResult =
       readonly candles: number;
       readonly status: RunState["status"];
       readonly phase: RunState["phase"];
+      readonly unlocks: readonly UnlockAward[];
     }
   | {
       readonly ok: true;
@@ -26,6 +29,7 @@ export type JudgeResult =
       readonly candles: number;
       readonly status: RunState["status"];
       readonly phase: RunState["phase"];
+      readonly unlocks: readonly UnlockAward[];
     }
   | { readonly ok: false; readonly error: JudgeError };
 
@@ -70,6 +74,9 @@ export async function judgeNightAttempt(
 
   const next = runMachine.reduce(owned.state, event);
   await appendRunEvent(database, input.runId, event, next);
+  const unlocks = verdict.survived
+    ? await applyUnlocksAfterReduce(database, input.playerId, owned.state, next)
+    : [];
 
   if (verdict.survived) {
     return {
@@ -78,6 +85,7 @@ export async function judgeNightAttempt(
       candles: next.candles,
       status: next.status,
       phase: next.phase,
+      unlocks,
     };
   }
   return {
@@ -88,5 +96,6 @@ export async function judgeNightAttempt(
     candles: next.candles,
     status: next.status,
     phase: next.phase,
+    unlocks,
   };
 }

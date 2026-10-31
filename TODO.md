@@ -59,7 +59,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **2.4.2 Checkpoint validation API.** The client submits gold hashes per checkpoint; the server compares, records the attempt, and updates candles. Returns only the first failing checkpoint.
 - [x] **2.4.3 Relics v1.** Wren's Lantern, Raven's Feather, Hourglass, Black Cat, and Spare Candle, implemented as engine effects with tests.
 - [x] **2.4.4 Curses v1.** Possession, Fog, Short Memory, and Darkness, implemented as engine effects with tests.
-- [ ] **2.4.5 Unlocks.** Act gating, characters, endings, and ledger fragments, persisted per player.
+- [x] **2.4.5 Unlocks.** Act gating, characters, endings, and ledger fragments, persisted per player.
 
 ---
 

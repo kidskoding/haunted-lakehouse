@@ -139,6 +139,7 @@ describe("judgeNightAttempt", () => {
       candles: 3,
       status: "playing",
       phase: "in-hour",
+      unlocks: [],
     });
 
     const [runRow] = await database.select().from(runs).where(eq(runs.id, run.id));
