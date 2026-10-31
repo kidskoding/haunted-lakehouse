@@ -108,6 +108,21 @@ function ensureKind(rng: Rng, spellings: Spellings, drops: readonly Drop[], kind
 }
 
 /**
+ * Makes sure the retype's own batch holds a count a strict cast misses, by respelling one of
+ * its plain-digit drops, so a cast breaks at the first check after the text arrives.
+ */
+function ensureTricky(rng: Rng, spellings: Spellings, drops: readonly Drop[]) {
+  if (drops.some((drop) => isTrickyCount(spellings.get(drop.dropId)))) return;
+  const digits = drops.filter((drop) => spellings.get(drop.dropId)?.kind === "digits");
+  if (digits.length === 0) return;
+  const drop = rng.pick(digits);
+  const kind = rng.pick(
+    (["unit", "word", "dozen"] as const).filter((k) => canSpell(k, drop.quantity)),
+  );
+  spellings.set(drop.dropId, { kind, text: spell(rng, kind, drop.quantity) });
+}
+
+/**
  * Gives one hidden drop a readable spelling the visible batches never showed, so mapping the
  * strings seen so far, rather than reading them by the story's rules, fails the last check.
  */
@@ -149,7 +164,8 @@ function ensureUnseen(rng: Rng, spellings: Spellings, plan: SpellingPlan) {
 /**
  * The text each drop's quantity arrives as from the retype on, keyed by drop id. Mostly a
  * seeded mix by the weights above, then nudged so the possession is visible before the seven
- * o'clock check and the hidden batches still hold surprises.
+ * o'clock check, a strict cast fails in the retype's own batch, and the hidden batches still
+ * hold surprises.
  */
 export function assignSpellings(plan: SpellingPlan, rng: (...labels: string[]) => Rng): Spellings {
   const draw = rng("spellings");
@@ -168,6 +184,9 @@ export function assignSpellings(plan: SpellingPlan, rng: (...labels: string[]) =
   for (const kind of ["unit", "word", "dozen", "vague"] as const) {
     ensureKind(fix, spellings, early, kind);
   }
+  const retyped = plan.placed.filter((p) => p.batch === plan.from).map((p) => p.drop);
+  // Its own stream, so the guarantees drawn above and below keep their draws.
+  ensureTricky(rng("spellings", "retype"), spellings, retyped);
   const hidden = plan.placed.filter((p) => p.batch >= plan.hiddenFrom).map((p) => p.drop);
   ensureKind(fix, spellings, hidden, "vague");
   ensureUnseen(fix, spellings, plan);
