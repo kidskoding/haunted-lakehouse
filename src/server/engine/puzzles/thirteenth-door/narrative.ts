@@ -34,14 +34,11 @@ export function narrativeBindings(
     .filter((h) => cursed.includes(h.houseId) && h.street === streets[0])
     .reduce<House | undefined>((low, h) => (low && low.number <= h.number ? low : h), undefined);
   return {
-    street_count: new Set(night.houses.map((h) => h.street)).size,
     bowl_count: bowls.length,
-    candy_type_count: new Set(bowls.map((b) => b.candyType)).size,
     bags_sold: bagsSold,
     scans_before_bell: night.doorScans.filter((s) => s.nightSecond < CURSE_BELL).length,
     cursed_count: cursed.length,
     cursed_street: listOf(streets),
-    cursed_street_count: streets.length,
     cursed_on_street: answer[0]?.cursed_houses ?? 0,
     cursed_household: first?.household ?? "",
   };

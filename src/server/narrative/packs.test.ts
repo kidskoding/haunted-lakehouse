@@ -50,6 +50,8 @@ function expectPuzzleRenders(puzzle: Puzzle, pack: NarrativePack): void {
       expect(text).not.toMatch(UNFILLED);
     }
     const withheld = packSymptoms(pack);
+    // A symptom the story marks but the puzzle doesn't declare would show through the fog.
+    if (puzzle.symptoms) expect(withheld).toEqual([...puzzle.symptoms].sort());
     const fogged = Object.fromEntries(
       Object.entries(bindings).filter(([key]) => !withheld.includes(key)),
     );
@@ -217,9 +219,13 @@ describe("the tutorial", () => {
 });
 
 describe("every registered puzzle", () => {
-  it("has a story that renders with no unfilled placeholders across 20 seeds", () => {
-    for (const puzzle of ALL_PUZZLES) expectPuzzleRenders(puzzle, narrativePack(puzzle.id));
-  });
+  // One test per puzzle, so each hour's 20 generated nights get their own time budget.
+  it.each(ALL_PUZZLES.map((puzzle) => [puzzle.id, puzzle] as const))(
+    "%s has a story that renders with no unfilled placeholders across 20 seeds",
+    (_, puzzle) => {
+      expectPuzzleRenders(puzzle, narrativePack(puzzle.id));
+    },
+  );
 
   it("binds its act's ending from its own data, if it closes Act I or II", () => {
     for (const puzzle of ALL_PUZZLES) {

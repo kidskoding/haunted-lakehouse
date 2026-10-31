@@ -242,6 +242,11 @@ describe("the thirteenth door", () => {
       expect(narrative.cursed_household).toBe(lowest?.household);
       expect(narrative.cursed_count).toBeGreaterThanOrEqual(Number(narrative.cursed_on_street));
       expect(narrative.bags_sold).toBeGreaterThanOrEqual(Number(narrative.bowl_count));
+      expect(narrative.bowl_count).toBe(delivered(data, "bowl_stock", 0).length);
+      const knocks = delivered(data, "door_scans", BELL_BATCH);
+      expect(narrative.scans_before_bell).toBe(
+        knocks.filter((s) => text(s, "scanned_at_local") < BELL_LOCAL).length,
+      );
     });
 
     it("lets the Curse of Possession twist the scale's weight column", () => {

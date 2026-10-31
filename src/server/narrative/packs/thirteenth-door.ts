@@ -10,6 +10,9 @@ export const thirteenthDoor: NarrativePack = {
   status: "launch",
   owner: "marisol",
   bindings: {
+    bowl_count: "count",
+    bags_sold: "count",
+    scans_before_bell: "count",
     cursed_count: "count",
     cursed_street: "name",
     cursed_on_street: "count",
@@ -17,12 +20,16 @@ export const thirteenthDoor: NarrativePack = {
   },
   intro: [
     marisol(
-      "There's an old rule. A house that gives out exactly thirteen pieces before 7:00pm is cursed for the year. The Mayor wants the street with the most cursed houses. Nothing counts pieces. Each bowl sits on a scale that reports the weight of what's left, honest to within a couple of grams. The rule goes by the scales: what a bowl's scale had weighed by its last report before seven is what that house gave. Every household bought one kind of candy from the Co-op, in the standard bag. When a bowl runs low, they tip in a whole new bag. Tipping in a bag is not giving. I have had this argument.",
+      "There's an old rule, and a list. A house that gives out exactly thirteen pieces before 7:00pm is cursed for the year. The Mayor wants the street with the most cursed houses. Each bowl sits on a scale that weighs what's left, honest to within a couple of grams. The rule goes by the scales: what a bowl's scale had weighed by its last report before seven is what that house gave. Every household bought one kind of candy from the Co-op, in the standard bag. When a bowl looks low, they tip in a whole new bag. Tipping in a bag is not giving. I have had this argument.",
+    ),
+    marisol(
+      "The scanners logged {*scans_before_bell|number} knocks before seven. A knock is not a piece. A child takes one, two, or three.",
+      "The scanners logged every knock before seven. A knock is not a piece. A child takes one, two, or three.",
     ),
   ],
   cleared: [
     marisol(
-      "{cursed_count|plural:cursed house,cursed houses}, and {cursed_street} has {cursed_on_street} of them. I'll tell the {cursed_household} family gently.",
+      "As of the bell: {cursed_count|words:cursed house,cursed houses}. The most on any one street is {cursed_on_street|word}: {cursed_street}. I'll tell the {cursed_household} family gently. I'll tell the Mayor quickly. He prefers it.",
     ),
     wrenCleared,
   ],
@@ -39,18 +46,18 @@ export const thirteenthDoor: NarrativePack = {
     ),
   ],
   autopsy: {
-    title: "Counting from a gauge",
-    town: "Nothing in Hollow Creek counted candy. Each scale reported what was left in its bowl, give or take a couple of grams, and every house stocked one kind of candy. Pieces given were the drops between one reading and the next, divided by that candy's weight and rounded past the noise. Rises were refills and counted for nothing. {cursed_count|plural:house,houses} came to exactly thirteen.",
+    title: "A gauge is not a counter",
+    town: "Nothing in Hollow Creek counted candy. The town's {bowl_count|plural:scale,scales} weighed what was left in each bowl, give or take two grams. Households bought {bags_sold|number} bags and tipped some in before the bell, so weights rose as well as fell. By the last reading before 7:00pm, {cursed_count|plural:house,houses} had given exactly thirteen.",
     tempting:
-      "Count door scans, because a knock looks like a gift. That undercounts from the first visit, because children take more than one piece. Or subtract the last reading from the first and divide. That holds until the first refill, when a whole bag tipped in cancels out the pieces that emptied the bowl.",
-    idea: "A **gauge** reports a level; a **counter** reports how much has happened. To get a flow from a gauge, order each sensor's readings by time and take the **delta** between neighbours, for example with `lag()`. Then classify each delta: a drop is consumption, a rise is a replenishment, and a change inside the sensor's tolerance is noise. Convert units last. Rounding to whole pieces only works because one piece outweighs the noise.",
+      "Divide each bowl's first reading minus its last before the bell by the candy's weight. It is exactly right for every bowl nobody topped up, so it looks finished. It breaks on a bowl refilled before the bell, where the bag cancels the pieces that emptied it, and tonight at least one cursed house had done that. Door scans count knocks, and one knock can take three pieces.",
+    idea: "A **gauge** reports a level; a **counter** reports how much has happened. To get a flow from a gauge, take the **delta** between each sensor's neighbouring readings in its own sequence (`lag()`), rounded to whole pieces, since one piece outweighs the noise in two readings. A fall of *n* is *n* given. A rise is a **refill** in whole bags, so a rise of *r* pieces means ⌈*r* / bag⌉ × bag − *r* also went out. Cut by **event time**, the reading's own stamp, never arrival.",
     production:
-      "Tank levels, storage quotas, inventory snapshots, and account balances all have this shape. Common failures are summing levels instead of differences, netting a top-up against usage, and reading a counter that reset after a restart as a huge negative flow. Teams keep the derivation in one tested model, flag deltas outside physical bounds, and keep the raw readings so the rule can be rerun when it changes.",
+      "Tank levels, battery charge, and stock between deliveries all have this shape. Its mirror is a counter that restarts at zero, which Prometheus's `rate()` treats as a reset rather than a huge negative flow. Teams keep unit sizes, like case packs, as reference data, flag deltas outside physical bounds, and keep the raw readings so a derived measure can be rebuilt when its definition changes.",
     search: [
       "gauge vs counter metrics",
-      "lag window function",
       "counter resets",
-      "sensor tolerance",
+      "lag window function",
+      "event time vs processing time",
     ],
   },
   epitaphs: ["Mistook a refill for generosity.", "Counted knocks, not candy."],
