@@ -112,7 +112,12 @@ export function Tooltip({ content, children, side = "top", defaultOpen = false }
         // Keyboard focus only: a mouse click focuses a button too, and hover already covers it.
         if (event.target.matches(":focus-visible")) showNow();
       }}
-      onBlur={hideNow}
+      onBlur={() => {
+        // Hover still counts: Tab can leave the trigger while the pointer stays on it, and
+        // the tooltip must remain until the pointer leaves (WCAG 1.4.13).
+        if (anchorRef.current?.matches(":hover")) return;
+        hideNow();
+      }}
     >
       {cloneElement(children, { "aria-describedby": describedBy })}
       <span

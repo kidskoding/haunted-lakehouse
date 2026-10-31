@@ -27,11 +27,23 @@ export function isTabVisible(element: {
   return element.checkVisibility({ visibilityProperty: true });
 }
 
-/** The elements inside `root` that Tab can reach, in document order. */
+/**
+ * Browser Tab order: positive `tabIndex` values ascending first, then `0` / default in
+ * document order. `querySelectorAll` already yields document order; this only lifts positives.
+ */
+export function byTabOrder(a: { tabIndex: number }, b: { tabIndex: number }): number {
+  const aRank = a.tabIndex > 0 ? a.tabIndex : Number.POSITIVE_INFINITY;
+  const bRank = b.tabIndex > 0 ? b.tabIndex : Number.POSITIVE_INFINITY;
+  return aRank - bRank;
+}
+
+/** The elements inside `root` that Tab can reach, in browser Tab order. */
 export function tabbableIn(root: Element): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR)).filter(
-    (element) => element.tabIndex >= 0 && !element.closest("[inert]") && isTabVisible(element),
-  );
+  return Array.from(root.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR))
+    .filter(
+      (element) => element.tabIndex >= 0 && !element.closest("[inert]") && isTabVisible(element),
+    )
+    .sort(byTabOrder);
 }
 
 /**
