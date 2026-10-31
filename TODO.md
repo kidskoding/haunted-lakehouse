@@ -58,7 +58,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **2.4.1 Run state machine.** Slots, pool draws (respecting prerequisites), candles, boss rules, curses, relic offers and choices, and death. A pure reducer with exhaustive tests.
 - [ ] **2.4.2 Checkpoint validation API.** The client submits gold hashes per checkpoint; the server compares, records the attempt, and updates candles. Returns only the first failing checkpoint.
 - [ ] **2.4.3 Relics v1.** Wren's Lantern, Raven's Feather, Hourglass, Black Cat, and Spare Candle, implemented as engine effects with tests.
-- [ ] **2.4.4 Curses v1.** Possession, Fog, Short Memory, and Darkness, implemented as engine effects with tests.
+- [x] **2.4.4 Curses v1.** Possession, Fog, Short Memory, and Darkness, implemented as engine effects with tests.
 - [ ] **2.4.5 Unlocks.** Act gating, characters, endings, and ledger fragments, persisted per player.
 
 ---
@@ -136,7 +136,7 @@ Every puzzle follows the same five steps:
 
 ### 7.1 Porch Lights (6:00pm, ★, tutorial)
 *The Mayor wants to know how many houses are welcoming trick-or-treaters at each checkpoint. Porch-light sensors report changes, not states, and a few go silent. The tutorial teaches the editor, models, preview, and running the night. Trap: counting lights that were ever switched on.*
-- [ ] **7.1.1** Design doc
+- [x] **7.1.1** Design doc
 - [ ] **7.1.2** Generator
 - [ ] **7.1.3** Reference and trap pipelines with tests
 - [ ] **7.1.4** Narrative, including tutorial callouts
