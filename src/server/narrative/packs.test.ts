@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { Puzzle } from "../engine/puzzle";
 import { ALL_PUZZLES } from "../engine/puzzles";
 import { generatePuzzle } from "../engine/registry";
+import { slotDefinition } from "../engine/slots";
 import { fakePuzzle } from "../engine/testing/fake-puzzle";
 import { SHARED_BINDINGS, type Bindings } from "./bindings";
+import { ending } from "./endings";
 import { mayor, wren } from "./lines";
 import { NARRATIVE_PACKS, narrativePack } from "./packs";
 import { LOST_CANDLE_BINDINGS } from "./reactions";
@@ -167,6 +169,21 @@ describe("narrative packs", () => {
 describe("every registered puzzle", () => {
   it("has a story that renders with no unfilled placeholders across 20 seeds", () => {
     for (const puzzle of ALL_PUZZLES) expectPuzzleRenders(puzzle, narrativePack(puzzle.id));
+  });
+
+  it("binds its act's ending from its own data, if it closes Act I or II", () => {
+    for (const puzzle of ALL_PUZZLES) {
+      const { boss, act } = slotDefinition(puzzle.slot);
+      // The Seance's endings read the player's pages as well as the hour, so they bind elsewhere.
+      if (!boss || act === 3) continue;
+      const { bindings } = ending(act === 1 ? "act-1" : "act-2");
+      for (const seed of SEEDS) {
+        const data = generatePuzzle(puzzle, seed);
+        for (const name of bindings) {
+          expect(data.narrative[name], `${puzzle.id} binds ${name} for seed ${seed}`).toBeDefined();
+        }
+      }
+    }
   });
 
   it("is checked the same way a real puzzle would be", () => {

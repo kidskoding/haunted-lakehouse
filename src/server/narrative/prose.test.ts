@@ -145,6 +145,7 @@ describe("length budgets", () => {
       const bindings = {
         ...fixtureRunBindings(),
         unknown_rows: 3,
+        example_vague: "see slip",
         flameouts_total: 41,
         restored_version: 212,
         restored_rows: 4096,

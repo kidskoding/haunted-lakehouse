@@ -15,11 +15,13 @@ export interface Ending {
 const dusk: Ending = {
   id: "act-1",
   title: "Dusk",
-  bindings: ["unknown_rows"],
+  bindings: ["unknown_rows", "example_vague"],
   scene: [
-    narrator("The bat on the Town Green fills with air and stands up."),
+    narrator(
+      "All over town, Hobb's fog juice goes into the machines. By the time you look up, Hollow Creek is gone to the knee.",
+    ),
     mayor(
-      "Every delivery accounted for. {unknown_rows} of them 'unknown', which I've decided is a quantity. Good work, {you}. Go home. The night shift can handle the rest.",
+      "Every drop on the books. {unknown_rows|Word} of them 'disputed', which I've decided is a quantity. Good work, {you}. Go home. The night shift can handle the rest.",
     ),
     wren("There isn't a night shift. There's you."),
     narrator("A reply arrives from Moribund Party Supply's support inbox:"),
@@ -28,12 +30,12 @@ const dusk: Ending = {
     ),
     wren("Then who rewrote it?"),
     narrator(
-      "She doesn't wait for an answer. She's looking at the rows you kept, the ones whose quantity came through as a word.",
+      "She doesn't wait for an answer. She's reading the rows you kept, the ones that only said '{example_vague}'.",
     ),
     wren(
-      "The town used to write things down like that. 'Lots.' 'A handful.' We kept them exactly as they were said. You kept them. Not everyone does.",
+      "The book used to have lines like that. 'Lots.' 'A handful.' We kept them exactly as they were said. You kept them. Not everyone does.",
     ),
-    narrator("She puts her coat on."),
+    narrator("She doesn't say which book. She puts her coat on."),
     wren("Come back tomorrow night. Stay past eight. It gets stranger after eight."),
   ],
 };
