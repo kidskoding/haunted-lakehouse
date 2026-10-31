@@ -1,4 +1,8 @@
+@AGENTS.md
+
 # Haunted Lakehouse
+
+Agent workflow (branches, commits, merge loop, stop-and-ask rules) lives in `AGENTS.md`. This file is the product bible.
 
 **A roguelike where your data pipeline has to survive Halloween night.**
 
