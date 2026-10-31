@@ -153,7 +153,7 @@ Every puzzle follows the same five steps:
 ### 7.3 The Possessed Feed (7:30pm, ★★, Act I boss)
 *The decorations vendor's feed renames, retypes (`"lots"` in an integer column), and reorders columns mid-night. Gold must keep the possessed rows by recovering their values. Trap: dropping or nulling malformed rows.*
 - [x] **7.3.1** Design doc
-- [ ] **7.3.2** Generator
+- [x] **7.3.2** Generator
 - [ ] **7.3.3** Reference and trap pipelines with tests
 - [ ] **7.3.4** Narrative, including the Act I ending
 - [ ] **7.3.5** Playtest note
