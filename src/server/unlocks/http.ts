@@ -2,6 +2,7 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { runs } from "../db/schema";
+import { ensurePlayerRow } from "../runs/create";
 import { currentPlayerId } from "../session/session";
 import { isPageId } from "./catalog";
 import { grantFragment, loadPlayerUnlocks } from "./store";
@@ -50,9 +51,9 @@ export async function handleGrantFragment(request: Request): Promise<Response> {
     return errorResponse("invalid-body");
   }
 
+  const database = await db();
   let findingRunId: string | null = null;
   if (typeof runId === "string") {
-    const database = await db();
     const [owned] = await database
       .select({ id: runs.id })
       .from(runs)
@@ -62,6 +63,8 @@ export async function handleGrantFragment(request: Request): Promise<Response> {
     findingRunId = owned.id;
   }
 
-  const granted = await grantFragment(await db(), playerId, fragmentId, findingRunId);
+  // A session cookie alone has no players row yet, and fragments hang off one.
+  await ensurePlayerRow(database, playerId);
+  const granted = await grantFragment(database, playerId, fragmentId, findingRunId);
   return Response.json({ granted, fragmentId }, { status: granted ? 201 : 200 });
 }
