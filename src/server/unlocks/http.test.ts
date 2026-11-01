@@ -46,4 +46,13 @@ describe("handleGrantFragment", () => {
       await database.select().from(fragments).where(eq(fragments.playerId, playerId)),
     ).toHaveLength(1);
   });
+
+  it("answers not-found for a finding run id that isn't a uuid", async () => {
+    vi.mocked(currentPlayerId).mockResolvedValue(crypto.randomUUID());
+
+    const response = await handleGrantFragment(post({ fragmentId: "page-1", runId: "abc" }));
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "not-found" });
+  });
 });

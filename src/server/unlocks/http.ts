@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { runs } from "../db/schema";
 import { ensurePlayerRow } from "../runs/create";
+import { isUuid } from "../runs/load";
 import { currentPlayerId } from "../session/session";
 import { isPageId } from "./catalog";
 import { grantFragment, loadPlayerUnlocks } from "./store";
@@ -54,6 +55,7 @@ export async function handleGrantFragment(request: Request): Promise<Response> {
   const database = await db();
   let findingRunId: string | null = null;
   if (typeof runId === "string") {
+    if (!isUuid(runId)) return errorResponse("not-found");
     const [owned] = await database
       .select({ id: runs.id })
       .from(runs)

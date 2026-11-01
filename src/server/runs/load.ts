@@ -23,8 +23,15 @@ export interface OwnedRun {
   readonly nextSeq: number;
 }
 
-// Run ids arrive from URLs; Postgres rejects a malformed uuid with an error, not an empty result.
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Whether an id from a URL or request body can name a row. Postgres rejects a malformed uuid
+ * with an error, not an empty result, so callers check before they query.
+ */
+export function isUuid(id: string): boolean {
+  return UUID.test(id);
+}
 
 /**
  * Loads a run the player owns, in any status, and replays its event log. Returns null when the
@@ -35,7 +42,7 @@ export async function loadPlayerRunWith(
   runId: string,
   playerId: string,
 ): Promise<OwnedRun | null> {
-  if (!UUID.test(runId)) return null;
+  if (!isUuid(runId)) return null;
   const [run] = await database
     .select()
     .from(runs)
