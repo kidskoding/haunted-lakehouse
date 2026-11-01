@@ -160,6 +160,16 @@ describe("spendRelic", () => {
     );
   });
 
+  it("refuses a peek at a batch a failed night already revealed", () => {
+    const state = machine.reduce(inHour(2, ALL), {
+      kind: "attempt_failed",
+      slot: 2,
+      checkpointId: "late",
+      revealedBatch: 2,
+    });
+    refusedByRelic(state, { relic: "ravens-feather", batch: 2 }, "batch-not-hidden");
+  });
+
   it("refuses intel for a different puzzle than the open hour", () => {
     const state = inHour(2, ALL);
     refusedByRelic(

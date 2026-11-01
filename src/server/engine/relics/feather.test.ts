@@ -22,25 +22,34 @@ describe("peekBatch", () => {
 describe("expectHidden", () => {
   it("accepts only batches past the visible ones", () => {
     expect(() => {
-      expectHidden(data, 1, 1);
+      expectHidden(data, 1, 1, []);
     }).not.toThrow();
     expect(() => {
-      expectHidden(data, 2, 1);
+      expectHidden(data, 2, 1, []);
     }).not.toThrow();
     expect(() => {
-      expectHidden(data, 0, 1);
+      expectHidden(data, 0, 1, []);
     }).toThrow(code("batch-not-hidden"));
     expect(() => {
-      expectHidden(data, 2, 3);
+      expectHidden(data, 2, 3, []);
     }).toThrow(code("batch-not-hidden"));
     expect(() => {
-      expectHidden(data, 3, 1);
+      expectHidden(data, 3, 1, []);
     }).toThrow(code("unknown-batch"));
+  });
+
+  it("treats a batch a failed night revealed as visible", () => {
+    expect(() => {
+      expectHidden(data, 2, 1, [2]);
+    }).toThrow(code("batch-not-hidden"));
+    expect(() => {
+      expectHidden(data, 1, 1, [2]);
+    }).not.toThrow();
   });
 
   it.each([-1, 4, 0.5])("rejects %s visible batches as a caller bug", (visible) => {
     expect(() => {
-      expectHidden(data, 2, visible);
+      expectHidden(data, 2, visible, []);
     }).toThrow(RangeError);
   });
 });

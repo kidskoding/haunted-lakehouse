@@ -1,5 +1,5 @@
 import "server-only";
-import { assertVisibleBatchCount, isBatchVisible } from "../batches/visibility";
+import { assertVisibleBatchCount, visibleIndices } from "../batches/visibility";
 import type { Batch, PuzzleData } from "../puzzle";
 import { RelicError } from "./errors";
 
@@ -17,12 +17,18 @@ export function peekBatch(data: PuzzleData, batch: number): Batch {
 
 /**
  * Checks that a batch is still hidden from the player, who already sees the first
- * `visibleBatchCount` batches. Peeking at one they can already query would waste the relic.
+ * `visibleBatchCount` batches and every batch a failed night `revealed`, as the batch routes
+ * serve them. Peeking at one they can already query would waste the relic.
  */
-export function expectHidden(data: PuzzleData, batch: number, visibleBatchCount: number): void {
+export function expectHidden(
+  data: PuzzleData,
+  batch: number,
+  visibleBatchCount: number,
+  revealed: readonly number[],
+): void {
   assertVisibleBatchCount(data, visibleBatchCount);
   peekBatch(data, batch);
-  if (isBatchVisible(batch, visibleBatchCount)) {
+  if (visibleIndices(data, visibleBatchCount, revealed).includes(batch)) {
     throw new RelicError("batch-not-hidden", `Batch ${String(batch)} is already in bronze.`);
   }
 }

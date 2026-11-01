@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fakePuzzle } from "../testing/fake-puzzle";
 import { generatePuzzle } from "../registry";
-import { assertVisibleBatchCount, isBatchVisible, visibleBatches } from "./visibility";
+import { assertVisibleBatchCount, visibleBatches } from "./visibility";
 
 const data = generatePuzzle(fakePuzzle({ visibleBatchCount: 2 }), "raven-pumpkin-13");
 
@@ -18,15 +18,6 @@ describe("assertVisibleBatchCount", () => {
     expect(() => {
       assertVisibleBatchCount(data, n);
     }).toThrow(RangeError);
-  });
-});
-
-describe("isBatchVisible", () => {
-  it("marks only the first visibleBatchCount indices", () => {
-    expect(isBatchVisible(0, 2)).toBe(true);
-    expect(isBatchVisible(1, 2)).toBe(true);
-    expect(isBatchVisible(2, 2)).toBe(false);
-    expect(isBatchVisible(-1, 2)).toBe(false);
   });
 });
 

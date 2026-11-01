@@ -100,7 +100,7 @@ export function spendRelic(
   const event: RelicOutcome["event"] = { kind: "relic_used", ...targetOf(state, intel, request) };
   const spent = machine.reduce(state, event);
   if (event.relic === "ravens-feather") {
-    expectHidden(intel.data, event.batch, intel.visibleBatchCount);
+    expectHidden(intel.data, event.batch, intel.visibleBatchCount, state.hour?.revealed ?? []);
   }
   return { state: spent, event, reveal: revealOf(event, intel) };
 }

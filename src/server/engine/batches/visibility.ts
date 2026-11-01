@@ -15,11 +15,6 @@ export function assertVisibleBatchCount(data: PuzzleData, visibleBatchCount: num
   }
 }
 
-/** Whether batch `index` is among the first `visibleBatchCount` the player can preview. */
-export function isBatchVisible(index: number, visibleBatchCount: number): boolean {
-  return Number.isInteger(index) && index >= 0 && index < visibleBatchCount;
-}
-
 /**
  * The batches a preview may load: the first `visibleBatchCount`. Hidden batches stay out of
  * bronze until the player runs the night (or peeks with The Raven's Feather).
