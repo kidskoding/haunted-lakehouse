@@ -1,6 +1,6 @@
 import "server-only";
 import type { RunState } from "../engine/run/types";
-import type { RunDatabase } from "../runs/load";
+import type { RunExecutor } from "../runs/load";
 import type { UnlockAward } from "./catalog";
 import { awardsAfterReduce } from "./progress";
 import { grantUnlocks, loadPlayerUnlocks } from "./store";
@@ -10,7 +10,7 @@ import { grantUnlocks, loadPlayerUnlocks } from "./store";
  * current fragments so a Séance clear can become the true ending when every page is held.
  */
 export async function applyUnlocksAfterReduce(
-  database: RunDatabase,
+  database: RunExecutor,
   playerId: string,
   before: RunState,
   after: RunState,

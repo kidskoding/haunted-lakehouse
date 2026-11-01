@@ -9,6 +9,12 @@ import * as schema from "./schema";
 /** Either Postgres driver the app binds to the schema: `pg` in production, PGlite locally. */
 export type RunDatabase = NodePgDatabase<typeof schema> | PgliteDatabase<typeof schema>;
 
+/** An open transaction on either driver. */
+export type RunTransaction = Parameters<Parameters<RunDatabase["transaction"]>[0]>[0];
+
+/** Where a read or write runs: straight on the database, or inside a transaction. */
+export type RunExecutor = RunDatabase | RunTransaction;
+
 export type DatabaseTarget =
   | { readonly kind: "postgres"; readonly url: string }
   | { readonly kind: "pglite"; readonly dataDir: string };

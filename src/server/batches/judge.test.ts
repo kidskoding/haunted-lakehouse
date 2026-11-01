@@ -13,6 +13,7 @@ import { players, runEvents, runs } from "../db/schema";
 import { generatePuzzle } from "../engine/registry";
 import { porchLights } from "../engine/puzzles/porch-lights";
 import { rowFromEvent } from "../runs/events";
+import { loadPlayerRunWith } from "../runs/load";
 import { getBatch, listPreviewBatches } from "./access";
 import { NIGHT_ATTEMPT_TTL_SECONDS, signNightAttempt } from "./attempt";
 import { expectedHashes } from "./expected";
@@ -159,6 +160,29 @@ describe("judgeNightAttempt", () => {
       phase: "offering",
     });
     expect((await storedEvents(database, run.id)).at(-1)?.kind).toBe("hour_cleared");
+  });
+
+  it("applies exactly one of two judges racing on the same night", async () => {
+    const { player, run, attemptToken } = await openPorchRun(database);
+    const expected = await expectedHashes(porchLights, data);
+    const judge = () =>
+      judgeNightAttempt(database, {
+        runId: run.id,
+        playerId: player.id,
+        attemptToken,
+        events: checkpointEvents((id) => expected[id] ?? {}),
+        now,
+        secret,
+      });
+
+    const results = await Promise.all([judge(), judge()]);
+
+    expect(results.filter((result) => result.ok)).toHaveLength(1);
+    expect(results.filter((result) => !result.ok)).toEqual([{ ok: false, error: "stale" }]);
+    const kinds = (await storedEvents(database, run.id)).map((row) => row.kind);
+    expect(kinds.filter((kind) => kind === "hour_cleared")).toHaveLength(1);
+    const replayed = await loadPlayerRunWith(database, run.id, player.id);
+    expect(replayed?.state.phase).toBe("offering");
   });
 
   describe("records and serves the batch the client reveals", () => {

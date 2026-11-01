@@ -20,6 +20,7 @@ const ERROR_STATUS: Record<string, number> = {
   "not-found": 404,
   "not-choosing": 409,
   "not-offered": 409,
+  stale: 409,
 };
 
 function errorResponse(error: string): Response {

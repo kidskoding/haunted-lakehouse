@@ -1,7 +1,7 @@
 import "server-only";
 import type { NightEvent } from "../../lib/executor/types";
 import type { RunEvent, RunState } from "../engine/run/types";
-import { appendRunEvent } from "../runs/append";
+import { appendRunEvent, StaleRunError } from "../runs/append";
 import type { RunDatabase } from "../runs/load";
 import { loadOwnedRunWith, runMachine } from "../runs/load";
 import { applyUnlocksAfterReduce } from "../unlocks/apply";
@@ -12,7 +12,7 @@ import { openHourData } from "./hour";
 import { validateNight } from "./validate";
 
 export type JudgeError =
-  "unauthorized" | "not-found" | "no-open-hour" | "invalid-attempt" | "invalid-night";
+  "unauthorized" | "not-found" | "no-open-hour" | "invalid-attempt" | "invalid-night" | "stale";
 
 export type JudgeResult =
   | {
@@ -85,10 +85,17 @@ export async function judgeNightAttempt(
       };
 
   const next = runMachine.reduce(owned.state, event);
-  await appendRunEvent(database, input.runId, event, next);
-  const unlocks = verdict.survived
-    ? await applyUnlocksAfterReduce(database, input.playerId, owned.state, next)
-    : [];
+  let unlocks: readonly UnlockAward[];
+  try {
+    // One transaction, so the event, run status, daily result, and unlocks land together.
+    unlocks = await database.transaction(async (tx) => {
+      await appendRunEvent(tx, input.runId, owned.nextSeq, event, next);
+      return verdict.survived ? applyUnlocksAfterReduce(tx, input.playerId, owned.state, next) : [];
+    });
+  } catch (error) {
+    if (error instanceof StaleRunError) return { ok: false, error: "stale" };
+    throw error;
+  }
 
   if (verdict.survived) {
     return {

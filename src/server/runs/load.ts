@@ -1,6 +1,6 @@
 import "server-only";
 import { and, asc, eq } from "drizzle-orm";
-import { db, type RunDatabase } from "../db/client";
+import { db, type RunDatabase, type RunExecutor } from "../db/client";
 import { runEvents, runs } from "../db/schema";
 import { ALL_PUZZLES } from "../engine/puzzles";
 import { createPuzzleRegistry } from "../engine/registry";
@@ -11,7 +11,7 @@ import { eventFromRow } from "./events";
 const registry = createPuzzleRegistry(ALL_PUZZLES);
 const machine = createRunMachine(registry);
 
-export type { RunDatabase };
+export type { RunDatabase, RunExecutor };
 
 export interface OwnedRun {
   readonly id: string;
@@ -19,6 +19,8 @@ export interface OwnedRun {
   readonly seed: string;
   readonly status: "active" | "survived" | "dead" | "abandoned";
   readonly state: RunState;
+  /** The seq the next event takes: how many events the log held when the run was read. */
+  readonly nextSeq: number;
 }
 
 // Run ids arrive from URLs; Postgres rejects a malformed uuid with an error, not an empty result.
@@ -54,6 +56,7 @@ export async function loadPlayerRunWith(
     seed: run.seed,
     status: run.status,
     state: machine.replay(events),
+    nextSeq: events.length,
   };
 }
 

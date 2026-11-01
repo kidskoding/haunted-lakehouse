@@ -1,9 +1,9 @@
 import "server-only";
-import { eq, max } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { dailyResults, runEvents, runs } from "../db/schema";
 import type { RunEvent, RunState } from "../engine/run/types";
 import { rowFromEvent } from "./events";
-import type { RunDatabase } from "./load";
+import type { RunExecutor } from "./load";
 
 /** Maps engine run status onto the persisted `runs.status` column. */
 export function persistedStatus(
@@ -24,24 +24,53 @@ export function persistedStatus(
 }
 
 /**
- * Appends one event at the next sequence number and syncs the run row's status. A Daily Haunt
- * run that ends here also posts its result to that day's board.
+ * Thrown when an append loses a race: another writer already stored the event at this seq, so
+ * the state this writer reduced from is stale.
+ */
+export class StaleRunError extends Error {
+  constructor(runId: string, seq: number) {
+    super(`Run ${runId} already has an event at seq ${String(seq)}.`);
+    this.name = "StaleRunError";
+  }
+}
+
+const SEQ_KEY = "run_events_run_id_seq_key";
+
+function isSeqConflict(error: unknown): boolean {
+  // Drizzle wraps the driver's error, so the Postgres fields sit on its cause.
+  const cause: unknown = error instanceof Error && error.cause ? error.cause : error;
+  return (
+    cause !== null &&
+    typeof cause === "object" &&
+    "code" in cause &&
+    cause.code === "23505" &&
+    "constraint" in cause &&
+    cause.constraint === SEQ_KEY
+  );
+}
+
+/**
+ * Appends one event at `seq`, the count of events the caller's state was replayed from, and
+ * syncs the run row's status. The unique (run, seq) key turns a stale writer's append into a
+ * {@link StaleRunError}. A Daily Haunt run that ends here also posts its result to that day's
+ * board.
  */
 export async function appendRunEvent(
-  database: RunDatabase,
+  database: RunExecutor,
   runId: string,
+  seq: number,
   event: RunEvent,
   state: RunState,
 ): Promise<void> {
-  const [aggregate] = await database
-    .select({ next: max(runEvents.seq) })
-    .from(runEvents)
-    .where(eq(runEvents.runId, runId));
-  const seq = (aggregate?.next ?? -1) + 1;
   const { kind, payload } = rowFromEvent(event);
   const status = persistedStatus(state.status);
 
-  await database.insert(runEvents).values({ runId, seq, kind, payload });
+  try {
+    await database.insert(runEvents).values({ runId, seq, kind, payload });
+  } catch (error) {
+    if (isSeqConflict(error)) throw new StaleRunError(runId, seq);
+    throw error;
+  }
   await database
     .update(runs)
     .set({

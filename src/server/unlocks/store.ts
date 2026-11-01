@@ -2,7 +2,7 @@ import "server-only";
 import { and, count, eq, ne } from "drizzle-orm";
 import { fragments, runs, unlocks } from "../db/schema";
 import type { PageId, StoryEndingId } from "../narrative/progress";
-import type { RunDatabase } from "../runs/load";
+import type { RunExecutor } from "../runs/load";
 import { isActUnlockKey, isEndingKey, isPageId, type UnlockAward } from "./catalog";
 import { charactersFrom, type PlayerUnlocks, unlockedActsFrom } from "./progress";
 
@@ -12,7 +12,7 @@ function awardKey(award: UnlockAward): string {
 
 /** Loads every unlock and ledger page this player holds, plus finished-run count. */
 export async function loadPlayerUnlocks(
-  database: RunDatabase,
+  database: RunExecutor,
   playerId: string,
 ): Promise<PlayerUnlocks> {
   const [rows, pageRows, [finished]] = await Promise.all([
@@ -63,25 +63,23 @@ export async function loadPlayerUnlocks(
 }
 
 /**
- * Persists unlock awards idempotently. Existing (player, kind, key) rows are left alone; only
- * newly written awards are returned.
+ * Persists unlock awards idempotently. Existing (player, kind, key) rows are left alone, even
+ * when a racing writer stored them a moment ago; only newly written awards are returned.
  */
 export async function grantUnlocks(
-  database: RunDatabase,
+  database: RunExecutor,
   playerId: string,
   awards: readonly UnlockAward[],
 ): Promise<readonly UnlockAward[]> {
   if (awards.length === 0) return [];
 
-  const existing = await database.select().from(unlocks).where(eq(unlocks.playerId, playerId));
-  const held = new Set(existing.map((row) => awardKey({ kind: row.kind, key: row.key })));
-  const fresh = awards.filter((award) => !held.has(awardKey(award)));
-  if (fresh.length === 0) return [];
-
-  await database
+  const written = await database
     .insert(unlocks)
-    .values(fresh.map((award) => ({ playerId, kind: award.kind, key: award.key })));
-  return fresh;
+    .values(awards.map((award) => ({ playerId, kind: award.kind, key: award.key })))
+    .onConflictDoNothing()
+    .returning();
+  const fresh = new Set(written.map(awardKey));
+  return awards.filter((award) => fresh.has(awardKey(award)));
 }
 
 /**
@@ -89,18 +87,15 @@ export async function grantUnlocks(
  * is kept only on the first insert so later finds don't overwrite provenance.
  */
 export async function grantFragment(
-  database: RunDatabase,
+  database: RunExecutor,
   playerId: string,
   fragmentId: PageId,
   runId: string | null,
 ): Promise<boolean> {
-  const [held] = await database
-    .select({ fragmentId: fragments.fragmentId })
-    .from(fragments)
-    .where(and(eq(fragments.playerId, playerId), eq(fragments.fragmentId, fragmentId)))
-    .limit(1);
-  if (held) return false;
-
-  await database.insert(fragments).values({ playerId, fragmentId, runId });
-  return true;
+  const written = await database
+    .insert(fragments)
+    .values({ playerId, fragmentId, runId })
+    .onConflictDoNothing()
+    .returning();
+  return written.length > 0;
 }

@@ -93,6 +93,22 @@ describe("unlock store", () => {
     expect(progress.endings).toEqual(["act-1"]);
   });
 
+  it("lets racing grants of the same unlocks and page both succeed, writing each once", async () => {
+    const player = await newPlayer(database);
+    const awards = awardsForBossClear("act-1", []);
+    const [first, second] = await Promise.all([
+      grantUnlocks(database, player.id, awards),
+      grantUnlocks(database, player.id, awards),
+    ]);
+    expect([...first, ...second]).toHaveLength(awards.length);
+
+    const pages = await Promise.all([
+      grantFragment(database, player.id, "page-2", null),
+      grantFragment(database, player.id, "page-2", null),
+    ]);
+    expect(pages.filter(Boolean)).toHaveLength(1);
+  });
+
   it("records ledger pages once and keeps them when the finding run is deleted", async () => {
     const player = await newPlayer(database);
     const run = await newRun(database, player.id);

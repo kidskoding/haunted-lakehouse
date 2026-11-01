@@ -27,6 +27,7 @@ const ERROR_STATUS: Record<string, number> = {
   "invalid-attempt": 403,
   "invalid-body": 400,
   "invalid-night": 422,
+  stale: 409,
 };
 
 function errorResponse(error: string): Response {

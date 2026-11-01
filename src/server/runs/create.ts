@@ -72,6 +72,6 @@ export async function createRun(
 
   const started: RunEvent = { kind: "run_started", ...config };
   const state = runMachine.replay([started]);
-  await appendRunEvent(database, run.id, started, state);
-  return { ok: true, runId: run.id, state: await settleRun(database, run.id, state) };
+  await appendRunEvent(database, run.id, 0, started, state);
+  return { ok: true, runId: run.id, state: await settleRun(database, run.id, 1, state) };
 }

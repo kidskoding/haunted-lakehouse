@@ -41,7 +41,7 @@ async function load(database: Db, runId: string, playerId: string) {
 
 /** Appends what the judge would after a night: a clear or a failure at the first checkpoint. */
 async function night(database: Db, runId: string, playerId: string, survived: boolean) {
-  const { state } = await load(database, runId, playerId);
+  const { state, nextSeq } = await load(database, runId, playerId);
   const hour = state.hour;
   if (!hour) throw new Error("no open hour");
   const puzzle = puzzleRegistry.get(hour.puzzleId);
@@ -56,7 +56,7 @@ async function night(database: Db, runId: string, playerId: string, survived: bo
         checkpointId: checkpoint.id,
         revealedBatch: checkpoint.afterBatch,
       };
-  await appendRunEvent(database, runId, event, runMachine.reduce(state, event));
+  await appendRunEvent(database, runId, nextSeq, event, runMachine.reduce(state, event));
 }
 
 describe("starting a run", () => {
