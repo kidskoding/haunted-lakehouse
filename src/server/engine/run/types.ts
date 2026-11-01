@@ -47,6 +47,11 @@ export interface OpenHour {
   readonly failures: readonly string[];
   /** The batch each failed "Run the night" revealed to the player, in order. */
   readonly revealed: readonly number[];
+  /**
+   * The night attempt served hidden batches and not yet judged, or null. Only it may be
+   * judged, and opening another first costs its candle.
+   */
+  readonly openAttempt: string | null;
 }
 
 export interface HourRecord extends OpenHour {
@@ -98,6 +103,8 @@ export type RunEvent =
       readonly checkpointId: string;
       readonly revealedBatch: number | null;
     }
+  /** A "Run the night" began: hidden batches are served under `attemptId` until it's judged. */
+  | { readonly kind: "attempt_started"; readonly slot: Slot; readonly attemptId: string }
   | { readonly kind: "hour_cleared"; readonly slot: Slot }
   | { readonly kind: "hour_skipped"; readonly slot: Slot }
   | { readonly kind: "relic_offered"; readonly relics: readonly RelicId[] }

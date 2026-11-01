@@ -6,6 +6,7 @@ import type { RunDatabase } from "../runs/load";
 import { loadOwnedRunWith, runMachine } from "../runs/load";
 import { applyUnlocksAfterReduce } from "../unlocks/apply";
 import type { UnlockAward } from "../unlocks/catalog";
+import { isOpenAttempt } from "./access";
 import { verifyNightAttempt } from "./attempt";
 import { expectedHashes } from "./expected";
 import { openHourData } from "./hour";
@@ -60,13 +61,9 @@ export async function judgeNightAttempt(
   const open = openHourData(owned.state);
   if (!open) return { ok: false, error: "no-open-hour" };
 
+  // Only the open attempt is judged, and judging closes it, so a token is spent once.
   const attempt = await verifyNightAttempt(input.attemptToken, input.now, input.secret);
-  if (
-    !attempt ||
-    attempt.playerId !== input.playerId ||
-    attempt.runId !== input.runId ||
-    attempt.puzzleId !== open.puzzle.id
-  ) {
+  if (!isOpenAttempt(attempt, input.playerId, input.runId, open.puzzle.id, open.hour)) {
     return { ok: false, error: "invalid-attempt" };
   }
 

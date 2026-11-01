@@ -83,6 +83,26 @@ export type NightResult =
   | { readonly started: false; readonly missingGold: readonly string[] };
 
 /**
+ * The active gold models for the hour's gold tables, and the tables no active model builds.
+ * A night with any missing is refused before it starts, so callers check this before asking
+ * the server for the hidden batches.
+ */
+export function goldModels(
+  pipeline: CompiledPipeline,
+  goldTables: readonly string[],
+): { readonly gold: readonly CompiledModel[]; readonly missingGold: readonly string[] } {
+  const byId = new Map(pipeline.models.map((model) => [model.id, model]));
+  const gold: CompiledModel[] = [];
+  const missingGold: string[] = [];
+  for (const id of goldTables) {
+    const model = byId.get(id.toLowerCase());
+    if (model?.active === true && model.schema === "gold") gold.push(model);
+    else missingGold.push(id);
+  }
+  return { gold, missingGold };
+}
+
+/**
  * Run the night (runtime contract 9.2): delivers every batch, and collects every gold hash at
  * every checkpoint reached, the replay check, and any runtime error, in timeline order.
  */
@@ -94,14 +114,7 @@ export async function runNight(
   input.batches.forEach((batch, i) => {
     if (batch.index !== i) throw new RangeError("Run the night delivers batches 0..B-1 in order.");
   });
-  const byId = new Map(input.pipeline.models.map((model) => [model.id, model]));
-  const gold: CompiledModel[] = [];
-  const missingGold: string[] = [];
-  for (const id of input.goldTables) {
-    const model = byId.get(id.toLowerCase());
-    if (model?.active === true && model.schema === "gold") gold.push(model);
-    else missingGold.push(id);
-  }
+  const { gold, missingGold } = goldModels(input.pipeline, input.goldTables);
   if (missingGold.length > 0) return { started: false, missingGold };
 
   const events: NightEvent[] = [];

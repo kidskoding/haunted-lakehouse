@@ -119,6 +119,7 @@ function applyEvent(registry: PuzzleRegistry, state: RunState, event: RunEvent):
           curse: event.curse,
           failures: [],
           revealed: [],
+          openAttempt: null,
         },
         actReached: maxAct(state.actReached, act),
       };
@@ -136,6 +137,14 @@ function applyEvent(registry: PuzzleRegistry, state: RunState, event: RunEvent):
       return { ...state, status: "stranded", phase: "ended" };
     }
 
+    case "attempt_started": {
+      const hour = expectHour(state, event.slot, event.kind);
+      if (hour.openAttempt !== null) {
+        throw new RunEventError("attempt-open", "The last night attempt hasn't been judged.");
+      }
+      return { ...state, hour: { ...hour, openAttempt: event.attemptId } };
+    }
+
     case "attempt_failed": {
       const hour = expectHour(state, event.slot, event.kind);
       const candles = Math.max(0, state.candles - failureCost(hour.slot));
@@ -147,6 +156,7 @@ function applyEvent(registry: PuzzleRegistry, state: RunState, event: RunEvent):
           failures: [...hour.failures, event.checkpointId],
           revealed:
             event.revealedBatch === null ? hour.revealed : [...hour.revealed, event.revealedBatch],
+          openAttempt: null,
         },
       };
       return candles === 0 ? { ...failed, status: "dead", phase: "ended" } : failed;
@@ -158,7 +168,7 @@ function applyEvent(registry: PuzzleRegistry, state: RunState, event: RunEvent):
       const closed: RunState = {
         ...state,
         hour: null,
-        history: [...state.history, { ...hour, outcome: "cleared" }],
+        history: [...state.history, { ...hour, openAttempt: null, outcome: "cleared" }],
         lastEnding: boss ? ENDINGS[act] : state.lastEnding,
       };
       const following = slotAfter(slot);
@@ -187,7 +197,7 @@ function applyEvent(registry: PuzzleRegistry, state: RunState, event: RunEvent):
         slot: following,
         phase: "opening",
         hour: null,
-        history: [...state.history, { ...hour, outcome: "skipped" }],
+        history: [...state.history, { ...hour, openAttempt: null, outcome: "skipped" }],
         relics: without(state.relics, "black-cat"),
       };
     }

@@ -5,6 +5,7 @@ const KINDS = new Set<RunEventKind>([
   "run_started",
   "hour_opened",
   "pool_exhausted",
+  "attempt_started",
   "attempt_failed",
   "hour_cleared",
   "hour_skipped",

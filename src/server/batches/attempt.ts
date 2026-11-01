@@ -6,7 +6,7 @@ const PUZZLE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MIN_SECRET_LENGTH = 32;
 
 // Domain-separates night-attempt signatures from the anonymous session cookie.
-const PURPOSE = "haunted-lakehouse/night-attempt/v1:";
+const PURPOSE = "haunted-lakehouse/night-attempt/v2:";
 
 /** How long a night attempt stays open: long enough to replay an hour, short enough to limit leaks. */
 export const NIGHT_ATTEMPT_TTL_SECONDS = 15 * 60;
@@ -15,6 +15,8 @@ export interface NightAttempt {
   readonly playerId: string;
   readonly runId: string;
   readonly puzzleId: string;
+  /** The `attempt_started` event this token belongs to; the judge takes only the open one. */
+  readonly attemptId: string;
   readonly expiresAt: number;
 }
 
@@ -36,13 +38,14 @@ async function hmacKey(secret: string): Promise<CryptoKey> {
 }
 
 function payloadOf(attempt: NightAttempt): string {
-  return `${attempt.playerId}.${attempt.runId}.${attempt.puzzleId}.${String(attempt.expiresAt)}`;
+  const { playerId, runId, puzzleId, attemptId, expiresAt } = attempt;
+  return `${playerId}.${runId}.${puzzleId}.${attemptId}.${String(expiresAt)}`;
 }
 
-/** Signs an active run-the-night attempt into `<player>.<run>.<puzzle>.<expires>.<sig>`. */
+/** Signs a run-the-night attempt into `<player>.<run>.<puzzle>.<attempt>.<expires>.<sig>`. */
 export async function signNightAttempt(attempt: NightAttempt, secret: string): Promise<string> {
-  if (!UUID.test(attempt.playerId) || !UUID.test(attempt.runId)) {
-    throw new Error("A night attempt's player and run ids must be lowercase UUIDs.");
+  if (!UUID.test(attempt.playerId) || !UUID.test(attempt.runId) || !UUID.test(attempt.attemptId)) {
+    throw new Error("A night attempt's player, run, and attempt ids must be lowercase UUIDs.");
   }
   if (!PUZZLE_ID.test(attempt.puzzleId)) {
     throw new Error("A night attempt's puzzle id must be a lowercase kebab-case id.");
@@ -65,23 +68,26 @@ export async function verifyNightAttempt(
   now: number,
   secret: string,
 ): Promise<NightAttempt | null> {
-  const [playerId, runId, puzzleId, expiresAt, signature, ...rest] = token.split(".");
+  const [playerId, runId, puzzleId, attemptId, expiresAt, signature, ...rest] = token.split(".");
   if (
     playerId === undefined ||
     runId === undefined ||
     puzzleId === undefined ||
+    attemptId === undefined ||
     expiresAt === undefined ||
     signature === undefined ||
     rest.length > 0
   ) {
     return null;
   }
-  if (!UUID.test(playerId) || !UUID.test(runId) || !PUZZLE_ID.test(puzzleId)) return null;
+  if (!UUID.test(playerId) || !UUID.test(runId) || !UUID.test(attemptId)) return null;
+  if (!PUZZLE_ID.test(puzzleId)) return null;
   if (!/^[0-9]{1,15}$/.test(expiresAt) || !/^[A-Za-z0-9_-]+$/.test(signature)) return null;
   const attempt: NightAttempt = {
     playerId,
     runId,
     puzzleId,
+    attemptId,
     expiresAt: Number(expiresAt),
   };
   const key = await hmacKey(secret);

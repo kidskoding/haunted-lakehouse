@@ -14,8 +14,7 @@ import { generatePuzzle } from "../engine/registry";
 import { porchLights } from "../engine/puzzles/porch-lights";
 import { rowFromEvent } from "../runs/events";
 import { loadPlayerRunWith } from "../runs/load";
-import { getBatch, listPreviewBatches } from "./access";
-import { NIGHT_ATTEMPT_TTL_SECONDS, signNightAttempt } from "./attempt";
+import { getBatch, listPreviewBatches, startNightAttempt } from "./access";
 import { expectedHashes } from "./expected";
 import { judgeNightAttempt } from "./judge";
 
@@ -30,7 +29,7 @@ async function freshDb() {
 
 type Db = Awaited<ReturnType<typeof freshDb>>;
 
-async function openPorchRun(database: Db, candlesViaFailures = 0) {
+async function openPorchRun(database: Db, candlesViaFailures = 0, legacyFailure = false) {
   const [player] = await database.insert(players).values({}).returning();
   if (!player) throw new Error("no player");
   const [run] = await database
@@ -60,6 +59,10 @@ async function openPorchRun(database: Db, candlesViaFailures = 0) {
         revealedBatch: 8,
       }),
     ),
+    // Rows written before attempt_failed carried revealedBatch: the old server served no reveal.
+    ...(legacyFailure
+      ? [{ kind: "attempt_failed", payload: { slot: 1, checkpointId: "quarter-to" } }]
+      : []),
   ];
 
   await database.insert(runEvents).values(
@@ -71,17 +74,14 @@ async function openPorchRun(database: Db, candlesViaFailures = 0) {
     })),
   );
 
-  const attemptToken = await signNightAttempt(
-    {
-      playerId: player.id,
-      runId: run.id,
-      puzzleId: "porch-lights",
-      expiresAt: now + NIGHT_ATTEMPT_TTL_SECONDS,
-    },
-    secret,
-  );
-
+  const attemptToken = await openAttempt(database, run.id, player.id);
   return { player, run, attemptToken };
+}
+
+async function openAttempt(database: Db, runId: string, playerId: string, at = now) {
+  const started = await startNightAttempt(database, { runId, playerId, now: at, secret });
+  if (!started.ok) throw new Error(started.error);
+  return started.attemptToken;
 }
 
 const data = generatePuzzle(porchLights, "raven-pumpkin-13");
@@ -296,14 +296,7 @@ describe("judgeNightAttempt", () => {
   });
 
   it("reads a failure stored before reveals were recorded as revealing nothing", async () => {
-    const { player, run, attemptToken } = await openPorchRun(database);
-    // Rows written before attempt_failed carried revealedBatch: the old server served no reveal.
-    await database.insert(runEvents).values({
-      runId: run.id,
-      seq: 2,
-      kind: "attempt_failed",
-      payload: { slot: 1, checkpointId: "quarter-to" },
-    });
+    const { player, run, attemptToken } = await openPorchRun(database, 0, true);
 
     const listed = await listPreviewBatches(database, run.id, player.id);
     if (!listed.ok) throw new Error(listed.error);
@@ -365,6 +358,80 @@ describe("judgeNightAttempt", () => {
     const [runRow] = await database.select().from(runs).where(eq(runs.id, run.id));
     expect(runRow?.status).toBe("dead");
     expect(runRow?.endedAt).not.toBeNull();
+  });
+
+  it("spends a token once: judging the same attempt again charges nothing", async () => {
+    const { player, run, attemptToken } = await openPorchRun(database);
+    const expected = await expectedHashes(porchLights, data);
+    const judge = () =>
+      judgeNightAttempt(database, {
+        runId: run.id,
+        playerId: player.id,
+        attemptToken,
+        events: checkpointEvents((id) =>
+          id === data.checkpoints[0]?.id ? wrong : (expected[id] ?? {}),
+        ),
+        now,
+        secret,
+      });
+
+    expect(await judge()).toMatchObject({ ok: true, survived: false, candles: 3 });
+    expect(await judge()).toEqual({ ok: false, error: "invalid-attempt" });
+    const kinds = (await storedEvents(database, run.id)).map((row) => row.kind);
+    expect(kinds.filter((kind) => kind === "attempt_failed")).toHaveLength(1);
+    expect((await loadPlayerRunWith(database, run.id, player.id))?.state.candles).toBe(3);
+  });
+
+  it("charges a candle for an attempt abandoned after its hidden batches were served", async () => {
+    const { player, run, attemptToken } = await openPorchRun(database);
+    const fetch = (token: string | null) =>
+      getBatch(database, {
+        runId: run.id,
+        playerId: player.id,
+        index: 7,
+        attemptToken: token,
+        now,
+        secret,
+      });
+    expect((await fetch(attemptToken)).ok).toBe(true);
+
+    const next = await openAttempt(database, run.id, player.id);
+
+    const stored = await storedEvents(database, run.id);
+    expect(stored.slice(-2)).toEqual([
+      {
+        kind: "attempt_failed",
+        payload: { slot: 1, checkpointId: data.checkpoints[0]?.id, revealedBatch: null },
+      },
+      { kind: "attempt_started", payload: expect.objectContaining({ slot: 1 }) as unknown },
+    ]);
+    expect((await loadPlayerRunWith(database, run.id, player.id))?.state.candles).toBe(3);
+    // The abandoned token is dead; only the new one opens the hidden night.
+    expect(await fetch(attemptToken)).toEqual({ ok: false, error: "hidden" });
+    expect((await fetch(next)).ok).toBe(true);
+    const expected = await expectedHashes(porchLights, data);
+    expect(
+      await judgeNightAttempt(database, {
+        runId: run.id,
+        playerId: player.id,
+        attemptToken,
+        events: checkpointEvents((id) => expected[id] ?? {}),
+        now,
+        secret,
+      }),
+    ).toEqual({ ok: false, error: "invalid-attempt" });
+  });
+
+  it("ends the run when an abandoned attempt takes the last candle", async () => {
+    const { player, run } = await openPorchRun(database, 3);
+    expect(
+      await startNightAttempt(database, { runId: run.id, playerId: player.id, now, secret }),
+    ).toEqual({
+      ok: false,
+      error: "no-open-hour",
+    });
+    const [runRow] = await database.select().from(runs).where(eq(runs.id, run.id));
+    expect(runRow?.status).toBe("dead");
   });
 
   it("rejects a missing or foreign attempt token", async () => {

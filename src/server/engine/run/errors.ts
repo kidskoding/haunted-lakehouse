@@ -12,6 +12,7 @@ export type RunErrorCode =
   | "prerequisite-not-played"
   | "pool-not-exhausted"
   | "curse-on-first-hour"
+  | "attempt-open"
   | "boss-cannot-be-skipped"
   | "relic-not-held"
   | "relic-not-offered"

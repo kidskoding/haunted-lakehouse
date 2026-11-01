@@ -6,10 +6,11 @@ const otherSecret = "b".repeat(32);
 const playerId = "6f1c2b9e-3a4d-4c5e-8f70-1a2b3c4d5e6f";
 const runId = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
 const puzzleId = "porch-lights";
+const attemptId = "12345678-90ab-4cde-8f01-234567890abc";
 const now = 1_793_404_800;
 const expiresAt = now + NIGHT_ATTEMPT_TTL_SECONDS;
 
-const attempt = { playerId, runId, puzzleId, expiresAt };
+const attempt = { playerId, runId, puzzleId, attemptId, expiresAt };
 
 describe("night attempt tokens", () => {
   it("round-trips an attempt before it expires", async () => {
@@ -25,7 +26,7 @@ describe("night attempt tokens", () => {
 
   it("rejects a token whose expiry was extended", async () => {
     const parts = (await signNightAttempt(attempt, secret)).split(".");
-    const forged = [parts[0], parts[1], parts[2], String(expiresAt + 3600), parts[4]].join(".");
+    const forged = [...parts.slice(0, 4), String(expiresAt + 3600), parts[5]].join(".");
     expect(await verifyNightAttempt(forged, expiresAt + 1, secret)).toBeNull();
   });
 
@@ -42,6 +43,7 @@ describe("night attempt tokens", () => {
       parts[2],
       parts[3],
       parts[4],
+      parts[5],
     ].join(".");
     expect(await verifyNightAttempt(forged, now, secret)).toBeNull();
   });
@@ -49,9 +51,10 @@ describe("night attempt tokens", () => {
   it.each([
     "",
     `${playerId}.${runId}`,
-    `${playerId}.${runId}.${puzzleId}.${String(expiresAt)}`,
-    `${playerId}.${runId}.${puzzleId}.${String(expiresAt)}.sig.extra`,
-    `${playerId}.${runId}.Porch_Lights.${String(expiresAt)}.abc`,
+    `${playerId}.${runId}.${puzzleId}.${attemptId}.${String(expiresAt)}`,
+    `${playerId}.${runId}.${puzzleId}.${String(expiresAt)}.abc`,
+    `${playerId}.${runId}.${puzzleId}.${attemptId}.${String(expiresAt)}.sig.extra`,
+    `${playerId}.${runId}.Porch_Lights.${attemptId}.${String(expiresAt)}.abc`,
   ])("rejects the malformed token %j", async (token) => {
     expect(await verifyNightAttempt(token, now, secret)).toBeNull();
   });

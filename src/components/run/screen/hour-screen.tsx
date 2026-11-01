@@ -15,7 +15,7 @@ import { Panel, PanelHeader, PanelTitle } from "@/components/ui/panel";
 import { useToast } from "@/components/ui/toast";
 import { relationName } from "@/lib/executor/connection";
 import { engineConnection } from "@/lib/executor/engine-connection";
-import { runNight, runPreview } from "@/lib/executor/night";
+import { goldModels, runNight, runPreview } from "@/lib/executor/night";
 import { reportError, reportFailure, type FailureReport } from "@/lib/executor/report";
 import type { NightBatch, NightEvent } from "@/lib/executor/types";
 import { useEngine } from "@/lib/engine/react";
@@ -253,6 +253,16 @@ export function HourScreen({ view, hour, files, onFilesChange, onReload }: HourS
           setResults({ status: "error", message: NOT_COMPILED });
           return;
         }
+        // Refused here at no cost: opening an attempt serves the hidden night, which costs a
+        // candle if it's never judged.
+        const { missingGold } = goldModels(pipeline, hour.goldTables);
+        if (missingGold.length > 0) {
+          setResults({
+            status: "error",
+            message: `The night needs a model for ${missingGold.join(", ")}.`,
+          });
+          return;
+        }
         const token = await api.startNightAttempt(view.runId);
         const all = await Promise.all(
           hour.schedule.batches.map((batch) => api.nightBatch(view.runId, batch.index, token)),
@@ -282,6 +292,9 @@ export function HourScreen({ view, hour, files, onFilesChange, onReload }: HourS
       } catch (error: unknown) {
         show({ tone: "error", title: "The night didn't run", description: message(error) });
         await execute(EMPTY_PIPELINE).catch(() => undefined);
+        // A 409 means the run moved on without this screen, as when an abandoned attempt
+        // took the last candle, so read it again.
+        if (error instanceof api.RunApiError && error.status === 409) await onReload();
       } finally {
         busy.current = false;
         setActivity("idle");
@@ -297,6 +310,7 @@ export function HourScreen({ view, hour, files, onFilesChange, onReload }: HourS
     freshDatabase,
     execute,
     show,
+    onReload,
   ]);
 
   const finishNight = useCallback(() => {

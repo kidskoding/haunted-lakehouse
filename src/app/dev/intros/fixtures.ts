@@ -36,7 +36,7 @@ function openHour({ slot, puzzleId, curse, character = "intern", unlockedActs = 
     candles: 3,
     tableMaterialization: true,
     slot,
-    hour: { slot, puzzleId, curse, failures: [], revealed: [] },
+    hour: { slot, puzzleId, curse, failures: [], revealed: [], openAttempt: null },
     history: [],
     relics: [],
     offer: null,

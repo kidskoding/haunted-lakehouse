@@ -100,6 +100,7 @@ describe("hour_opened", () => {
       curse: "fog",
       failures: [],
       revealed: [],
+      openAttempt: null,
     });
     expect(state.actReached).toBe(2);
   });
@@ -177,6 +178,29 @@ describe("pool_exhausted", () => {
   });
 });
 
+describe("attempt_started", () => {
+  const attempt = (state: RunState, attemptId = "night-1") =>
+    machine.reduce(state, { kind: "attempt_started", slot: state.slot, attemptId });
+
+  it("holds the attempt open, at no cost, until a verdict closes it", () => {
+    const state = attempt(open(start()));
+    expect(state.hour?.openAttempt).toBe("night-1");
+    expect(state.candles).toBe(4);
+    expect(failed(state).hour?.openAttempt).toBeNull();
+    expect(attempt(failed(state), "night-2").hour?.openAttempt).toBe("night-2");
+    expect(cleared(state).history.at(-1)?.openAttempt).toBeNull();
+  });
+
+  it("refuses a second attempt while one is open, and any outside the hour", () => {
+    rejects(
+      attempt(open(start())),
+      { kind: "attempt_started", slot: 1, attemptId: "night-2" },
+      "attempt-open",
+    );
+    rejects(start(), { kind: "attempt_started", slot: 1, attemptId: "night-1" }, "wrong-phase");
+  });
+});
+
 describe("attempt_failed", () => {
   it("costs one candle and records the checkpoint that broke and the batch it revealed", () => {
     const state = failed(failed(open(start()), "early", 0), "late", 2);
@@ -229,6 +253,7 @@ describe("hour_cleared", () => {
         curse: null,
         failures: ["early"],
         revealed: [0],
+        openAttempt: null,
         outcome: "cleared",
       },
     ]);

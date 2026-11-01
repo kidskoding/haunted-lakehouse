@@ -26,7 +26,7 @@ const shared: PuzzleData = {
 
 function hourWith(revealed: readonly number[] = [], hourData = data): OpenHourData {
   return {
-    hour: { slot: 1, puzzleId: puzzle.id, curse: null, failures: [], revealed },
+    hour: { slot: 1, puzzleId: puzzle.id, curse: null, failures: [], revealed, openAttempt: null },
     puzzle,
     data: hourData,
     retention: puzzle.retention,
