@@ -6,10 +6,11 @@ export interface FoundLeaf {
   readonly page: RenderedPage;
 }
 
-/** A page still missing. Only its numeral survives on the torn edge, so it spoils nothing. */
+/** A page still missing. Only its numeral and year survive on the torn edge, never its text. */
 export interface TornLeaf {
   readonly kind: "torn";
   readonly numeral: string;
+  readonly year: number;
 }
 
 export type LedgerLeaf = FoundLeaf | TornLeaf;

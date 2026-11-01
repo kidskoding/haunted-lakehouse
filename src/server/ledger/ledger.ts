@@ -13,7 +13,8 @@ const FIXED_LORE = { bindings: {}, withheld: [] } as const;
 
 /**
  * The Ledger from the pages a player holds. A found page is rendered here, on the server; a
- * missing one ships only its numeral, since its text is the mystery the pages give away.
+ * missing one ships only its numeral and the year legible on its torn edge, since its text is
+ * the mystery the pages give away.
  */
 export function ledgerView(
   pagesHeld: readonly PageId[],
@@ -24,7 +25,7 @@ export function ledgerView(
     const { numeral, year, text } = LEDGER_PAGES[id];
     return held.has(id)
       ? { kind: "found", page: { numeral, year, segments: renderTemplate(text, FIXED_LORE) } }
-      : { kind: "torn", numeral };
+      : { kind: "torn", numeral, year };
   });
   if (!PAGE_IDS.every((id) => held.has(id))) return { leaves, closing: null };
 

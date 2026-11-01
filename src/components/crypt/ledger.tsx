@@ -49,15 +49,15 @@ function Torn({ leaf, index }: { readonly leaf: TornLeaf; readonly index: number
         {leaf.numeral}
         <span className="sr-only">, torn out</span>
       </h2>
-      <div
-        aria-hidden="true"
-        style={TORN_EDGE}
-        // Mirroring every other gap keeps the tears from lining up like a pattern.
-        className={cx(
-          "h-14 max-w-reading bg-inset sm:mt-2 sm:h-16",
-          index % 2 === 1 && "-scale-x-100",
-        )}
-      />
+      <div className="flex max-w-reading flex-col gap-2 sm:pt-1">
+        <p className="text-smoke type-data">{leaf.year}</p>
+        <div
+          aria-hidden="true"
+          style={TORN_EDGE}
+          // Mirroring every other gap keeps the tears from lining up like a pattern.
+          className={cx("h-14 bg-inset sm:h-16", index % 2 === 1 && "-scale-x-100")}
+        />
+      </div>
     </li>
   );
 }
@@ -68,7 +68,7 @@ function Leaf({ leaf, index }: { readonly leaf: LedgerLeaf; readonly index: numb
 
 /**
  * The Ledger: the old book's seven torn pages, laid out as one leaf. A found page reads in full;
- * a missing one is a torn gap under its numeral. Server-renderable; it needs no script.
+ * a missing one is a torn gap under its numeral, with only its year legible. Server-renderable; it needs no script.
  */
 export function Ledger({ ledger }: LedgerProps) {
   const found = ledger?.leaves.filter((leaf) => leaf.kind === "found").length ?? 0;

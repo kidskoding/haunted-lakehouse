@@ -18,8 +18,21 @@ describe("ledgerView", () => {
   it("tears out every page for a player who holds none, in the order of the book", () => {
     const view = ledgerView([], []);
     expect(view.leaves).toEqual(
-      ["I", "II", "III", "IV", "V", "VI", "VII"].map((numeral) => ({ kind: "torn", numeral })),
+      PAGE_IDS.map((id) => ({
+        kind: "torn",
+        numeral: LEDGER_PAGES[id].numeral,
+        year: LEDGER_PAGES[id].year,
+      })),
     );
+    expect(view.leaves.map((leaf) => (leaf.kind === "torn" ? leaf.numeral : ""))).toEqual([
+      "I",
+      "II",
+      "III",
+      "IV",
+      "V",
+      "VI",
+      "VII",
+    ]);
     expect(view.closing).toBeNull();
   });
 
@@ -30,8 +43,12 @@ describe("ledgerView", () => {
       if (id === "page-3") expect(shipped).toContain(words(text));
       else expect(shipped).not.toContain(words(text));
     }
-    // Not even the year on the edge: the dates alone point at 2020.
-    expect(shipped).not.toContain("2020");
+    // Only the year stays legible on a torn edge (story bible, section 6).
+    const torn = ledgerView(["page-3"], []).leaves.filter((leaf) => leaf.kind === "torn");
+    expect(torn.map((leaf) => leaf.year)).toEqual([1891, 1918, 1987, 2020, 2020, 2020]);
+    expect(torn.every((leaf) => Object.keys(leaf).sort().join() === "kind,numeral,year")).toBe(
+      true,
+    );
   });
 
   it("writes a found page in full, in the book's place for it", () => {

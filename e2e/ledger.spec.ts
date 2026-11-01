@@ -12,9 +12,12 @@ test("a visitor with no session finds every page of the Ledger torn out", async 
   await expect(page.getByRole("heading", { level: 1, name: "The Ledger" })).toBeVisible();
   await expect(page.getByText("0 of 7 pages found")).toBeVisible();
   await expect(pageHeadings(page)).toHaveText(NUMERALS.map((n) => `Page ${n}, torn out`));
-  // A torn page is a gap: nothing of its text, not even its year, reaches the page.
+  // A torn page is a gap: only its year is legible, and nothing of its text reaches the page.
+  for (const year of ["1891", "1918", "1962", "1987", "2020"]) {
+    await expect(book(page)).toContainText(year);
+  }
   await expect(book(page)).not.toContainText("Hallowe'en");
-  await expect(book(page)).not.toContainText("2020");
+  await expect(book(page)).not.toContainText("Town Charter");
   await expect(page.getByRole("link", { name: "Enter the night" })).toHaveCount(0);
 
   await page.getByRole("link", { name: "Back to the Crypt" }).click();
