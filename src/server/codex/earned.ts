@@ -35,20 +35,37 @@ export async function loadEarnedClears(
     .where(eq(runs.playerId, playerId))
     .orderBy(asc(runs.createdAt), asc(runs.id), asc(runEvents.seq));
 
-  const earned = new Map<string, EarnedClear>();
-  let runId: string | null = null;
-  let state: RunState | null = null;
+  const byRun = new Map<string, { kind: string; payload: unknown }[]>();
   for (const row of rows) {
-    const event = eventFromRow(row.kind, row.payload);
-    if (row.runId !== runId) {
-      runId = row.runId;
-      state = null;
+    const log = byRun.get(row.runId) ?? [];
+    log.push(row);
+    byRun.set(row.runId, log);
+  }
+
+  const earned = new Map<string, EarnedClear>();
+  // Maps keep insertion order, so runs fold oldest first and a later clear wins.
+  for (const [runId, log] of byRun) {
+    try {
+      for (const clear of clearsIn(log)) earned.set(clear.puzzleId, clear);
+    } catch (error) {
+      // One run the reducer no longer accepts shouldn't take the whole Codex down with it.
+      console.error(`The Codex skipped run ${runId}, whose log doesn't replay`, error);
     }
+  }
+  return [...earned.values()];
+}
+
+/** Every hour one run's log cleared, in order. Throws when the log doesn't replay. */
+function clearsIn(log: readonly { kind: string; payload: unknown }[]): EarnedClear[] {
+  const clears: EarnedClear[] = [];
+  let state: RunState | null = null;
+  for (const row of log) {
+    const event = eventFromRow(row.kind, row.payload);
     // The reducer checks every event as it would on append, so the clear is the one the run saw.
     const before: RunState | null = state;
     state = before === null ? runMachine.replay([event]) : runMachine.reduce(before, event);
     if (event.kind === "hour_cleared" && before?.hour) {
-      earned.set(before.hour.puzzleId, {
+      clears.push({
         puzzleId: before.hour.puzzleId,
         seed: state.seed,
         character: state.character,
@@ -57,5 +74,5 @@ export async function loadEarnedClears(
       });
     }
   }
-  return [...earned.values()];
+  return clears;
 }

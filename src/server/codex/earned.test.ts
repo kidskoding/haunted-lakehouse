@@ -1,7 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as schema from "../db/schema";
 import { players, runEvents, runs } from "../db/schema";
 import type { CurseId, RunEvent } from "../engine/run/types";
@@ -140,5 +140,26 @@ describe("loadEarnedClears", () => {
       porchCleared("raven-pumpkin-13", declined),
     );
     expect(await loadEarnedClears(database, player)).toEqual([]);
+  });
+
+  it("skips a run whose log no longer replays, and keeps the rest", async () => {
+    const player = await newPlayer(database);
+    const broken = await storeRun(database, player, "moth-lantern-7", [
+      ...porchCleared("moth-lantern-7", declined),
+      // A clear with no hour open: the reducer refuses it.
+      { kind: "hour_cleared", slot: 2 },
+    ]);
+    await storeRun(database, player, "raven-pumpkin-13", [
+      started("raven-pumpkin-13"),
+      opened(1, "porch-lights", null),
+      { kind: "hour_cleared", slot: 1 },
+    ]);
+    const logged = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const earned = await loadEarnedClears(database, player);
+
+    expect(earned.map((clear) => clear.seed)).toEqual(["raven-pumpkin-13"]);
+    expect(logged).toHaveBeenCalledWith(expect.stringContaining(broken), expect.anything());
+    logged.mockRestore();
   });
 });
