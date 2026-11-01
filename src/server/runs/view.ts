@@ -4,10 +4,8 @@ import type { RelicId } from "../engine/run/types";
 import type { RelicView } from "../../lib/run/bottom-bar";
 import type { RunClearedView, RunDeathView, RunHourView, RunView } from "../../lib/run/view";
 import { visibleIndices } from "../engine/batches/visibility";
-import { fogNarrative } from "../engine/curses/fog";
-import { effectiveRetention } from "../engine/curses/limits";
+import { generateHour } from "../engine/curses/apply";
 import type { Checkpoint, Puzzle, PuzzleData } from "../engine/puzzle";
-import { generatePuzzle } from "../engine/registry";
 import { CHARACTERS } from "../engine/run/characters";
 import type { CurseId, OpenHour, RunState } from "../engine/run/types";
 import { SLOTS, slotDefinition } from "../engine/slots";
@@ -43,12 +41,9 @@ interface HourData {
 function hourData(puzzleId: string, seed: string, curse: CurseId | null): HourData {
   const puzzle = puzzleRegistry.get(puzzleId);
   if (!puzzle) throw new Error(`The run names unknown puzzle ${puzzleId}.`);
-  const data = generatePuzzle(puzzle, seed);
-  const { narrative, withheld } =
-    curse === "fog"
-      ? fogNarrative(puzzle, data.narrative)
-      : { narrative: data.narrative, withheld: [] };
-  return { puzzle, data, narrative, withheld, retention: effectiveRetention(puzzle, curse) };
+  // The same cursed night the batch routes serve, so feeds and retention match what loads.
+  const { data, withheld, retention } = generateHour(puzzle, seed, curse);
+  return { puzzle, data, narrative: data.narrative, withheld, retention };
 }
 
 function feedsOf(data: PuzzleData): string[] {

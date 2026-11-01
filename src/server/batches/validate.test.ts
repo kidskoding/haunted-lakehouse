@@ -29,6 +29,7 @@ function hourWith(revealed: readonly number[] = [], hourData = data): OpenHourDa
     hour: { slot: 1, puzzleId: puzzle.id, curse: null, failures: [], revealed },
     puzzle,
     data: hourData,
+    retention: puzzle.retention,
   };
 }
 
