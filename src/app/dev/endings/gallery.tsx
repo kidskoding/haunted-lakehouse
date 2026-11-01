@@ -11,7 +11,7 @@ export function Gallery({
   readonly current: EndingFixture;
 }) {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-page flex-col gap-8 px-8 py-12">
+    <main className="mx-auto flex min-h-dvh max-w-page flex-col gap-8 px-4 py-12 md:px-8">
       <header className="flex flex-col gap-4">
         <h1 className="text-parchment type-display-m">Endings</h1>
         <nav aria-label="Fixtures">

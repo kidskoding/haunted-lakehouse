@@ -46,16 +46,26 @@ const disabledStyles: Readonly<Record<ButtonVariant, string>> = {
   quiet: disabledQuiet,
 };
 
+/*
+ * A finger needs 44px. Below the run screen's width a touch screen is a phone or a tablet on a
+ * page-style screen, so `lg` and `md` grow there; the run screen's panels keep their density.
+ */
+const touch = "pointer-coarse:max-xl:h-11";
+
 export const sizes = {
   /** 40px: primary and run buttons. */
-  lg: "h-10 gap-2 px-4 type-ui-l",
+  lg: `h-10 gap-2 px-4 type-ui-l ${touch}`,
   /** 32px: the default. */
-  md: "h-8 gap-2 px-3 type-ui font-semibold",
+  md: `h-8 gap-2 px-3 type-ui font-semibold ${touch}`,
   /** 28px: panel actions. */
   sm: "h-7 gap-1.5 px-2 type-ui font-semibold",
 } as const;
 
-export const iconSizes = { lg: "size-10", md: "size-8", sm: "size-7" } as const;
+export const iconSizes = {
+  lg: "size-10 pointer-coarse:max-xl:size-11",
+  md: "size-8 pointer-coarse:max-xl:size-11",
+  sm: "size-7",
+} as const;
 
 export type ButtonVariant = keyof typeof variants;
 export type ButtonSize = keyof typeof sizes;

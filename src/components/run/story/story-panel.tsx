@@ -35,7 +35,7 @@ function Monogram({ speaker }: { readonly speaker: Turn["speaker"] }) {
     <span
       aria-hidden="true"
       className={cx(
-        "flex size-9 items-center justify-center rounded-xs bg-raised text-parchment",
+        "flex size-9 items-center justify-center rounded-xs bg-raised text-parchment @xs:row-span-2",
         markClass,
       )}
     >
@@ -81,12 +81,13 @@ function StoryTurn({ turn, index }: { readonly turn: Turn; readonly index: numbe
   }
   return (
     <li
-      className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 story-reveal"
+      className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 gap-y-2 story-reveal @xs:gap-y-1"
       style={revealDelay(index)}
     >
       <Monogram speaker={turn.speaker} />
-      <div className="flex flex-col gap-1">
-        <p className="pt-2 font-semibold text-ash type-ui">{name}</p>
+      <p className="self-center font-semibold text-ash type-ui @xs:self-auto @xs:pt-2">{name}</p>
+      {/* Under 20rem, the lines take the monogram's width back and the name sits beside it. */}
+      <div className="col-span-2 @xs:col-span-1 @xs:col-start-2">
         <TurnLines turn={turn} />
       </div>
     </li>
@@ -96,7 +97,7 @@ function StoryTurn({ turn, index }: { readonly turn: Turn; readonly index: numbe
 /** A rendered scene's turns, each under its speaker's monogram, arriving one after another. */
 export function StoryScene({ lines }: { readonly lines: readonly RenderedLine[] }) {
   return (
-    <ol className="flex flex-col gap-6">
+    <ol className="flex flex-col gap-6 @container">
       {turnsOf(lines).map((turn, index) => (
         <StoryTurn
           // Turns are a fixed rendering of the scene and never reorder.

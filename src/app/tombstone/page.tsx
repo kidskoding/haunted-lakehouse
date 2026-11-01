@@ -58,7 +58,7 @@ export default async function TombstonePage(props: TombstonePageProps) {
       <DeathActions stone={stone} sharePath={tombstonePaths(death).share} />
       <Link
         href="/"
-        className="text-ash type-ui underline underline-offset-4 ui-hover:text-parchment"
+        className="inline-flex min-h-11 items-center text-ash type-ui underline underline-offset-4 ui-hover:text-parchment"
       >
         What is {site.name}?
       </Link>

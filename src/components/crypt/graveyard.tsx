@@ -69,7 +69,7 @@ function FilterGroup({ id, label, links }: FilterGroupProps) {
               href={link.href}
               aria-current={link.current ? "true" : undefined}
               className={cx(
-                "relative inline-flex min-h-8 items-center rounded-xs px-2 type-ui transition-colors duration-fast ease-out",
+                "relative inline-flex min-h-8 items-center rounded-xs px-2 type-ui transition-colors duration-fast ease-out pointer-coarse:max-xl:min-h-11",
                 link.current
                   ? "bg-raised text-parchment font-semibold"
                   : "text-ash ui-hover:bg-raised ui-hover:text-parchment",

@@ -264,7 +264,7 @@ test("a narrow window shows the laptop message instead of the panels", async ({ 
   const errors = collectConsoleErrors(page);
   await page.goto("/dev/run");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Hollow Creek needs a wider window" }),
+    page.getByRole("heading", { level: 1, name: "The night won’t fit on this screen." }),
   ).toBeVisible();
   await expect(page.getByTestId("run-layout")).toBeHidden();
   await expect(page.getByRole("separator")).toHaveCount(0);

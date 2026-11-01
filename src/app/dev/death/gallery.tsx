@@ -23,7 +23,7 @@ export function Gallery({ specimens }: { readonly specimens: readonly DeathSpeci
   if (!active) return null;
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-page flex-col gap-8 px-8 py-12 3xl:max-w-none">
+    <main className="mx-auto flex min-h-dvh max-w-page flex-col gap-8 px-4 py-12 md:px-8 3xl:max-w-none">
       <header className="flex max-w-reading flex-col gap-3">
         <h1 className="text-balance text-parchment type-display-m">Death</h1>
         <p className="text-pretty text-ash type-prose">

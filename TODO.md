@@ -115,7 +115,7 @@ Spikes are throwaway experiments. Build them wherever is quickest outside the ap
 - [x] **5.5.4 Ledger.** Fragments collected and the torn pages filling in.
 - [x] **5.5.5 Daily Haunt.** Today's seed, one attempt, and a leaderboard.
 
-- [ ] **5.6 Mobile.** Landing, Crypt, tombstones, and story are readable on phones, and the run screen shows a polished "best played on a laptop" message.
+- [x] **5.6 Mobile.** Landing, Crypt, tombstones, and story are readable on phones, and the run screen shows a polished "best played on a laptop" message.
 
 ---
 

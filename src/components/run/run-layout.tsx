@@ -21,6 +21,7 @@ import {
   type TrackFloors,
 } from "./layout";
 import { useSavedLayout } from "./layout-store";
+import { RunLayoutNarrow } from "./run-layout-narrow";
 import { Splitter } from "./splitter";
 
 export interface RunLayoutProps {
@@ -35,7 +36,7 @@ export interface RunLayoutProps {
   readonly results: ReactNode;
   /** Relics and the two run buttons. */
   readonly bottomBar: ReactNode;
-  /** Shown instead of the run screen below 1280px. */
+  /** Shown instead of the run screen below 1280px; by default, the hour waiting for a laptop. */
   readonly narrow?: ReactNode;
 }
 
@@ -93,7 +94,7 @@ export function RunLayout({
   editor,
   results,
   bottomBar,
-  narrow = <RunLayoutNarrow />,
+  narrow = <RunLayoutNarrow title={title} />,
 }: RunLayoutProps) {
   const [saved, save] = useSavedLayout();
   // A drag shows its sizes live and is saved once, when the pointer lets go.
@@ -268,24 +269,5 @@ function Pane({ id, children }: { readonly id?: string; readonly children: React
     <div id={id} className="flex min-h-0 min-w-0 flex-col overflow-hidden *:min-h-0 *:flex-1">
       {children}
     </div>
-  );
-}
-
-/**
- * What the run screen shows on a window narrower than 1280px. A placeholder that the mobile
- * item (5.6) will refine; it keeps the player's place rather than squeezing six panels.
- */
-export function RunLayoutNarrow() {
-  return (
-    <main className="mx-auto flex min-h-dvh max-w-copy flex-col justify-center gap-4 px-6 py-16">
-      <h1 className="text-balance text-parchment type-display-m">
-        Hollow Creek needs a wider window
-      </h1>
-      <p className="text-pretty text-ash type-prose">
-        The night is built on a laptop-sized screen: a story, a pipeline, an editor, and its
-        results, side by side. Open this page on a screen at least 1280 pixels wide, or widen the
-        window, and the run picks up where it is.
-      </p>
-    </main>
   );
 }
