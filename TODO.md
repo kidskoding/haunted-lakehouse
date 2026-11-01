@@ -163,7 +163,7 @@ Every puzzle follows the same five steps:
 - [ ] **7.4.1 End-to-end tests.** Playwright plays a full Act I run, a death, and a Crypt visit on 3 seeds.
 - [ ] **7.4.2 Quality pass.** Lighthouse 90+ and zero axe violations on every page, screenshot review at all widths, and fixes applied.
 - [ ] **7.4.3 Hallowed Night seed.** Event seed configuration, released at 6pm Central on Oct 31.
-- [ ] **7.4.4 README.** Hook, a screenshot or GIF, a "Play now" link, how it works, the stack, how to run locally, and an Act I puzzle list (no spoilers).
+- [x] **7.4.4 README.** Hook, a screenshot or GIF, a "Play now" link, how it works, the stack, how to run locally, and an Act I puzzle list (no spoilers).
 - [ ] **7.4.5 Production deploy and tag v0.1.0.**
 
 ---
