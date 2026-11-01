@@ -1,6 +1,6 @@
 import "server-only";
 import { and, asc, eq } from "drizzle-orm";
-import { db, type RunDatabase, type RunExecutor } from "../db/client";
+import type { RunDatabase, RunExecutor } from "../db/client";
 import { runEvents, runs } from "../db/schema";
 import { ALL_PUZZLES } from "../engine/puzzles";
 import { createPuzzleRegistry } from "../engine/registry";
@@ -78,11 +78,6 @@ export async function loadOwnedRunWith(
 ): Promise<OwnedRun | null> {
   const run = await loadPlayerRunWith(database, runId, playerId);
   return run?.status === "active" ? run : null;
-}
-
-/** {@link loadOwnedRunWith} against the shared database. */
-export async function loadOwnedRun(runId: string, playerId: string): Promise<OwnedRun | null> {
-  return loadOwnedRunWith(await db(), runId, playerId);
 }
 
 export { machine as runMachine, registry as puzzleRegistry };
