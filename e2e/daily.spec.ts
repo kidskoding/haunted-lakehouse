@@ -101,9 +101,10 @@ test("once attempted, the room shows the result instead of a second try", async 
 
   await page.goto("/dev/daily?state=in-progress");
   await expect(begin(page)).toHaveCount(0);
+  // Back into the caller's own run, not a fresh one.
   await expect(page.getByRole("link", { name: "Return to the night" })).toHaveAttribute(
     "href",
-    "/run",
+    "/run?run=0d0d0d0d-1031-4000-8000-000000000013",
   );
 });
 

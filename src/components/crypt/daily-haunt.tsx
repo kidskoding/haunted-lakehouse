@@ -57,7 +57,10 @@ function Attempt({ attempt, seed }: { readonly attempt: DailyAttemptView; readon
         <p className="max-w-copy text-pretty text-parchment type-prose">
           Your haunt is still under way. It&rsquo;s your one attempt today, so see it through.
         </p>
-        <Link href="/run" className={`${buttonClassName("primary", "lg")} self-start`}>
+        <Link
+          href={`/run?run=${attempt.runId}`}
+          className={`${buttonClassName("primary", "lg")} self-start`}
+        >
           Return to the night
         </Link>
       </div>

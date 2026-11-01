@@ -20,7 +20,8 @@ export interface DailyResult {
 /** The caller's one attempt at today's haunt. */
 export type DailyAttemptView =
   | { readonly kind: "none" }
-  | { readonly kind: "in-progress" }
+  /** `runId` is the caller's own run, so the page can lead back into it. */
+  | { readonly kind: "in-progress"; readonly runId: string }
   | {
       readonly kind: "finished";
       /** Null when the run ended without a result on the board, as an abandoned one does. */

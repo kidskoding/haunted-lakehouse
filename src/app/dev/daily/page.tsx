@@ -55,10 +55,13 @@ const CAPPED: DailyBoard = {
 
 const EMPTY: DailyBoard = { rows: [], total: 0 };
 
+// A stand-in for the caller's own run, which the live page reads from the database.
+const RUN_ID = "0d0d0d0d-1031-4000-8000-000000000013";
+
 const STATES: Readonly<Record<string, DailyHauntProps["standing"]>> = {
   fresh: { attempt: { kind: "none" }, board: BOARD },
   empty: { attempt: { kind: "none" }, board: EMPTY },
-  "in-progress": { attempt: { kind: "in-progress" }, board: BOARD },
+  "in-progress": { attempt: { kind: "in-progress", runId: RUN_ID }, board: BOARD },
   finished: {
     attempt: { kind: "finished", result: { slotsCleared: 4, candlesLeft: 2, rank: 6 } },
     board: WITH_YOU,

@@ -158,10 +158,14 @@ export async function loadDailyStanding(date: string): Promise<DailyStanding | n
       playerId ? dailyAttempt(playerId, date) : ({ kind: "none" } as const),
       dailyBoardWith(await db(), date, playerId),
     ]);
-    // The run id stays on the server; the page needs only what the attempt came to.
-    const { kind } = attempt;
+    // A finished run's id stays on the server; one under way is the caller's own, to return to.
     return {
-      attempt: kind === "finished" ? { kind, result: attempt.result } : { kind },
+      attempt:
+        attempt.kind === "finished"
+          ? { kind: attempt.kind, result: attempt.result }
+          : attempt.kind === "in-progress"
+            ? { kind: attempt.kind, runId: attempt.runId }
+            : { kind: attempt.kind },
       board,
     };
   } catch (error) {

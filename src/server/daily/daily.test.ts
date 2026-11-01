@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { db } from "../db/client";
 import * as schema from "../db/schema";
 import { dailyResults, players, runs } from "../db/schema";
 import { dailySeed } from "../engine/seed";
@@ -10,6 +11,7 @@ import { currentPlayerId } from "../session/session";
 import { dailyAttemptWith, dailyBoardWith, dailyToday, loadDailyStanding, utcDate } from "./daily";
 
 vi.mock("../session/session", () => ({ currentPlayerId: vi.fn() }));
+vi.mock("../db/client", () => ({ db: vi.fn() }));
 
 const TODAY = "2026-10-31";
 
@@ -172,6 +174,17 @@ describe("dailyBoardWith", () => {
 });
 
 describe("loadDailyStanding", () => {
+  it("hands the page the caller's own run while their haunt is under way, and only then", async () => {
+    vi.mocked(db).mockResolvedValue(database);
+    const playerId = await newPlayer();
+    const runId = await dailyRun(playerId);
+    vi.mocked(currentPlayerId).mockResolvedValue(playerId);
+    expect((await loadDailyStanding(TODAY))?.attempt).toEqual({ kind: "in-progress", runId });
+
+    await database.update(runs).set({ status: "dead" }).where(eq(runs.id, runId));
+    expect(JSON.stringify(await loadDailyStanding(TODAY))).not.toContain(runId);
+  });
+
   it("says it couldn't be read, and logs why, when the session can't be read", async () => {
     const failure = new Error("session store unreachable");
     vi.mocked(currentPlayerId).mockRejectedValueOnce(failure);
